@@ -12,6 +12,9 @@ import ConfirmPasswordScreen from '../screens/auth/authScreen/ConfirmPasswordScr
 import GenderScreen_1 from '../screens/auth/authScreen/GenderScreen_1';
 import GoalScreen_2 from '../screens/auth/authScreen/GoalScreen_2';
 import DateofBirthScreen_3 from '../screens/auth/authScreen/DateofBirthScreen_3';
+import TimeofBirthScreen_4 from '../screens/auth/authScreen/TimeofBirthScreen_4';
+import PlaceofBirthScreen_5 from '../screens/auth/authScreen/PlaceofBirthScreen_5';
+import RelationshipScreen_6 from '../screens/auth/authScreen/RelationshipScreen_6';
 
 
 
@@ -39,6 +42,9 @@ const AuthNavigator = () => {
       <Stack.Screen name='GenderScreen' component={GenderScreen_1} />
             <Stack.Screen name='GoalScreen' component={GoalScreen_2} />
                   <Stack.Screen name='DateofBirth' component={DateofBirthScreen_3} />
+                    <Stack.Screen name='TimeofBirth' component={TimeofBirthScreen_4} />
+                       <Stack.Screen name='PlaceofBirth' component={PlaceofBirthScreen_5} />
+                          <Stack.Screen name='RelationshipStatus' component={RelationshipScreen_6} />
     </Stack.Navigator>
   )
 }

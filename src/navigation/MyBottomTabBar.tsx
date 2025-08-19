@@ -1,6 +1,4 @@
-
-
-
+import React from 'react';
 import {
   View,
   Pressable,
@@ -12,6 +10,7 @@ import {
 } from 'react-native';
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { useThemeStore } from '../store/useThemeStore';
+import GradientBox from '../components/GradientBox';
 
 import HomeIcon from '../assets/icons/homeIcon.png';
 import DivineIcon from '../assets/icons/divineIcon.png';
@@ -42,12 +41,10 @@ export const MyBottomTabBar = ({
   const colors = theme.colors;
 
   return (
-    <View style={[styles.wrapper, {
-      backgroundColor: '#FFF',
-      borderWidth:1,
-      borderColor: 'rgba(164, 73, 239, 0.15)',
-      shadowColor: '#000',
-    }]}>
+    <GradientBox
+      colors={[colors.black, colors.bgBox]} 
+      style={styles.wrapper}
+    >
       {state.routes.map((route, index) => {
         const { options } = descriptors[route.key];
         const label =
@@ -89,12 +86,12 @@ export const MyBottomTabBar = ({
               <Image
                 source={getIcon(route.name)}
                 style={styles.icon}
-                tintColor={isFocused ? colors.primary : colors.black}
+                tintColor={isFocused ? colors.primary : colors.white}
               />
               <Text
                 style={{
                   fontSize: 12,
-                  color: isFocused ? colors.primary : colors.black,
+                  color: isFocused ? colors.primary : colors.white,
                   fontWeight: '500',
                   marginTop: 4,
                 }}
@@ -105,23 +102,24 @@ export const MyBottomTabBar = ({
           </Pressable>
         );
       })}
-    </View>
+    </GradientBox>
   );
 };
 
 const styles = StyleSheet.create({
   wrapper: {
     position: 'absolute',
-    bottom: 12,
-    left: 16,
-    right: 16,
+    bottom: 0, 
+    left: 0,
+    right: 0,
     height: 71,
-    // borderRadius: 46,
-    borderWidth: 1,
     flexDirection: 'row',
     justifyContent: 'space-around',
     alignItems: 'center',
-    shadowOffset: { width: 0, height: 2 },
+    // borderTopLeftRadius: 20,
+    // borderTopRightRadius: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 4,

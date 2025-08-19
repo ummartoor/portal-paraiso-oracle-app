@@ -24,5 +24,7 @@ export type AuthStackParamsList = {
     GenderScreen:undefined;
     GoalScreen:undefined;
     DateofBirth:undefined;
-
+    TimeofBirth:undefined;
+    PlaceofBirth:undefined;
+    RelationshipStatus:undefined;
 };

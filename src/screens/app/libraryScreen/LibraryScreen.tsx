@@ -1,36 +1,75 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Image,
+  StatusBar,
+  Dimensions,
+  ImageBackground,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { Fonts } from '../../../constants/fonts';
 import { useThemeStore } from '../../../store/useThemeStore';
+import { AuthStackParamsList } from '../../../navigation/routeTypes';
 
+const { height: SCREEN_HEIGHT, width: SCREEN_WIDTH } = Dimensions.get('screen');
 
-const LibraryScreen: React.FC = () => {
-  const { colors } = useThemeStore(state => state.theme);
+const LibraryScreen = () => {
+  const theme = useThemeStore(state => state.theme);
+  const colors = theme.colors;
+  const navigation =
+    useNavigation<NativeStackNavigationProp<AuthStackParamsList>>();
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: 'black' }]}>
-      <View style={styles.centerContent}>
-        <Text style={[styles.title, { color: colors.primary }]}>
-          LibraryScreen
-        </Text>
-      </View>
-    </SafeAreaView>
+    <ImageBackground
+      source={require('../../../assets/images/backgroundImage.png')}
+      style={[styles.bgImage, { height: SCREEN_HEIGHT, width: SCREEN_WIDTH }]}
+      resizeMode="cover"
+    >
+      <SafeAreaView style={styles.container}>
+        <StatusBar
+          barStyle="light-content"
+          backgroundColor="transparent"
+          translucent
+        />
+
+
+        {/* Center Title */}
+        <View style={styles.centerBox}>
+          <Text style={[styles.title, { color: colors.white }]}>
+           Library Screen
+          </Text>
+        </View>
+      </SafeAreaView>
+    </ImageBackground>
   );
 };
 
 export default LibraryScreen;
 
 const styles = StyleSheet.create({
-  container: {
+  bgImage: {
     flex: 1,
   },
-  centerContent: {
+  container: {
+    flex: 1,
+    paddingHorizontal: 20,
+    paddingTop: 40,
+  },
+
+  centerBox: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
   title: {
-    fontSize: 28,
-    
+    fontSize: 32,
+    lineHeight: 36,
+    textAlign: 'center',
+    fontFamily: Fonts.cormorantSCBold,
   },
 });
