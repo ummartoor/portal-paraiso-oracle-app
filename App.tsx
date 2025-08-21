@@ -29,6 +29,7 @@ import { StatusBar, StyleSheet, useColorScheme, View,Text } from 'react-native';
 import RouteNavigator from './src/navigation/RouteNavigator';
 import { NavigationContainer } from '@react-navigation/native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 function App() {
 
@@ -36,9 +37,11 @@ function App() {
   return (
 
     <SafeAreaProvider>
+      <GestureHandlerRootView>
     <NavigationContainer>
        <RouteNavigator />
        </NavigationContainer>
+       </GestureHandlerRootView>
        </SafeAreaProvider>
      
 

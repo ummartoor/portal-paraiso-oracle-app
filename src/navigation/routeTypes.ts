@@ -2,6 +2,7 @@
 export type AppStackParamList = {
   MainTabs: undefined;
   Profile: undefined;
+    CarouselCardDetail: { title: string };
 
 };
 
@@ -27,4 +28,5 @@ export type AuthStackParamsList = {
     TimeofBirth:undefined;
     PlaceofBirth:undefined;
     RelationshipStatus:undefined;
+
 };

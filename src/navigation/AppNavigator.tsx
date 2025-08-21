@@ -5,6 +5,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import React from 'react'
 import { AppStackParamList } from './routeTypes';
 import MainTabs from './MainTabs';
+import CarouselCardDetailScreen from '../screens/app/homeScreen/carouselCardDetail/CarouselCardDetailScreen';
 
 
 
@@ -18,7 +19,7 @@ const AppNavigator = () => {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name='MainTabs' component={MainTabs} />
-       {/* <Stack.Screen name='ProfileCardDetailScreen' component={ProfileCardDetailScreen} /> */}
+       <Stack.Screen name='CarouselCardDetail' component={CarouselCardDetailScreen} />
  
     
 
