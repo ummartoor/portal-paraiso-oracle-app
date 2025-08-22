@@ -15,7 +15,7 @@ import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Fonts } from "../../../constants/fonts";
 import { useThemeStore } from "../../../store/useThemeStore";
-import { AuthStackParamsList } from "../../../navigation/routeTypes";
+import { AppStackParamList } from "../../../navigation/routeTypes"; // <-- use App stack
 import CarouselCard, { DEFAULT_CARDS, CardItem } from "./CarouselCards";
 
 const { height: SCREEN_HEIGHT, width: SCREEN_WIDTH } = Dimensions.get("screen");
@@ -51,8 +51,10 @@ const CardBox: React.FC<CardBoxProps> = ({ label, isSelected, onPress }) => {
 const HomeScreen: React.FC = () => {
   const theme = useThemeStore((state) => state.theme);
   const { colors } = theme;
+
+  // IMPORTANT: App stack navigation, not Auth
   const navigation =
-    useNavigation<NativeStackNavigationProp<AuthStackParamsList>>();
+    useNavigation<NativeStackNavigationProp<AppStackParamList>>();
 
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
 
@@ -64,8 +66,11 @@ const HomeScreen: React.FC = () => {
   ];
 
   const onPressCarouselCard = (item: CardItem) => {
-    // e.g., navigation.navigate('SomeDetail', { id: item.id });
-    console.log("Pressed card:", item.id);
+    if (item.route) {
+      navigation.navigate(item.route);
+    } else {
+      console.warn("No route defined for card:", item.id);
+    }
   };
 
   return (
@@ -97,7 +102,7 @@ const HomeScreen: React.FC = () => {
                 source={require("../../../assets/icons/userprofile.png")}
                 style={[styles.profileImg, { borderColor: colors.white }]}
               />
-              <View style={[styles.onlineDot, { borderColor: colors.white }]} />
+              <View  style={[styles.onlineDot, { borderColor: colors.white }]} />
             </View>
 
             <TouchableOpacity style={styles.headerIconBtn}>

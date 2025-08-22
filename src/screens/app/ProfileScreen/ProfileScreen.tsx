@@ -14,6 +14,10 @@ import { useThemeStore } from '../../../store/useThemeStore';
 import { useAuthStore } from '../../../store/useAuthStore';
 import { Fonts } from '../../../constants/fonts';
 import LogOutModal from '../../../components/LogOutModal';
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { AppStackParamList } from '../../../navigation/routeTypes';
+
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 const H_PADDING = 20;
@@ -25,6 +29,8 @@ const ProfileScreen: React.FC = () => {
   const logout = useAuthStore(state => state.logout);
   const insets = useSafeAreaInsets();
   const [logoutModalVisible, setLogoutModalVisible] = useState(false);
+    const navigation = useNavigation<NativeStackNavigationProp<AppStackParamList>>();
+  
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: 'black' }]} edges={['top', 'left', 'right', 'bottom']}>
       <ImageBackground
@@ -56,22 +62,23 @@ const ProfileScreen: React.FC = () => {
           </View>
 
           {/* Avatar + Name + DOB */}
-          <View style={styles.topRow}>
-            <View style={styles.leftProfile}>
-              <View style={styles.avatarWrap}>
-                <Image
-                  source={require('../../../assets/icons/userprofile.png')}
-                  style={styles.avatar}
-                />
-                <View style={styles.onlineDot} />
-              </View>
-              <View style={{ marginLeft: 10 }}>
-                <Text style={[styles.name, { color: colors.white }]}>George Henry</Text>
-              </View>
-            </View>
+       <View style={styles.topRow}>
+  <View style={styles.leftProfile}>
+    <TouchableOpacity style={styles.avatarWrap} activeOpacity={0.8} onPress={() => navigation.navigate('EditProfile')}>
+      <Image
+        source={require('../../../assets/icons/userprofile.png')}
+        style={styles.avatar}
+      />
+      <View style={styles.onlineDot} />
+    </TouchableOpacity>
+    <View style={{ marginLeft: 10 }}>
+      <Text style={[styles.name, { color: colors.white }]}>George Henry</Text>
+    </View>
+  </View>
 
-            <Text style={[styles.dob, { color: colors.white }]}>29 Sep, 2000</Text>
-          </View>
+  <Text style={[styles.dob, { color: colors.white }]}>29 Sep, 2000</Text>
+</View>
+
 
           {/* Two Boxes Row */}
           <View style={{ flexDirection: 'row', marginTop: 16 }}>
@@ -117,7 +124,8 @@ const ProfileScreen: React.FC = () => {
 
           {/* Subscription */}
           <Text style={[styles.sectionTitle, { color: colors.primary, marginTop: 18 }]}>Subscription</Text>
-          <TouchableOpacity activeOpacity={0.85} style={[styles.rowBtn, { backgroundColor: colors.bgBox }]}>
+          <TouchableOpacity activeOpacity={0.85}  onPress={()=>navigation.navigate('BuySubscription')}
+           style={[styles.rowBtn, { backgroundColor: colors.bgBox }]}>
             <Text style={[styles.rowText, { color: colors.white }]}>Buy Subscription</Text>
             <Image
               source={require('../../../assets/icons/rightArrowIcon.png')}
@@ -129,7 +137,8 @@ const ProfileScreen: React.FC = () => {
           {/* General */}
           <Text style={[styles.sectionTitle, { color: colors.primary, marginTop: 18 }]}>General</Text>
 
-          <TouchableOpacity activeOpacity={0.85} style={[styles.rowBtn, { backgroundColor: colors.bgBox }]}>
+          <TouchableOpacity activeOpacity={0.85}  onPress={()=>{navigation.navigate('SupportScreen')}}
+          style={[styles.rowBtn, { backgroundColor: colors.bgBox }]}>
             <Text style={[styles.rowText, { color: colors.white }]}>Support</Text>
             <Image
               source={require('../../../assets/icons/rightArrowIcon.png')}
@@ -152,7 +161,7 @@ const ProfileScreen: React.FC = () => {
             />
           </TouchableOpacity>
 
-          <TouchableOpacity activeOpacity={0.85} style={[styles.rowBtn, { backgroundColor: colors.bgBox }]}>
+          <TouchableOpacity activeOpacity={0.85} style={[styles.rowBtn, { backgroundColor: colors.bgBox }]} onPress={()=>{navigation.navigate('DeleteAccount')}}  >
             <Text style={[styles.rowText, { color: colors.white }]}>Delete Account</Text>
             <Image
               source={require('../../../assets/icons/rightArrowIcon.png')}
@@ -164,7 +173,8 @@ const ProfileScreen: React.FC = () => {
           {/* Document */}
           <Text style={[styles.sectionTitle, { color: colors.primary, marginTop: 18 }]}>Document</Text>
 
-          <TouchableOpacity activeOpacity={0.85} style={[styles.rowBtn, { backgroundColor: colors.bgBox }]}>
+          <TouchableOpacity activeOpacity={0.85} onPress={()=>navigation.navigate('TermOfService')}
+           style={[styles.rowBtn, { backgroundColor: colors.bgBox }]}>
             <Text style={[styles.rowText, { color: colors.white }]}>Terms of Service</Text>
             <Image
               source={require('../../../assets/icons/rightArrowIcon.png')}
@@ -173,7 +183,8 @@ const ProfileScreen: React.FC = () => {
             />
           </TouchableOpacity>
 
-          <TouchableOpacity activeOpacity={0.85} style={[styles.rowBtn, { backgroundColor: colors.bgBox }]}>
+          <TouchableOpacity activeOpacity={0.85} onPress={()=>navigation.navigate('SubscriptionTerms')}
+           style={[styles.rowBtn, { backgroundColor: colors.bgBox }]}>
             <Text style={[styles.rowText, { color: colors.white }]}>Subscription Terms</Text>
             <Image
               source={require('../../../assets/icons/rightArrowIcon.png')}
@@ -182,7 +193,8 @@ const ProfileScreen: React.FC = () => {
             />
           </TouchableOpacity>
 
-          <TouchableOpacity activeOpacity={0.85} style={[styles.rowBtn, { backgroundColor: colors.bgBox }]}>
+          <TouchableOpacity activeOpacity={0.85}  onPress={()=>navigation.navigate('PrivacyPolicy')}
+           style={[styles.rowBtn, { backgroundColor: colors.bgBox }]}>
             <Text style={[styles.rowText, { color: colors.white }]}>Privacy Policy</Text>
             <Image
               source={require('../../../assets/icons/rightArrowIcon.png')}

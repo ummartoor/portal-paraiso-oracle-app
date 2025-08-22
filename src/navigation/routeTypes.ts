@@ -2,8 +2,17 @@
 export type AppStackParamList = {
   MainTabs: undefined;
   Profile: undefined;
-    CarouselCardDetail: { title: string };
-
+   
+    TarotCardDetail:undefined;
+    AstrologyCardDetail:undefined;
+    NumerologyCardDetail:undefined;
+  DeleteAccount: undefined;
+    SupportScreen: undefined;
+      EditProfile: undefined;
+      BuySubscription:undefined;
+      TermOfService :undefined;
+       SubscriptionTerms :undefined;
+       PrivacyPolicy:undefined
 };
 
 
