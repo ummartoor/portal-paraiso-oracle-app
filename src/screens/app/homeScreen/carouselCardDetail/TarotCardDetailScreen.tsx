@@ -29,7 +29,7 @@ import {
   GestureDetector,
 } from 'react-native-gesture-handler';
 
-import GradientBox from '../../../../components/GradientBox'; // <-- adjust path if needed
+import GradientBox from '../../../../components/GradientBox';
 import { Fonts } from '../../../../constants/fonts';
 import { useThemeStore } from '../../../../store/useThemeStore';
 import { AppStackParamList } from '../../../../navigation/routeTypes';
@@ -90,8 +90,7 @@ const cardsJSON: Array<{ id: string; image: ImageSourcePropType }> = [
   { id: '16', image: require('../../../../assets/images/deskCard.png') },
 ];
 
-const toDeck = (rows: typeof cardsJSON): CardT[] =>
-  rows.map(r => ({ id: r.id, img: r.image }));
+const toDeck = (rows: typeof cardsJSON): CardT[] => rows.map(r => ({ id: r.id, img: r.image }));
 
 function triggerHaptic() {
   if (Platform.OS === 'android') {
@@ -194,7 +193,7 @@ const TarotCardDetailScreen = () => {
           <View style={styles.content}>
             <Text style={[styles.focusTitle, { color: colors.primary || '#CEA16A' }]}>Focus on Your Question</Text>
             <Text style={[styles.paragraph, { color: colors.white }]}>
-              Take a deep breath and think about{'\n'}
+              Take a deep breath and think about{"\n"}
               what you seek to know
             </Text>
           </View>
@@ -228,10 +227,7 @@ const TarotCardDetailScreen = () => {
           {/* Start Revealing (hidden until 3 filled) */}
           {isLocked && (
             <TouchableOpacity activeOpacity={0.9} onPress={onStartRevealing} style={styles.revealBtnWrap}>
-              <GradientBox
-                colors={[colors.black, colors.bgBox]}
-                style={styles.revealBtnGrad}
-              >
+              <GradientBox colors={[colors.black, colors.bgBox]} style={styles.revealBtnGrad}>
                 <Text style={styles.revealBtnText}>Start Revealing</Text>
               </GradientBox>
             </TouchableOpacity>
@@ -250,9 +246,7 @@ const TarotCardDetailScreen = () => {
                 lockedSV={lockedSV}
               />
             ))}
-            <Text style={styles.hint}>
-              drag to move
-            </Text>
+            <Text style={styles.hint}>drag to move</Text>
           </View>
         </SafeAreaView>
       </ImageBackground>
@@ -349,7 +343,7 @@ function ArcCard({
     let opacity = 1 - 0.1 * t;
     if (lockedSV.value) opacity = Math.min(opacity, 0.35); // dull when locked
 
-    const cfg = { duration: 120 };
+    const cfg = { duration: 120 } as const;
     const combinedScale = baseScale * pressScale.value;
 
     // IMPORTANT: while dragging, keep rotate 0deg so the card is straight
@@ -389,12 +383,12 @@ function ArcCard({
     .onEnd(() => {
       'worklet';
       if (lockedSV.value || isPressing.value === 1) return;
-      const projected = progress.value; // using current since velocity->snap can conflict with longPress
+      const projected = progress.value;
       const snapTo = wClamp(wRound(projected), 0, maxIndex);
       progress.value = withTiming(snapTo, { duration: 160 });
     });
 
-  /* Tap to select — waits for pan to fail */
+  /* Tap to select — waits for pans to fail */
   const tap = Gesture.Tap()
     .maxDuration(250)
     .onEnd(() => {
@@ -407,11 +401,10 @@ function ArcCard({
     })
     .requireExternalGestureToFail(deckPan);
 
-  /* Long-press — ZOOM first, then VIBRATE (delayed)
-     CHANGE: .maxDistance(30) so thoda movement allow ho, phir drag smooth ho */
+  /* Long-press — ZOOM first, then VIBRATE (delayed) */
   const longPress = Gesture.LongPress()
     .minDuration(300)
-    .maxDistance(30) // allow slight finger drift; prevents accidental cancel
+    .maxDistance(30)
     .shouldCancelWhenOutside(false)
     .onStart(() => {
       'worklet';
@@ -438,41 +431,43 @@ function ArcCard({
 
   /* While holding, DRAG to any slot (card follows finger) */
   const dragPan = Gesture.Pan()
-    .minDistance(1)
-    .onUpdate(e => {
+    .minDistance(0)
+    .manualActivation(true)
+    // Android reliability: activate as soon as a touch is down OR moves
+    .onTouchesDown((_evt: any, state: any) => {
+      'worklet';
+      if (isPressing.value === 1) state.activate();
+    })
+    .onTouchesMove((_evt: any, state: any) => {
+      'worklet';
+      if (isPressing.value === 1) state.activate();
+    })
+    .onUpdate((e: any) => {
       'worklet';
       if (lockedSV.value) return;
-      if (isPressing.value !== 1) return;
-
-      // follow the finger
+      if (isPressing.value !== 1) return; // move only while long-press is active
       transX.value = e.translationX;
       transY.value = e.translationY;
     })
-    .onEnd(e => {
+    .onEnd((e: any) => {
       'worklet';
       if (lockedSV.value) return;
 
       if (isPressing.value !== 1 || sentUpOnce.value === 1) {
-        // reset transform
         transX.value = withTiming(0, { duration: 160 });
         transY.value = withTiming(0, { duration: 160 });
         return;
       }
 
-      // consider a "drop" when dragged up enough towards slots
       const movedUpEnough = e.translationY < DROP_Y_THRESHOLD;
       if (movedUpEnough) {
         const x = (e as any).absoluteX as number;
-
-        // compute slot by % across the 3 boxes row
         const leftPadding = SLOTS_PAD_H;
         const rowWidth = SCREEN_WIDTH - leftPadding * 2;
         const slotWidth = rowWidth / 3;
         let slot = Math.max(0, Math.min(2, Math.floor((x - leftPadding) / slotWidth)));
 
         sentUpOnce.value = 1;
-
-        // small bounce feedback
         pressScale.value = withSpring(1.22, { damping: 16, stiffness: 240 });
         pressScale.value = withDelay(150, withTiming(1.05, { duration: 160 }));
 
@@ -480,25 +475,27 @@ function ArcCard({
         runOnJS(onSelect)(card, slot);
       }
 
-      // either way, return card visually to arc
       transX.value = withTiming(0, { duration: 160 });
       transY.value = withTiming(0, { duration: 160 });
-    });
+    })
+    .requireExternalGestureToFail(tap) // quick tap shouldn't be stolen
+    .simultaneousWithExternalGesture(longPress);
+
+  // tap must also wait for dragPan if it's about to engage
+  tap.requireExternalGestureToFail(dragPan);
 
   /* Relationships */
-  // Deck pan can run unless you're actively pressing/dragging
   deckPan.simultaneousWithExternalGesture(longPress);
   deckPan.simultaneousWithExternalGesture(dragPan);
   longPress.simultaneousWithExternalGesture(deckPan);
   longPress.simultaneousWithExternalGesture(dragPan);
   dragPan.simultaneousWithExternalGesture(deckPan);
-  dragPan.simultaneousWithExternalGesture(longPress);
 
   // LongPress vs Tap — if press holds enough, longPress wins; otherwise tap
   const composed = Gesture.Simultaneous(
-    deckPan,
     Gesture.Exclusive(longPress, tap),
-    dragPan
+    dragPan,
+    deckPan
   );
 
   return (
@@ -634,4 +631,4 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 6 },
     elevation: 8,
   },
-}); 
+});

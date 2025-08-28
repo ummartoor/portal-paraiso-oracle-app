@@ -131,7 +131,7 @@ const InsightTabs: React.FC<InsightTabsProps> = ({ initialIndex = 0, style, onCh
               >
                 <Image
                   source={t.icon}
-                  style={[styles.tabIcon, { tintColor: colors.primary }]} // keeping your current choice
+                  style={[styles.tabIcon, { tintColor: colors.primary }]} 
                   resizeMode="contain"
                 />
               </View>

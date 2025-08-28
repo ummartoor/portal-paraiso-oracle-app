@@ -11,10 +11,11 @@ import {
   ScrollView,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useNavigation } from "@react-navigation/native";
-import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+
 import { Fonts } from "../../../constants/fonts";
 import { useThemeStore } from "../../../store/useThemeStore";
+import { useNavigation } from "@react-navigation/native";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { AppStackParamList } from "../../../navigation/routeTypes"; // <-- use App stack
 import CarouselCard, { DEFAULT_CARDS, CardItem } from "./CarouselCards";
 
