@@ -6,7 +6,6 @@ import {
   StyleSheet,
   TouchableOpacity,
   Image,
-  ScrollView,
   ViewStyle,
 } from 'react-native';
 
@@ -14,11 +13,10 @@ import GradientBox from '../../../../../components/GradientBox';
 import { Fonts } from '../../../../../constants/fonts';
 import { useThemeStore } from '../../../../../store/useThemeStore';
 
-// Tab model (export in case you later want to override internal data)
 export type InsightTab = {
   key: string;
   title: string;
-  icon: any;        
+  icon: any;
   description: string;
 };
 
@@ -28,9 +26,9 @@ type InsightTabsProps = {
   onChange?: (index: number, tab: InsightTab) => void;
 };
 
-const TAB_SIZE = 50;
+const TAB_SIZE = 47;   // as you set
+const TAB_SPACING = 7; // as you set
 
-// Default data (icons: update paths if your structure differs)
 const DEFAULT_TABS: InsightTab[] = [
   {
     key: 'morning',
@@ -77,7 +75,6 @@ const DEFAULT_TABS: InsightTab[] = [
 ];
 
 const InsightTabs: React.FC<InsightTabsProps> = ({ initialIndex = 0, style, onChange }) => {
-  // ✅ dynamic theme colors from store
   const colors = useThemeStore(s => s.theme.colors);
 
   const tabs = useMemo(() => DEFAULT_TABS, []);
@@ -91,14 +88,11 @@ const InsightTabs: React.FC<InsightTabsProps> = ({ initialIndex = 0, style, onCh
 
   return (
     <View style={[styles.card, style]}>
-      {/* Tabs Row */}
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.tabsRow}
-      >
+      {/* Tabs Row (no scroll, full width) */}
+      <View style={styles.tabsRow}>
         {tabs.map((t, idx) => {
           const selected = idx === active;
+          const isLast = idx === tabs.length - 1;
 
           if (selected) {
             return (
@@ -106,10 +100,9 @@ const InsightTabs: React.FC<InsightTabsProps> = ({ initialIndex = 0, style, onCh
                 key={t.key}
                 activeOpacity={0.9}
                 onPress={() => handleSelect(idx)}
-                style={styles.tabTouchable}
+                style={[styles.tabTouchable, !isLast && { marginRight: TAB_SPACING }]}
               >
                 <GradientBox
-                  // gradient on selected tab
                   colors={[colors.black, colors.bgBox]}
                   style={[styles.tabBox, styles.tabSelected, { borderColor: colors.primary }]}
                 >
@@ -128,7 +121,7 @@ const InsightTabs: React.FC<InsightTabsProps> = ({ initialIndex = 0, style, onCh
               key={t.key}
               activeOpacity={0.9}
               onPress={() => handleSelect(idx)}
-              style={styles.tabTouchable}
+              style={[styles.tabTouchable, !isLast && { marginRight: TAB_SPACING }]}
             >
               <View
                 style={[
@@ -138,14 +131,14 @@ const InsightTabs: React.FC<InsightTabsProps> = ({ initialIndex = 0, style, onCh
               >
                 <Image
                   source={t.icon}
-                  style={[styles.tabIcon, { tintColor: 'rgba(255,255,255,0.9)' }]}
+                  style={[styles.tabIcon, { tintColor: colors.primary }]} // keeping your current choice
                   resizeMode="contain"
                 />
               </View>
             </TouchableOpacity>
           );
         })}
-      </ScrollView>
+      </View>
 
       {/* Content for active tab */}
       <Text style={[styles.sectionTitle, { color: colors.primary }]} numberOfLines={2}>
@@ -163,14 +156,20 @@ export default InsightTabs;
 /* ----------------- STYLES ----------------- */
 const styles = StyleSheet.create({
   card: {
+    marginTop: 30,
     width: '100%',
-    borderRadius: 16,
   },
   tabsRow: {
+    width: '100%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    // space-between keeps both ends aligned; we still use marginRight for consistent gaps
+    justifyContent: 'space-between',
     paddingVertical: 8,
-    gap: 10, // if your RN doesn't support gap, add marginRight on tabTouchable except last
   },
-  tabTouchable: {},
+  tabTouchable: {
+    // marginRight applied per-item (except last)
+  },
   tabBox: {
     width: TAB_SIZE,
     height: TAB_SIZE,
@@ -196,11 +195,13 @@ const styles = StyleSheet.create({
     fontSize: 16,
     letterSpacing: 0.6,
     textTransform: 'uppercase',
+    textAlign: 'center',
   },
   sectionBody: {
     fontFamily: Fonts.aeonikRegular,
     fontSize: 14,
     lineHeight: 20,
     opacity: 0.95,
+    textAlign: 'center',
   },
 });

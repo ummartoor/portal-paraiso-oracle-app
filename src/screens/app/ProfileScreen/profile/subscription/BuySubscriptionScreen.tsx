@@ -183,7 +183,7 @@ const BuySubscriptionScreen = () => {
               colors={[colors.black, colors.bgBox]}
               style={[styles.actionBtn, { borderWidth: 1.5, borderColor: colors.primary }]}
             >
-              <Text style={styles.actionText}>Start Free • Cancel Anytime</Text>
+              <Text style={styles.actionText}>Start Now</Text>
             </GradientBox>
           </TouchableOpacity>
         </View>

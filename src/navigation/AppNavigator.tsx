@@ -15,7 +15,7 @@ import SubscriptionTermsScreen from '../screens/app/ProfileScreen/profile/docume
 import PrivacyPolicyScreen from '../screens/app/ProfileScreen/profile/document/PrivacyPolicyScreen';
 import TarotCardDetailScreen from '../screens/app/homeScreen/carouselCardDetail/TarotCardDetailScreen';
 import AstrologyCardDetailScreen from '../screens/app/homeScreen/carouselCardDetail/astrologyCardDetail/AstrologyCardDetailScreen';
-import NumerologyCardDetailScreen from '../screens/app/homeScreen/carouselCardDetail/NumerologyCardDetailScreen';
+import NumerologyCardDetailScreen from '../screens/app/homeScreen/carouselCardDetail/CaurisCardDetailScreen';
 
 
 
