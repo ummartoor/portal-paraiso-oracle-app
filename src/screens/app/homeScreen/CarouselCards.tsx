@@ -275,7 +275,7 @@ export const DEFAULT_CARDS: CardItem[] = [
   },
   {
     id: "numero",
-    title: "Numerology",
+    title: "Cauris, Buzious, odu",
     subtitle: "Numbers that shape your destiny.",
     image: require("../../../assets/images/odu.png"),
     route: "NumerologyCardDetail",

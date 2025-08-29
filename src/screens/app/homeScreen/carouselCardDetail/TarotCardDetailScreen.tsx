@@ -88,7 +88,7 @@ function triggerHapticDelayed(ms = 120) {
   setTimeout(() => triggerHaptic(), ms);
 }
 
-/* ---- STATIC REVEAL IMAGES (Put these files in assets/images) ---- */
+/* ---- STATIC REVEAL IMAGES  */
 const revealImages: ImageSourcePropType[] = [
   require('../../../../assets/images/revealCard1.png'),
   require('../../../../assets/images/revealCard2.png'),
