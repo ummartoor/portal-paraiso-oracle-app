@@ -1139,6 +1139,7 @@ import GradientBox from '../../../../components/GradientBox';
 import { Fonts } from '../../../../constants/fonts';
 import { useThemeStore } from '../../../../store/useThemeStore';
 import { AppStackParamList } from '../../../../navigation/routeTypes';
+import SubscriptionPlanModal from '../../../../components/SubscriptionPlanModal';
 
 // 🔊 TTS
 import Tts from 'react-native-tts';
@@ -1218,6 +1219,7 @@ function ShellSprite({
 const CaurisCardDetailScreen: React.FC = () => {
   const colors = useThemeStore(s => s.theme.colors);
   const navigation = useNavigation<NativeStackNavigationProp<AppStackParamList>>();
+const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
 
   // 0 = intro, 1 = casting, 2 = pattern reveal, 3 = divine message
   const [phase, setPhase] = useState<0 | 1 | 2 | 3>(0);
@@ -1329,7 +1331,7 @@ const CaurisCardDetailScreen: React.FC = () => {
     } else if (phase === 2) {
       setPhase(3);
     } else {
-      // navigation.navigate('Premium');
+  setShowSubscriptionModal(true);
     }
   };
 
@@ -1360,7 +1362,7 @@ const CaurisCardDetailScreen: React.FC = () => {
 
   useEffect(() => {
     Tts.setDefaultLanguage('en-US').catch(() => {});
-
+  Tts.setDefaultRate(0.4, true);
 
     const onStart = () => setIsSpeaking(true);
     const onFinish = () => setIsSpeaking(false);
@@ -1515,6 +1517,18 @@ const CaurisCardDetailScreen: React.FC = () => {
             </TouchableOpacity>
           </View>
         </ScrollView>
+
+      {/* Subscription Plan Modal */}
+        <SubscriptionPlanModal
+  isVisible={showSubscriptionModal}
+  onClose={() => setShowSubscriptionModal(false)}
+  onConfirm={(plan) => {
+    setShowSubscriptionModal(false);
+    console.log('User selected plan:', plan);
+
+  }}
+/>
+
       </SafeAreaView>
     </ImageBackground>
   );
@@ -1606,7 +1620,7 @@ const styles = StyleSheet.create({
   centerImageWrap: {
     width: '100%',
     alignItems: 'center',
-    marginTop: 24,
+    marginTop: 15,
     marginBottom: 8,
     height: DECAL_SIZE
   },
@@ -1657,7 +1671,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  playIcon: { width: 36, height: 36 },
+  playIcon: { width: 40, height: 40 },
 
   // Share / Save small buttons
   shareRow: {

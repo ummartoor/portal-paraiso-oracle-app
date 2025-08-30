@@ -15,7 +15,10 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import Animated, {
+import SubscriptionPlanModal from '../../../../components/SubscriptionPlanModal';
+
+import Animated,
+{
   useSharedValue,
   useAnimatedStyle,
   withTiming,
@@ -32,6 +35,9 @@ import GradientBox from '../../../../components/GradientBox';
 import { Fonts } from '../../../../constants/fonts';
 import { useThemeStore } from '../../../../store/useThemeStore';
 import { AppStackParamList } from '../../../../navigation/routeTypes';
+
+// 🔊 TTS
+import Tts from 'react-native-tts';
 
 const { height: SCREEN_HEIGHT, width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -95,15 +101,23 @@ const revealImages: ImageSourcePropType[] = [
   require('../../../../assets/images/revealCard3.png'),
 ];
 
+// Sample reading text
+const readingMessage = `In the past, The Lovers suggests a meaningful connection or important decision that deeply influenced your path. In the present, The Chariot reveals your need to stay focused and take charge as you move forward. Looking to the future, The Star brings a message of hope, renewal, and the promise of brighter days ahead.`;
+
+
 const TarotCardDetailScreen: React.FC = () => {
   const colors = useThemeStore(s => s.theme.colors);
   const navigation = useNavigation<NativeStackNavigationProp<AppStackParamList>>();
+const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
+
 
   const [deck] = useState<CardT[]>(() => toDeck(cardsJSON));
   const [selectedCards, setSelectedCards] = useState<Array<CardT | null>>([null, null, null]);
 
-  // NEW: reveal state
   const [revealStarted, setRevealStarted] = useState(false);
+  const [showReading, setShowReading] = useState(false);
+
+  const [isSpeaking, setIsSpeaking] = useState(false);
 
   const maxIndex = deck.length - 1;
   const initialIndex = useMemo(() => Math.floor(deck.length / 2), [deck.length]);
@@ -120,9 +134,44 @@ const TarotCardDetailScreen: React.FC = () => {
   useEffect(() => {
     lockedSV.value = isLocked ? 1 : 0;
   }, [isLocked]);
+  type TtsSub = { remove?: () => void; removeListener?: () => void };
+  // TTS setup
+  useEffect(() => {
+    Tts.setDefaultLanguage('en-US').catch(() => {});
+  Tts.setDefaultRate(0.4, true);
+
+    const onStart = () => setIsSpeaking(true);
+    const onFinish = () => setIsSpeaking(false);
+    const onCancel = () => setIsSpeaking(false);
+
+    const startSub = Tts.addEventListener('tts-start', onStart) as unknown as TtsSub;
+    const finishSub = Tts.addEventListener('tts-finish', onFinish) as unknown as TtsSub;
+    const cancelSub = Tts.addEventListener('tts-cancel', onCancel) as unknown as TtsSub;
+
+    return () => {
+      startSub?.remove?.();       
+      startSub?.removeListener?.(); 
+      finishSub?.remove?.();
+      finishSub?.removeListener?.();
+      cancelSub?.remove?.();
+      cancelSub?.removeListener?.();
+      Tts.stop();
+    };
+  }, []);
+
+  const onPressPlayToggle = async () => {
+    if (!readingMessage.trim()) return;
+    if (isSpeaking) {
+      await Tts.stop();
+      setIsSpeaking(false);
+    } else {
+      await Tts.stop();
+      Tts.speak(readingMessage);
+    }
+  };
 
   const handleSelect = (card: CardT, slotIndex?: number) => {
-    if (revealStarted) return; // prevent changes after reveal start
+    if (revealStarted) return;
     setSelectedCards(prev => {
       const next = [...prev];
       if (slotIndex !== undefined) {
@@ -136,7 +185,7 @@ const TarotCardDetailScreen: React.FC = () => {
   };
 
   const handleRemove = (slotIndex: number) => {
-    if (revealStarted) return; // lock removal after reveal
+    if (revealStarted) return;
     setSelectedCards(prev => {
       const next = [...prev];
       next[slotIndex] = null;
@@ -146,12 +195,10 @@ const TarotCardDetailScreen: React.FC = () => {
 
   const onPressReveal = () => {
     if (!revealStarted) {
-      triggerHaptic();
-      setRevealStarted(true); // switch text + swap images
+      setRevealStarted(true);
     } else {
-      // "Reveal Meaning" action — hook up navigation later if needed
-      triggerHaptic();
-      // e.g., navigation.navigate('TarotMeaning'); // optional
+      // Now show final Reading screen
+      setShowReading(true);
     }
   };
 
@@ -182,76 +229,152 @@ const TarotCardDetailScreen: React.FC = () => {
             </View>
           </View>
 
-          {/* Instructions */}
-          <View style={styles.content}>
-            <Text style={[styles.focusTitle, { color: colors.primary }]}>
-              {revealStarted ? 'Your Card' : 'Focus on Your Question'}
-            </Text>
-         {revealStarted ? (
-  <Text style={[styles.paragraph, { color: colors.white }]}>
-    Discover the deeper meaning behind the card drawn for you.
-  </Text>
-) : (
-  <Text style={[styles.paragraph, { color: colors.white }]}>
-    Focus text ya jo chaho pre-reveal me.
-  </Text>
-)}
-
-          </View>
-
-          {/* Slots */}
-          <View style={styles.selectedRow}>
-            {[0, 1, 2].map(i => (
-              <View key={i} style={styles.box}>
-                {selectedCards[i] && (
-                  <>
-                    <Image
-                      // if revealed -> show static reveal images
-                      source={revealStarted ? revealImages[i] : selectedCards[i]!.img}
-                      style={styles.boxImg}
-                    />
-                    {!revealStarted && (
-                      <TouchableOpacity onPress={() => handleRemove(i)} style={styles.removeBtn}>
-                        <Image
-                          source={require('../../../../assets/icons/closeIcon.png')}
-                          style={styles.removeIcon}
-                        />
-                      </TouchableOpacity>
-                    )}
-                  </>
-                )}
-              </View>
-            ))}
-          </View>
-
-          {/* Reveal Button */}
-          {isLocked && (
-            <TouchableOpacity style={styles.revealBtnWrap} onPress={onPressReveal} activeOpacity={0.9}>
-              <GradientBox colors={[colors.black, colors.bgBox]} style={styles.revealBtnGrad}>
-                <Text style={styles.revealBtnText}>
-                  {revealStarted ? 'Reveal Meaning' : 'Start Revealing'}
+          {/* Content */}
+          {!showReading ? (
+            <>
+              <View style={styles.content}>
+                <Text style={[styles.focusTitle, { color: colors.primary }]}>
+                  {revealStarted ? 'Your Card' : 'Focus on Your Question'}
                 </Text>
-              </GradientBox>
-            </TouchableOpacity>
+                <Text style={[styles.paragraph, { color: colors.white }]}>
+                  {revealStarted ? 'Discover the deeper meaning behind the cards drawn for you.' : 'Take a deep breath and think about what you seek to know'}
+                </Text>
+              </View>
+
+              {/* Slots */}
+              <View style={styles.selectedRow}>
+                {[0, 1, 2].map(i => (
+                  <View key={i} style={styles.box}>
+                    {selectedCards[i] && (
+                      <>
+                        <Image
+                          source={revealStarted ? revealImages[i] : selectedCards[i]!.img}
+                          style={styles.boxImg}
+                        />
+                        {!revealStarted && (
+                          <TouchableOpacity onPress={() => handleRemove(i)} style={styles.removeBtn}>
+                            <Image
+                              source={require('../../../../assets/icons/closeIcon.png')}
+                              style={styles.removeIcon}
+                            />
+                          </TouchableOpacity>
+                        )}
+                      </>
+                    )}
+                  </View>
+                ))}
+              </View>
+
+              {/* Reveal Button */}
+              {isLocked && (
+                <TouchableOpacity style={styles.revealBtnWrap} onPress={onPressReveal} activeOpacity={0.9}>
+ <View                  style={{
+    borderColor: colors.primary,
+    borderWidth: 1.5,
+    borderRadius: 60,
+    overflow: 'hidden'   // borderRadius ke liye zaroori
+  }}>
+  <GradientBox colors={[colors.black, colors.bgBox]} style={styles.revealBtnGrad}>
+                    <Text style={styles.revealBtnText}>
+                      {revealStarted ? 'Reveal Meaning' : 'Start Revealing'}
+                    </Text>
+                  </GradientBox>
+ </View>
+                
+                </TouchableOpacity>
+              )}
+            </>
+          ) : (
+            <>
+              <View style={styles.content}>
+                <Text style={[styles.focusTitle, { color: colors.primary }]}>Your Reading</Text>
+              </View>
+
+              {/* Show the same cards */}
+              <View style={styles.selectedRow}>
+                {[0, 1, 2].map(i => (
+                  <View key={i} style={styles.box}>
+                    <Image source={revealImages[i]} style={styles.boxImg} />
+                  </View>
+                ))}
+              </View>
+
+              {/* Play Icon */}
+              <View style={{ alignItems: 'center', marginTop: 10 }}>
+                <TouchableOpacity onPress={onPressPlayToggle} activeOpacity={0.7}>
+                  <Image
+                    source={isSpeaking ? require('../../../../assets/icons/pauseIcon.png') : require('../../../../assets/icons/playIcon.png')}
+                    style={{ width: 40, height: 40 }}
+                    resizeMode="contain"
+                  />
+                </TouchableOpacity>
+              </View>
+
+              {/* Message */}
+              <Text style={[styles.paragraph, { color: colors.white, marginTop: 12, paddingHorizontal: 8 }]}>
+                {readingMessage}
+              </Text>
+
+              {/* Share / Save */}
+              <View style={styles.shareRow}>
+                <GradientBox colors={[colors.black, colors.bgBox]} style={styles.smallBtn}>
+                  <Image source={require('../../../../assets/icons/shareIcon.png')} style={styles.smallIcon} resizeMode="contain" />
+                  <Text style={styles.smallBtnText}>Share</Text>
+                </GradientBox>
+                <GradientBox colors={[colors.black, colors.bgBox]} style={styles.smallBtn}>
+                  <Image source={require('../../../../assets/icons/saveIcon.png')} style={styles.smallIcon} resizeMode="contain" />
+                  <Text style={styles.smallBtnText}>Save</Text>
+                </GradientBox>
+              </View>
+
+              {/* Premium CTA */}
+          <TouchableOpacity style={{ marginTop: 40}}  onPress={()=>{  setShowSubscriptionModal(true);}}>
+  <View style={{
+    borderColor: colors.primary,
+    borderWidth: 1.5,
+    borderRadius: 60,
+    overflow: 'hidden'   // borderRadius ke liye zaroori
+  }}>
+    <GradientBox
+      colors={[colors.black, colors.bgBox]}
+      style={[styles.revealBtnGrad, { borderRadius: 60 }]}
+    >
+      <Text style={styles.revealBtnText}>Get Premium For Full Reading</Text>
+    </GradientBox>
+  </View>
+</TouchableOpacity>
+
+            </>
           )}
 
           {/* Deck */}
-          <View style={styles.deckWrap}>
-            {deck.map((card, i) => (
-              <ArcCard
-                key={card.id}
-                card={card}
-                index={i}
-                progress={progress}
-                maxIndex={maxIndex}
-                onSelect={handleSelect}
-                lockedSV={lockedSV}
-                revealStarted={revealStarted}
-              />
-            ))}
-            {/* HINT fixed to screen bottom & white */}
-            <Text style={styles.hint}>drag to move</Text>
-          </View>
+          {!showReading && (
+            <View style={styles.deckWrap}>
+              {deck.map((card, i) => (
+                <ArcCard
+                  key={card.id}
+                  card={card}
+                  index={i}
+                  progress={progress}
+                  maxIndex={maxIndex}
+                  onSelect={handleSelect}
+                  lockedSV={lockedSV}
+                  revealStarted={revealStarted}
+                />
+              ))}
+              <Text style={styles.hint}>drag to move</Text>
+            </View>
+          )}
+          <SubscriptionPlanModal
+  isVisible={showSubscriptionModal}
+  onClose={() => setShowSubscriptionModal(false)}
+  onConfirm={(plan) => {
+    setShowSubscriptionModal(false);
+    console.log('User selected plan:', plan);
+   
+  }}
+/>
+
         </SafeAreaView>
       </ImageBackground>
     </GestureHandlerRootView>
@@ -261,15 +384,7 @@ const TarotCardDetailScreen: React.FC = () => {
 export default TarotCardDetailScreen;
 
 /* --------- Arc Card --------- */
-function ArcCard({
-  card,
-  index,
-  progress,
-  maxIndex,
-  onSelect,
-  lockedSV,
-  revealStarted,
-}: {
+function ArcCard({ card, index, progress, maxIndex, onSelect, lockedSV, revealStarted }: {
   card: CardT;
   index: number;
   progress: Animated.SharedValue<number>;
@@ -305,8 +420,8 @@ function ArcCard({
 
     return {
       position: 'absolute',
-      left: withTiming(x, { duration: 100 }),
-      top: withTiming(y, { duration: 100 }),
+      left: withTiming(x, { duration: 60 }),
+      top: withTiming(y, { duration: 60 }),
       width: CARD_W,
       height: CARD_H,
       opacity,
@@ -321,9 +436,7 @@ function ArcCard({
   });
 
   const deckPan = Gesture.Pan()
-    .onStart(() => {
-      start.value = progress.value;
-    })
+    .onStart(() => { start.value = progress.value; })
     .onUpdate(e => {
       if (isPressing.value === 1 || lockedSV.value || revealStarted) return;
       progress.value = wClamp(start.value - e.translationX / ITEM_STRIDE, 0, maxIndex);
@@ -360,15 +473,11 @@ function ArcCard({
       if (isPressing.value !== 1 || revealStarted) return;
       if (e.translationY < DROP_Y_THRESHOLD) {
         const slotWidth = (SCREEN_WIDTH - SLOTS_PAD_H * 2) / 3;
-        const slot = Math.max(
-          0,
-          Math.min(2, Math.floor((e.absoluteX - SLOTS_PAD_H) / slotWidth))
-        );
+        const slot = Math.max(0, Math.min(2, Math.floor((e.absoluteX - SLOTS_PAD_H) / slotWidth)));
         runOnJS(onSelect)(card, slot);
         runOnJS(triggerHaptic)();
         sentUpOnce.value = 1;
       }
-      // snap back
       transX.value = withTiming(0);
       transY.value = withTiming(0);
       pressScale.value = withTiming(1);
@@ -389,7 +498,6 @@ function ArcCard({
 /* ---------------- STYLES ---------------- */
 const styles = StyleSheet.create({
   container: { flex: 1, paddingHorizontal: 20 },
-  /* Header */
   header: {
     height: 56,
     justifyContent: 'center',
@@ -413,13 +521,16 @@ const styles = StyleSheet.create({
     textTransform: 'capitalize',
   },
   content: { alignItems: 'center', marginVertical: 6 },
-  focusTitle: { fontFamily: Fonts.aeonikRegular, fontSize: 18 },
+  focusTitle: { fontFamily: Fonts.aeonikRegular, fontSize: 18,
+        marginBottom: 5,
+   },
   paragraph: {
     fontFamily: Fonts.aeonikRegular,
     fontSize: 14,
     textAlign: 'center',
     marginTop: 5,
-    marginBottom: 5,
+    marginBottom: 8,
+    lineHeight: 20,
   },
   selectedRow: {
     flexDirection: 'row',
@@ -428,7 +539,7 @@ const styles = StyleSheet.create({
   },
   box: {
     width: '32%',
-    height: 170,
+    height: 180,
     borderWidth: 1,
     borderColor: '#CEA16A',
     borderRadius: 10,
@@ -447,9 +558,12 @@ const styles = StyleSheet.create({
   revealBtnWrap: { margin: 10 },
   revealBtnGrad: {
     height: 52,
-    borderRadius: 60,
+   
     justifyContent: 'center',
     alignItems: 'center',
+    paddingHorizontal: 20,
+ 
+  
   },
   revealBtnText: { color: '#fff', fontSize: 16 },
   deckWrap: { flex: 1 },
@@ -470,7 +584,38 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 8,
   },
+  shareRow: {
+    marginTop: 16,
+    width: '100%',
+    flexDirection: 'row',
+    gap: 12,
+    justifyContent: 'center',
+  },
+  smallBtn: {
+    minWidth: 120,
+    height: 46,
+    borderRadius: 22,
+    paddingHorizontal: 16,
+    borderWidth: 1.1,
+    borderColor: '#D9B699',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  smallIcon: {
+    width: 15,
+    height: 15,
+    marginRight: 8,
+    resizeMode: 'contain',
+    tintColor: '#fff',
+  },
+  smallBtnText: {
+    fontFamily: Fonts.aeonikRegular,
+    fontSize: 14,
+    color: '#fff',
+  },
 });
+
 
 
 // import React, { useEffect, useMemo, useState } from 'react';

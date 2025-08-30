@@ -12,6 +12,8 @@ import { useThemeStore } from '../store/useThemeStore';
 import { Fonts } from '../constants/fonts';
 import GradientBox from './GradientBox';
 
+const { width: SCREEN_WIDTH } = Dimensions.get('screen');
+
 type PlanKey = 'yearly' | 'monthly' | 'weekly';
 
 interface SubscriptionPlanModalProps {
@@ -58,10 +60,12 @@ const SubscriptionPlanModal: React.FC<SubscriptionPlanModalProps> = ({
         ]}
       >
         {isActive ? (
+          // ✅ Selected: White bg, border primary 2
           <View style={[styles.gradientCard]}>
             <CardContent p={p} isActive={isActive} colors={colors} />
           </View>
         ) : (
+          // ✅ Default: Gradient bg, no border
           <GradientBox colors={[colors.bgBox, colors.black]} style={styles.gradientCard}>
             <CardContent p={p} isActive={isActive} colors={colors} />
           </GradientBox>
@@ -83,8 +87,7 @@ const SubscriptionPlanModal: React.FC<SubscriptionPlanModalProps> = ({
             {/* Hero Section */}
             <ImageBackground
               source={require('../assets/images/heroImage.png')}
-              style={styles.hero}
-              imageStyle={{ borderRadius: 16 }}  // ✅ Rounded corners
+              style={[styles.hero, { width: SCREEN_WIDTH - 40 }]}
               resizeMode="cover"
             >
               <View style={styles.heroOverlay}>
@@ -194,7 +197,10 @@ const CardContent = ({
     {/* Right price area */}
     <View style={styles.priceCol}>
       <Text
-        style={[styles.price, { color: isActive ? colors.black : colors.white }]}
+        style={[
+          styles.price,
+          { color: isActive ? colors.black : colors.white },
+        ]}
       >
         {p.perWeek}
       </Text>
@@ -234,8 +240,9 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   hero: {
-    width: '100%',     // ✅ full width
-    height: 200,       // ✅ fixed height
+    height: 200,
+    // borderRadius: 16,
+    overflow: 'hidden',
     marginBottom: -40, 
   },
   heroOverlay: {
@@ -248,8 +255,8 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.aeonikBold,
     fontSize: 16,
     textAlign: 'center',
-    marginBottom: 20,
-    color: '#fff',
+    marginBottom:20
+
   },
   cardsWrap: {
     width: '100%',
