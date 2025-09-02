@@ -259,13 +259,7 @@ type Props = {
 
 // Default cards (id same as aapke pehle waale, bas route add kiya)
 export const DEFAULT_CARDS: CardItem[] = [
-  {
-    id: "astro",
-    title: "Astrology",
-    subtitle: "Unveil your path through ancient cards of intuition.",
-    image: require("../../../assets/images/astrology.png"),
-    route: "AstrologyCardDetail",
-  },
+ 
   {
     id: "tarot",
     title: "Tarot Reading",
@@ -279,6 +273,13 @@ export const DEFAULT_CARDS: CardItem[] = [
     subtitle: "Numbers that shape your destiny.",
     image: require("../../../assets/images/odu.png"),
     route: "NumerologyCardDetail",
+  },
+   {
+    id: "astro",
+    title: "Astrology",
+    subtitle: "Unveil your path through ancient cards of intuition.",
+    image: require("../../../assets/images/astrology.png"),
+    route: "AstrologyCardDetail",
   },
 ];
 
