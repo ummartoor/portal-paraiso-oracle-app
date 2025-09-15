@@ -235,6 +235,7 @@ interface UpdateUserDetailsPayload {
   time_of_birth?: string;
   place_of_birth?: string;
   relationship_status?: string;
+  sign_in_zodiac?: string;
 }
 
 interface RegisterState {
@@ -313,7 +314,7 @@ export const useRegisterStore = create<RegisterState>((set, get) => ({
       );
 
       await AsyncStorage.setItem('user', JSON.stringify(response.data));
-      // Alert.alert('Success', 'Profile updated successfully!'); // Isay comment out kar dein
+      Alert.alert('Success', 'Profile updated successfully!'); 
       
       set({ isUpdating: false });
       return true;

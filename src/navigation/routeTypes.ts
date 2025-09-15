@@ -37,5 +37,6 @@ export type AuthStackParamsList = {
     TimeofBirth:undefined;
     PlaceofBirth:undefined;
     RelationshipStatus:undefined;
+    ZodiacSymbol:undefined;
 
 };
