@@ -29,7 +29,7 @@ export type AuthStackParamsList = {
   Login: undefined;
   ForgotPasswordScreen:undefined;
     OTPScreen:{ email: string };
-  ConfirmPassword: undefined; 
+  ConfirmPassword:{ email: string }; 
     SignUp: undefined;
     GenderScreen:undefined;
     GoalScreen:undefined;

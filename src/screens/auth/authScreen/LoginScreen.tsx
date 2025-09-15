@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import {
   View,
@@ -12,6 +13,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   Dimensions,
+  ActivityIndicator, 
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useThemeStore } from '../../../store/useThemeStore';
@@ -33,11 +35,7 @@ const LoginScreen = () => {
   const theme = useThemeStore(state => state.theme);
   const colors = theme.colors;
   const [showPassword, setShowPassword] = useState(false);
-  const login = useAuthStore(state => state.login);
-
-  const handleLogin = async () => {
-    await login();
-  };
+  const login = useAuthStore(state => state.login); // Your login function from store
 
   const navigation =
     useNavigation<NativeStackNavigationProp<AuthStackParamsList>>();
@@ -46,10 +44,6 @@ const LoginScreen = () => {
     email: Yup.string().email('Invalid email').required('Email is required'),
     password: Yup.string().required('Password is required'),
   });
-
-  const handleFormSubmit = (submit: () => void) => () => {
-    submit();
-  };
 
   return (
     <ImageBackground
@@ -84,9 +78,21 @@ const LoginScreen = () => {
             <Formik
               initialValues={{ email: '', password: '' }}
               validationSchema={validationSchema}
-              onSubmit={values => {
-                console.log(values);
-                handleLogin();
+              // --- CHANGE 1: Updated onSubmit ---
+              onSubmit={async (values, { setSubmitting }) => {
+                const deviceToken = 'some-placeholder-device-token'; 
+                
+                // Call the login function from your store with form values
+                const success = await login(
+                  values.email,
+                  values.password,
+                  deviceToken,
+                );
+
+                // If success is false, you can re-enable the form
+                if (!success) {
+                  setSubmitting(false);
+                }
               }}
             >
               {({
@@ -96,6 +102,7 @@ const LoginScreen = () => {
                 values,
                 errors,
                 touched,
+                isSubmitting, // --- ADDED: For loading state ---
               }) => (
                 <>
                   <Text style={[styles.label, { color: colors.white }]}>
@@ -111,6 +118,8 @@ const LoginScreen = () => {
                       styles.input,
                       { backgroundColor: colors.bgBox, color: colors.white },
                     ]}
+                    keyboardType="email-address"
+                    autoCapitalize="none"
                   />
                   {errors.email && touched.email && (
                     <Text style={styles.errorText}>{errors.email}</Text>
@@ -152,17 +161,18 @@ const LoginScreen = () => {
                   {errors.password && touched.password && (
                     <Text style={styles.errorText}>{errors.password}</Text>
                   )}
-      <TouchableOpacity 
-        style={styles.forgotContainer}
-        onPress={() => navigation.navigate('ForgotPasswordScreen')} 
-      >
-        <Text style={styles.forgotText}>Forgot Password?</Text>
-      </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.forgotContainer}
+                    onPress={() => navigation.navigate('ForgotPasswordScreen')}
+                  >
+                    <Text style={styles.forgotText}>Forgot Password?</Text>
+                  </TouchableOpacity>
 
-                  {/* Gradient Sign in Button */}
+                  {/* --- CHANGE 2: Updated Button --- */}
                   <TouchableOpacity
                     activeOpacity={0.8}
-                    onPress={handleFormSubmit(handleSubmit)}
+                    onPress={() => handleSubmit()}
+                    disabled={isSubmitting} // Disable button when submitting
                     style={{ width: '100%' }}
                   >
                     <GradientBox
@@ -172,13 +182,16 @@ const LoginScreen = () => {
                         { borderWidth: 1.5, borderColor: colors.primary },
                       ]}
                     >
-                      <Text style={styles.signinText}>Sign in</Text>
+                      {isSubmitting ? (
+                        <ActivityIndicator color={colors.primary} />
+                      ) : (
+                        <Text style={styles.signinText}>Sign in</Text>
+                      )}
                     </GradientBox>
                   </TouchableOpacity>
                 </>
               )}
             </Formik>
-
 
             <View style={styles.footer}>
               <Text style={styles.footerText}>Don’t have an account ?</Text>
@@ -200,6 +213,7 @@ const LoginScreen = () => {
 
 export default LoginScreen;
 
+// Aap ke styles bilkul theek hain, unhein change karne ki zaroorat nahi
 const styles = StyleSheet.create({
   bgImage: {
     flex: 1,
