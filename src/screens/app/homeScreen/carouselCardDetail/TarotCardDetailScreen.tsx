@@ -123,20 +123,18 @@ const TarotCardDetailScreen: React.FC = () => {
     }
   }, [selectedCards.length]);
 
-  // --- MODIFIED: This function now builds the text for TTS on-demand ---
   const onPressPlayToggle = async () => { 
-    if (!readingData?.reading) return;
-    
-    // Build the string to be spoken
-    const textToSpeak = `Introduction. ${readingData.reading.introduction}. Love . ${readingData.reading.love} Career . ${readingData.reading.career}`;
+    if (!readingData?.reading) return;
+    
+    const textToSpeak = `Introduction. ${readingData.reading.introduction}. Love . ${readingData.reading.love} Career . ${readingData.reading.career}`;
 
-    if (isSpeaking) {
-      await Tts.stop();
-    } else {
-      await Tts.stop();
-      Tts.speak(textToSpeak);
-    }
-  };
+    if (isSpeaking) {
+      await Tts.stop();
+    } else {
+      await Tts.stop();
+      Tts.speak(textToSpeak);
+    }
+  };
 
   const handleSelect = (card: DeckCard) => { setSelectedCards(prev => [...prev, card]); triggerHaptic(); };
   const handleRemove = (cardToRemove: DeckCard) => { setSelectedCards(prev => prev.filter(card => card._id !== cardToRemove._id)); triggerHaptic(); };
@@ -168,12 +166,16 @@ const TarotCardDetailScreen: React.FC = () => {
                 {showVideo ? (
                     <View style={styles.fullscreenCenter}><Video source={require('../../../../assets/videos/onboardingVideo2.mp4')} style={styles.video} resizeMode="cover" repeat={false} paused={false} /><View style={styles.footer}><TouchableOpacity onPress={() => { setShowVideo(false); setShowRevealGrid(true); }} activeOpacity={0.9}><View style={styles.buttonBorder}><GradientBox colors={[colors.black, colors.bgBox]} style={styles.revealBtnGrad}><Text style={styles.revealBtnText}>Continue</Text></GradientBox></View></TouchableOpacity></View></View>
                 ) : showRevealGrid ? (
-                    <><View style={{flex: 1}}>{renderHeader()}<View style={styles.content}><Text style={[styles.focusTitle, { color: colors.primary }]}>Your Cards</Text><Text style={[styles.paragraph, { color: colors.white }]}>Discover the deeper meaning behind the cards.</Text></View>
-                    <ScrollView contentContainerStyle={styles.selectedScroll} style={{ flex: 1 }}>
-                        {selectedCards.reduce((rows: DeckCard[][], card, index) => {if (index % 3 === 0) rows.push([card]); else rows[rows.length - 1].push(card); return rows;}, []).map((row, rowIndex) => (
-                            <View key={rowIndex} style={styles.selectedRow}>{row.map(card => (
-                                <View key={card._id} style={styles.box}><Image source={{ uri: card.card_image.url }} style={styles.boxImg} /></View>))}{row.length < 3 && [...Array(3 - row.length)].map((_, i) => <View key={`p-grid-${rowIndex}-${i}`} style={[styles.box, { opacity: 0 }]} />)}</View>))}
-                    </ScrollView>
+                    <><View style={{flex: 1}}>
+                    {renderHeader()}
+                    <View style={styles.content}><Text style={[styles.focusTitle, { color: colors.primary }]}>Your Cards</Text><Text style={[styles.paragraph, { color: colors.white }]}>Discover the deeper meaning behind the cards.</Text></View>
+                    <View style={styles.revealGridContainer}>
+                        <ScrollView contentContainerStyle={styles.selectedScroll}>
+                            {selectedCards.reduce((rows: DeckCard[][], card, index) => {if (index % 3 === 0) rows.push([card]); else rows[rows.length - 1].push(card); return rows;}, []).map((row, rowIndex) => (
+                                <View key={rowIndex} style={styles.selectedRow}>{row.map(card => (
+                                    <View key={card._id} style={styles.box}><Image source={{ uri: card.card_image.url }} style={styles.boxImg} /></View>))}{row.length < 3 && [...Array(3 - row.length)].map((_, i) => <View key={`p-grid-${rowIndex}-${i}`} style={[styles.box, { opacity: 0 }]} />)}</View>))}
+                        </ScrollView>
+                    </View>
                 </View>
                 <View style={styles.footer}>
                     <TouchableOpacity onPress={handleRevealMeaning} activeOpacity={0.9} disabled={isReadingLoading}>
@@ -203,32 +205,41 @@ const TarotCardDetailScreen: React.FC = () => {
                         </ScrollView>
                     </View>
                     <View style={{ alignItems: 'center', marginTop: 10 }}><TouchableOpacity onPress={onPressPlayToggle} activeOpacity={0.7}><Image source={isSpeaking ? require('../../../../assets/icons/pauseIcon.png') : require('../../../../assets/icons/playIcon.png')} style={{ width: 40, height: 40 }} resizeMode="contain" /></TouchableOpacity></View>
-                    
-                    {/* --- MODIFIED: Styled reading text --- */}
-                    <View style={styles.readingContentContainer}>
-                      {readingData?.reading?.introduction && (
-                        <>
-                          <Text style={styles.readingTitle}>Introduction</Text>
-                          <Text style={styles.readingParagraph}>"{readingData.reading.introduction}"</Text>
-                        </>
-                      )}
-                      {readingData?.reading?.love && (
-                        <>
-                          <Text style={[styles.readingTitle, { marginTop: 15 }]}>Love</Text>
-                          <Text style={styles.readingParagraph}>"{readingData.reading.love}"</Text>
-                        </>
-                      )}
-                        {readingData?.reading?.career && (
-                        <>
-                          <Text style={[styles.readingTitle, { marginTop: 15 }]}>career</Text>
-                          <Text style={styles.readingParagraph}>"{readingData.reading.career}"</Text>
-                        </>
-                      )}
-                    </View>
+                    
+                    <View style={styles.readingContentContainer}>
+                      {readingData?.reading?.introduction && (
+                        <>
+                          <Text style={styles.readingTitle}>Introduction</Text>
+                          <Text style={styles.readingParagraph}>"{readingData.reading.introduction}"</Text>
+                            
+                            {/* --- MODIFIED: Button is now after the paragraph and aligned right --- */}
+                            <View style={styles.readMoreContainer}>
+                                <TouchableOpacity onPress={() => setShowSubscriptionModal(true)}>
+                              
+                                        <Text style={[styles.smallBtnText, {color:colors.primary, textDecorationLine:'underline'}]}>Read More</Text>
+                            
+                                </TouchableOpacity>
+                            </View>
+                        </>
+                      )}
+                      
+                        {/* {readingData?.reading?.love && (
+                        <>
+                          <Text style={[styles.readingTitle, { marginTop: 15 }]}>Love</Text>
+                          <Text style={styles.readingParagraph}>"{readingData.reading.love}"</Text>
+                        </>
+                      )}
+                        {readingData?.reading?.career && (
+                        <>
+                          <Text style={[styles.readingTitle, { marginTop: 15 }]}>career</Text>
+                          <Text style={styles.readingParagraph}>"{readingData.reading.career}"</Text>
+                        </>
+                      )} */}
+                    </View>
 
                     <View style={styles.shareRow}><GradientBox colors={[colors.black, colors.bgBox]} style={styles.smallBtn}><Image source={require('../../../../assets/icons/shareIcon.png')} style={styles.smallIcon} resizeMode="contain" /><Text style={styles.smallBtnText}>Share</Text></GradientBox><GradientBox colors={[colors.black, colors.bgBox]} style={styles.smallBtn}><Image source={require('../../../../assets/icons/saveIcon.png')} style={styles.smallIcon} resizeMode="contain" /><Text style={styles.smallBtnText}>Save</Text></GradientBox></View>
-                    <TouchableOpacity style={{ marginTop: 40, alignItems: 'center' }} onPress={() => setShowSubscriptionModal(true)}><View style={styles.buttonBorder}><GradientBox colors={[colors.black, colors.bgBox]} style={[styles.revealBtnGrad, { borderRadius: 60 }]}><Text style={styles.revealBtnText}>Get Premium For Full Reading</Text></GradientBox></View></TouchableOpacity>
-                    </ScrollView></View></>
+                    <TouchableOpacity style={{ marginTop: 40, alignItems: 'center' }} onPress={() => setShowSubscriptionModal(true)}><View style={styles.buttonBorder}><GradientBox colors={[colors.black, colors.bgBox]} style={[styles.revealBtnGrad, { borderRadius: 60 }]}><Text style={styles.revealBtnText}>Get Premium For Full Reading</Text></GradientBox></View></TouchableOpacity>
+                    </ScrollView></View></>
                 ) : (
                     <>
                         <View style={styles.topContentContainer}>
@@ -257,14 +268,13 @@ const TarotCardDetailScreen: React.FC = () => {
                             </View>
                             )}
                         </View>
-                            {/* --- FIX 1: Cleaned this view to prevent text rendering errors --- */}
                         <View style={styles.deckWrap}>
                             {isDeckLoading 
-                                ? <ActivityIndicator size="large" color={colors.primary} />
-                                : availableDeck.map((card) => (
-                                    <ArcCard key={card._id} index={availableDeck.indexOf(card)} card={card} progress={progress} maxIndex={maxIndex} onSelect={handleSelect} />
-                                ))
-                                }
+                                ? <ActivityIndicator size="large" color={colors.primary} />
+                                : availableDeck.map((card) => (
+                                    <ArcCard key={card._id} index={availableDeck.indexOf(card)} card={card} progress={progress} maxIndex={maxIndex} onSelect={handleSelect} />
+                                ))
+                                }
                             {!isDeckLoading && <Text style={styles.hint}>tap to select</Text>}
                         </View>
                     </>
@@ -328,33 +338,47 @@ const styles = StyleSheet.create({
     hint: { color: '#fff', fontSize: 12, opacity: 0.95, marginTop: 70,position: 'absolute', },
     cardImg: { width: '100%', height: '100%', borderRadius: 10 },
     cardShadow: { shadowColor: '#000', shadowOpacity: 0.35, shadowRadius: 8, elevation: 8 },
-    // --- MODIFIED: Changed height to maxHeight ---
     readingCardsContainer: {
         maxHeight: 380, 
         marginTop: 10,
     },
-    // --- NEW: Styles for the improved reading text display ---
-    readingContentContainer: {
-      paddingHorizontal: 16,
-      marginTop: 12,
-    },
-    readingTitle: {
-      color: '#CEA16A', // Golden color
-      fontFamily: Fonts.cormorantSCBold,
-      fontSize: 18,
-      textAlign: 'center',
+    readingContentContainer: {
+      paddingHorizontal: 16,
+      marginTop: 12,
+    },
+    readingTitle: {
+      color: '#CEA16A',
+      fontFamily: Fonts.cormorantSCBold,
+      fontSize: 18,
       marginBottom: 8,
-    },
-    readingParagraph: {
-      color: '#FFFFFF',
-      fontFamily: Fonts.aeonikRegular,
-      fontSize: 15,
-      textAlign: 'center',
-      lineHeight: 22,
-      fontStyle: 'italic',
-    },
+      // --- MODIFIED: Centered the title as it's now on its own line ---
+      textAlign: 'center',
+    },
+    readingParagraph: {
+      color: '#FFFFFF',
+      fontFamily: Fonts.aeonikRegular,
+      fontSize: 15,
+      textAlign: 'center',
+      lineHeight: 22,
+      fontStyle: 'italic',
+    },
     shareRow: { marginTop: 24, width: '100%', flexDirection: 'row', gap: 12, justifyContent: 'center' },
     smallBtn: { minWidth: 120, height: 46, borderRadius: 22, paddingHorizontal: 16, borderWidth: 1.1, borderColor: '#D9B699', flexDirection: 'row', justifyContent: 'center', alignItems: 'center' },
+    readMoreBtn: {
+        height: 40,
+        borderRadius: 20,
+        paddingHorizontal: 20,
+        borderWidth: 1.1,
+        borderColor: '#D9B699',
+        justifyContent: 'center',
+        alignItems: 'center'
+    },
+    // --- MODIFIED: This new style aligns the "Read More" button correctly ---
+    readMoreContainer: {
+      alignItems: 'flex-end',
+      marginTop: 12,
+      paddingHorizontal: 5,
+    },
     smallIcon: { width: 15, height: 15, marginRight: 8, resizeMode: 'contain', tintColor: '#fff' },
     smallBtnText: { fontFamily: Fonts.aeonikRegular, fontSize: 14, color: '#fff' },
     footer: {
@@ -376,9 +400,12 @@ const styles = StyleSheet.create({
       flex: 1,
       justifyContent: 'center',
       alignItems: 'center',
-    }
+    },
+    revealGridContainer: {
+        flex: 1,
+        paddingBottom: 100,
+    }
 });
-
 
 
 
