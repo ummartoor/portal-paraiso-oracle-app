@@ -262,6 +262,7 @@ export const useRegisterStore = create<RegisterState>((set, get) => ({
       });
       const token = response.data?.token; 
       const user = response.data?.user;
+      console.log(response.data)
       if (token) {
         await AsyncStorage.setItem('x-auth-token', token);
         await AsyncStorage.setItem('isLoggedIn', 'true');
@@ -312,9 +313,9 @@ export const useRegisterStore = create<RegisterState>((set, get) => ({
           },
         }
       );
-
+console.log(response.data)
       await AsyncStorage.setItem('user', JSON.stringify(response.data));
-      Alert.alert('Success', 'Profile updated successfully!'); 
+      // Alert.alert('Success', 'Profile updated successfully!'); 
       
       set({ isUpdating: false });
       return true;
