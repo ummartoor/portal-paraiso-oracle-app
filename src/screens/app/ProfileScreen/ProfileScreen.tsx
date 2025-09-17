@@ -104,27 +104,32 @@ const ProfileScreen: React.FC = () => {
             </TouchableOpacity>
           </View>
 
-          {/* Avatar + Name + DOB */}
-          <View style={styles.topRow}>
-            <View style={styles.leftProfile}>
-              <TouchableOpacity style={styles.avatarWrap} activeOpacity={0.8} onPress={() => navigation.navigate('EditProfile')}>
-                <Image
-                  source={require('../../../assets/icons/userprofile.png')}
-                  style={styles.avatar}
-                />
-                <View style={styles.onlineDot} />
-              </TouchableOpacity>
-              <View style={{ marginLeft: 10 }}>
-                <Text style={[styles.name, { color: colors.white }]}>
-                  {user?.name || 'User Name'}
-                </Text>
-              </View>
-            </View>
-            <Text style={[styles.dob, { color: colors.white }]}>
-              {/* --- FIX: Added a placeholder for better UX while loading --- */}
-              {user?.dob ? formatDate(user.dob) : '...'}
-            </Text>
-          </View>
+          {/* profile name  */}
+        <TouchableOpacity
+  activeOpacity={0.8}
+  style={[styles.topRow, { backgroundColor: colors.bgBox }]}
+  onPress={() => navigation.navigate('EditProfile')}
+>
+  <View style={styles.leftProfile}>
+    <View style={styles.avatarWrap}>
+      <Image
+        source={require('../../../assets/icons/userprofile.png')}
+        style={styles.avatar}
+      />
+      <View style={styles.onlineDot} />
+    </View>
+    <View style={{ marginLeft: 10 }}>
+      <Text style={[styles.name, { color: colors.white }]}>
+        {user?.name || 'User Name'}
+      </Text>
+    </View>
+  </View>
+
+  <Text style={[styles.dob, { color: colors.white }]}>
+    {user?.dob ? formatDate(user.dob) : '...'}
+  </Text>
+</TouchableOpacity>
+
 
           {/* Two Boxes Row */}
           <View style={{ flexDirection: 'row', marginTop: 16 }}>
@@ -282,6 +287,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    
+      height: 55,
+    borderRadius: 20,
+    paddingHorizontal: 16,
+
   },
   leftProfile: {
     flexDirection: 'row',

@@ -188,7 +188,9 @@ const AstrologyCardDetailScreen: React.FC = () => {
           {/* Zodiac Navigation */}
           <View style={styles.zodiacRow}>
             <View style={styles.sideCol}>
-              <TouchableOpacity activeOpacity={0.85} style={[styles.arrowWrap, { borderColor: colors.primary, backgroundColor: colors?.bgBox }]} onPress={goPrev}>
+              <TouchableOpacity activeOpacity={0.85} style={[styles.arrowWrap, { borderColor: colors.primary, backgroundColor: colors?.bgBox }]}
+              //  onPress={goPrev}
+               >
                 <Image source={require('../../../../../assets/icons/backIcon.png')} style={[styles.arrowIcon, { tintColor: colors.white }]} resizeMode="contain" />
               </TouchableOpacity>
               <Text style={[styles.sideLabel, { color: colors.white }]} numberOfLines={1}>{prevZ?.name ?? ''}</Text>
@@ -200,7 +202,9 @@ const AstrologyCardDetailScreen: React.FC = () => {
               <Text style={[styles.zodiacName, { color: colors.white }]}>{current?.name ?? ''}</Text>
             </View>
             <View style={[styles.sideCol, { alignItems: 'flex-end' }]}>
-              <TouchableOpacity activeOpacity={0.85} style={[styles.arrowWrap, { borderColor: colors.primary, backgroundColor: colors?.bgBox }]} onPress={goNext}>
+              <TouchableOpacity activeOpacity={0.85} style={[styles.arrowWrap, { borderColor: colors.primary, backgroundColor: colors?.bgBox }]}
+              //  onPress={goNext}
+               >
                 <Image source={require('../../../../../assets/icons/rightArrow.png')} style={[styles.arrowIcon, { tintColor: colors.white }]} resizeMode="contain" />
               </TouchableOpacity>
               <Text style={[styles.sideLabel, { color: colors.white }]} numberOfLines={1}>{nextZ?.name ?? ''}</Text>
