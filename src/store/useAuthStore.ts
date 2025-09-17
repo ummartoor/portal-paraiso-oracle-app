@@ -36,15 +36,30 @@ import { Alert } from 'react-native';
 import { API_BASEURL } from   '@env';
 
 // --- Interfaces ---
+
+interface User {
+  _id: string;
+  name: string;
+  email: string;
+  gender: string;
+  dob: string;
+  time_of_birth: string;
+  place_of_birth: string;
+  relationship_status: string;
+  sign_in_zodiac: string;
+  is_premium_user: boolean;
+  // You can add other fields from the response here if you need them
+}
 interface AuthState {
   isLoggedIn: boolean;
   token: string | null;
-  user: any | null;
+ user: User | null;
   login: (
     email: string,
     password: string,
     deviceToken: string,
   ) => Promise<boolean>;
+
   googleLogin: (accessToken: string, deviceToken: string) => Promise<boolean>;
   logout: () => Promise<void>;
   forgotPassword: (email: string) => Promise<boolean>;
@@ -55,7 +70,7 @@ interface AuthState {
     password: string,
     confirmPassword: string,
   ) => Promise<boolean>;
-
+   fetchCurrentUser: () => Promise<boolean>; 
   checkAuthStatus: () => Promise<void>;
 }
 
@@ -116,6 +131,51 @@ login: async (email, password, deviceToken) => {
   }
 },
 
+// Add this entire function inside your create() block
+
+// --- FETCH CURRENT USER ---
+fetchCurrentUser: async () => {
+  try {
+    // 1. Get token from storage, as this often runs on app start
+    const token = await AsyncStorage.getItem('auth_token');
+
+    if (!token) {
+      // If no token, there's no user to fetch
+      set({ isLoggedIn: false, user: null, token: null });
+      return false;
+    }
+
+    // 2. Make the API call to the /auth/me endpoint
+    const response = await axios.get(`${API_BASEURL}/auth/me`, {
+      headers: {
+        'x-auth-token': token,
+      },
+    });
+    
+    console.log('FETCH CURRENT USER RESPONSE:', response.data);
+
+    // 3. On success, update the user state
+    if (response.data && response.data.success) {
+      const updatedUser = response.data.user as User;
+      
+      // Update user data in both the store and AsyncStorage
+      set({ user: updatedUser, isLoggedIn: true, token });
+      await AsyncStorage.setItem('user', JSON.stringify(updatedUser));
+      
+      return true;
+    } else {
+      throw new Error(response.data.message || 'Failed to fetch user profile.');
+    }
+  } catch (error: any) {
+    console.log('FETCH USER ERROR:', error.response?.data?.message || error.message);
+    
+    // If token is invalid, the API might return an error. Log the user out.
+    await AsyncStorage.clear();
+    set({ isLoggedIn: false, token: null, user: null });
+    
+    return false;
+  }
+},
   googleLogin: async (accessToken: string, deviceToken: string) => {
     try {
       const response = await axios.post(
@@ -170,18 +230,23 @@ login: async (email, password, deviceToken) => {
   },
 
   // --- CHECK AUTH STATUS ---
-  checkAuthStatus: async () => {
-    const token = await AsyncStorage.getItem('auth_token');
-    const isLoggedIn = await AsyncStorage.getItem('isLoggedIn');
-    const userData = await AsyncStorage.getItem('user');
+  // checkAuthStatus: async () => {
+  //   const token = await AsyncStorage.getItem('auth_token');
+  //   const isLoggedIn = await AsyncStorage.getItem('isLoggedIn');
+  //   const userData = await AsyncStorage.getItem('user');
 
-    set({
-      isLoggedIn: isLoggedIn === 'true',
-      token,
-      user: userData ? JSON.parse(userData) : null,
-    });
-  },
-
+  //   set({
+  //     isLoggedIn: isLoggedIn === 'true',
+  //     token,
+  //     user: userData ? JSON.parse(userData) : null,
+  //   });
+  // },
+  
+// --- CHECK AUTH STATUS  ---
+checkAuthStatus: async () => {
+  // This will now verify the token with the server and get the latest user data
+  await get().fetchCurrentUser();
+},
   //forgot password
   forgotPassword: async (email: string) => {
     try {

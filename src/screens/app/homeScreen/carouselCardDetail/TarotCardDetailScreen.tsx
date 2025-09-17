@@ -68,7 +68,10 @@ const TarotCardDetailScreen: React.FC = () => {
     fetchTarotCards,
     generateReading,
     readingData,
-    isReadingLoading
+    isReadingLoading,
+    saveReading,          // <-- Add this
+    isSavingLoading       // <-- And this
+
   } = useTarotCardStore();
 
   const [fullDeck, setFullDeck] = useState<DeckCard[]>([]);
@@ -82,6 +85,14 @@ const TarotCardDetailScreen: React.FC = () => {
 
   const selectedCardsScrollViewRef = useRef<ScrollView>(null);
 
+
+const handleSaveReading = async () => {
+  // Prevent user from pressing again while it's already saving
+  if (isSavingLoading) return;
+
+  await saveReading();
+  // Your store already handles showing the success/error alert
+};
   const availableDeck = useMemo(() => {
     const selectedIds = new Set(selectedCards.map(c => c._id));
     return fullDeck.filter(card => !selectedIds.has(card._id));
@@ -209,7 +220,7 @@ const TarotCardDetailScreen: React.FC = () => {
                     <View style={styles.readingContentContainer}>
                       {readingData?.reading?.introduction && (
                         <>
-                          <Text style={styles.readingTitle}>Introduction</Text>
+{/*                           <Text style={styles.readingTitle}>Introduction</Text> */}
                           <Text style={styles.readingParagraph}>"{readingData.reading.introduction}"</Text>
                             
                             {/* --- MODIFIED: Button is now after the paragraph and aligned right --- */}
@@ -237,9 +248,25 @@ const TarotCardDetailScreen: React.FC = () => {
                       )} */}
                     </View>
 
-                    <View style={styles.shareRow}><GradientBox colors={[colors.black, colors.bgBox]} style={styles.smallBtn}><Image source={require('../../../../assets/icons/shareIcon.png')} style={styles.smallIcon} resizeMode="contain" /><Text style={styles.smallBtnText}>Share</Text></GradientBox><GradientBox colors={[colors.black, colors.bgBox]} style={styles.smallBtn}><Image source={require('../../../../assets/icons/saveIcon.png')} style={styles.smallIcon} resizeMode="contain" /><Text style={styles.smallBtnText}>Save</Text></GradientBox></View>
-                    <TouchableOpacity style={{ marginTop: 40, alignItems: 'center' }} onPress={() => setShowSubscriptionModal(true)}><View style={styles.buttonBorder}><GradientBox colors={[colors.black, colors.bgBox]} style={[styles.revealBtnGrad, { borderRadius: 60 }]}><Text style={styles.revealBtnText}>Get Premium For Full Reading</Text></GradientBox></View></TouchableOpacity>
-                    </ScrollView></View></>
+                    <View style={styles.shareRow}>
+  <GradientBox colors={[colors.black, colors.bgBox]} style={styles.smallBtn}>
+    <Image source={require('../../../../assets/icons/shareIcon.png')} style={styles.smallIcon} resizeMode="contain" />
+    <Text style={styles.smallBtnText}>Share</Text>
+    </GradientBox>
+
+    <GradientBox colors={[colors.black, colors.bgBox]} style={styles.smallBtn}>
+      <Image source={require('../../../../assets/icons/saveIcon.png')} style={styles.smallIcon} resizeMode="contain" />
+      <Text style={styles.smallBtnText}>Save</Text></GradientBox>
+      </View>
+                    <TouchableOpacity style={{ marginTop: 40, alignItems: 'center' }} onPress={() => setShowSubscriptionModal(true)}>
+  <View style={styles.buttonBorder}>
+    <GradientBox colors={[colors.black, colors.bgBox]} style={[styles.revealBtnGrad, { borderRadius: 60 }]}>
+    <Text style={styles.revealBtnText}>Get Premium For Full Reading</Text>
+    </GradientBox>
+    </View>
+    </TouchableOpacity>
+                    </ScrollView>
+</View></>
                 ) : (
                     <>
                         <View style={styles.topContentContainer}>
