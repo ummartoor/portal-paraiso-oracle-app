@@ -17,16 +17,16 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import SubscriptionPlanModal from '../../../../components/SubscriptionPlanModal';
+import SubscriptionPlanModal from '../../../../../components/SubscriptionPlanModal';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, runOnJS } from 'react-native-reanimated';
 import { GestureHandlerRootView, Gesture, GestureDetector } from 'react-native-gesture-handler';
-import GradientBox from '../../../../components/GradientBox';
-import { Fonts } from '../../../../constants/fonts';
-import { useThemeStore } from '../../../../store/useThemeStore';
-import { AppStackParamList } from '../../../../navigation/routeTypes';
+import GradientBox from '../../../../../components/GradientBox';
+import { Fonts } from '../../../../../constants/fonts';
+import { useThemeStore } from '../../../../../store/useThemeStore';
+import { AppStackParamList } from '../../../../../navigation/routeTypes';
 import Tts from 'react-native-tts';
 import Video from 'react-native-video';
-import { useTarotCardStore } from '../../../../store/useTarrotCardStore';
+import { useTarotCardStore } from '../../../../../store/useTarrotCardStore';
 
 const { height: SCREEN_HEIGHT, width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -105,7 +105,7 @@ const handleSaveReading = async () => {
 
   useEffect(() => {
     if (apiCards.length > 0) {
-      const cardBackImg = require('../../../../assets/images/deskCard.png');
+      const cardBackImg = require('../../../../../assets/images/deskCard.png');
       const transformedDeck = apiCards.map(card => ({ ...card, cardBackImg }));
       setFullDeck(transformedDeck);
       progress.value = Math.floor(transformedDeck.length / 2);
@@ -166,16 +166,16 @@ const handleSaveReading = async () => {
   };
 
   const renderHeader = () => (
-    <View style={styles.header}><TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}><Image source={require('../../../../assets/icons/backIcon.png')} style={[styles.backIcon, { tintColor: colors.white }]} resizeMode="contain" /></TouchableOpacity><View style={styles.headerTitleWrap} pointerEvents="none"><Text numberOfLines={1} ellipsizeMode="tail" style={[styles.headerTitle, { color: colors.white }]}>Tarot Reader</Text></View></View>
+    <View style={styles.header}><TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}><Image source={require('../../../../../assets/icons/backIcon.png')} style={[styles.backIcon, { tintColor: colors.white }]} resizeMode="contain" /></TouchableOpacity><View style={styles.headerTitleWrap} pointerEvents="none"><Text numberOfLines={1} ellipsizeMode="tail" style={[styles.headerTitle, { color: colors.white }]}>Tarot Reader</Text></View></View>
   );
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-        <ImageBackground source={require('../../../../assets/images/backgroundImage.png')} style={{ flex: 1 }} resizeMode="cover">
+        <ImageBackground source={require('../../../../../assets/images/backgroundImage.png')} style={{ flex: 1 }} resizeMode="cover">
             <SafeAreaView style={styles.container}>
                 <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
                 {showVideo ? (
-                    <View style={styles.fullscreenCenter}><Video source={require('../../../../assets/videos/onboardingVideo2.mp4')} style={styles.video} resizeMode="cover" repeat={false} paused={false} /><View style={styles.footer}><TouchableOpacity onPress={() => { setShowVideo(false); setShowRevealGrid(true); }} activeOpacity={0.9}><View style={styles.buttonBorder}><GradientBox colors={[colors.black, colors.bgBox]} style={styles.revealBtnGrad}><Text style={styles.revealBtnText}>Continue</Text></GradientBox></View></TouchableOpacity></View></View>
+                    <View style={styles.fullscreenCenter}><Video source={require('../../../../../assets/videos/onboardingVideo2.mp4')} style={styles.video} resizeMode="cover" repeat={false} paused={false} /><View style={styles.footer}><TouchableOpacity onPress={() => { setShowVideo(false); setShowRevealGrid(true); }} activeOpacity={0.9}><View style={styles.buttonBorder}><GradientBox colors={[colors.black, colors.bgBox]} style={styles.revealBtnGrad}><Text style={styles.revealBtnText}>Continue</Text></GradientBox></View></TouchableOpacity></View></View>
                 ) : showRevealGrid ? (
                     <><View style={{flex: 1}}>
                     {renderHeader()}
@@ -215,7 +215,7 @@ const handleSaveReading = async () => {
                         ))}
                         </ScrollView>
                     </View>
-                    <View style={{ alignItems: 'center', marginTop: 10 }}><TouchableOpacity onPress={onPressPlayToggle} activeOpacity={0.7}><Image source={isSpeaking ? require('../../../../assets/icons/pauseIcon.png') : require('../../../../assets/icons/playIcon.png')} style={{ width: 40, height: 40 }} resizeMode="contain" /></TouchableOpacity></View>
+                    <View style={{ alignItems: 'center', marginTop: 10 }}><TouchableOpacity onPress={onPressPlayToggle} activeOpacity={0.7}><Image source={isSpeaking ? require('../../../../../assets/icons/pauseIcon.png') : require('../../../../../assets/icons/playIcon.png')} style={{ width: 40, height: 40 }} resizeMode="contain" /></TouchableOpacity></View>
                     
                     <View style={styles.readingContentContainer}>
                       {readingData?.reading?.introduction && (
@@ -250,12 +250,12 @@ const handleSaveReading = async () => {
 
                     <View style={styles.shareRow}>
   <GradientBox colors={[colors.black, colors.bgBox]} style={styles.smallBtn}>
-    <Image source={require('../../../../assets/icons/shareIcon.png')} style={styles.smallIcon} resizeMode="contain" />
+    <Image source={require('../../../../../assets/icons/shareIcon.png')} style={styles.smallIcon} resizeMode="contain" />
     <Text style={styles.smallBtnText}>Share</Text>
     </GradientBox>
 
     <GradientBox colors={[colors.black, colors.bgBox]} style={styles.smallBtn}>
-      <Image source={require('../../../../assets/icons/saveIcon.png')} style={styles.smallIcon} resizeMode="contain" />
+      <Image source={require('../../../../../assets/icons/saveIcon.png')} style={styles.smallIcon} resizeMode="contain" />
       <Text style={styles.smallBtnText}>Save</Text></GradientBox>
       </View>
                     <TouchableOpacity style={{ marginTop: 40, alignItems: 'center' }} onPress={() => setShowSubscriptionModal(true)}>
@@ -280,7 +280,7 @@ const handleSaveReading = async () => {
                                 <ScrollView ref={selectedCardsScrollViewRef} contentContainerStyle={styles.selectedScroll}>
                                 {selectedCards.reduce((rows: DeckCard[][], card, index) => { if (index % 3 === 0) rows.push([card]); else rows[rows.length - 1].push(card); return rows; }, []).map((row, rowIndex) => (
                                     <View key={rowIndex} style={styles.selectedRow}>
-                                        {row.map(card => (<View key={card._id} style={styles.box}><Image source={card.cardBackImg} style={styles.boxImg} /><TouchableOpacity onPress={() => handleRemove(card)} style={styles.removeBtn}><Image source={require('../../../../assets/icons/closeIcon.png')} style={styles.removeIcon} /></TouchableOpacity></View>))}
+                                        {row.map(card => (<View key={card._id} style={styles.box}><Image source={card.cardBackImg} style={styles.boxImg} /><TouchableOpacity onPress={() => handleRemove(card)} style={styles.removeBtn}><Image source={require('../../../../../assets/icons/closeIcon.png')} style={styles.removeIcon} /></TouchableOpacity></View>))}
                                         {row.length < 3 && [...Array(3 - row.length)].map((_, i) => <View key={`p-initial-${rowIndex}-${i}`} style={[styles.box, { opacity: 0 }]} />)}
                                     </View>
                                 ))}

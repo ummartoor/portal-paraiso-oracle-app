@@ -58,7 +58,7 @@ const AstrologyCardDetailScreen: React.FC = () => {
   const navigation = useNavigation<NativeStackNavigationProp<AppStackParamList>>();
 
   const { user, fetchCurrentUser } = useAuthStore();
-  const { horoscope, isLoading, createHoroscope } = useAstrologyStore();
+  const { horoscope, isLoading, createHoroscope, saveHoroscope, isSaving } = useAstrologyStore();
 
   const days = useMemo(() => {
     const today = new Date();
@@ -106,6 +106,23 @@ const AstrologyCardDetailScreen: React.FC = () => {
   const goPrev = () => setZIndex(i => wrapIndex(i - 1));
   const goNext = () => setZIndex(i => wrapIndex(i + 1));
 
+
+  const handleSave = async () => {
+  // Agar horoscope data nahi hai ya pehle se save ho raha hai, to kuch na karein
+  if (!horoscope || isSaving) return;
+
+  // Current selected sign aur date hasil karein
+  const selectedSign = ZODIACS[zIndex]?.key;
+  const selectedDate = days[selectedIdx]?.date;
+
+  if (selectedSign && selectedDate) {
+    const dateISO = selectedDate.toISOString();
+    
+    // Store se saveHoroscope function ko call karein
+    await saveHoroscope(selectedSign, dateISO, horoscope);
+    // Success/Error alert store khud handle kar lega
+  }
+};
   return (
     <ImageBackground
       source={require('../../../../../assets/images/backgroundImage.png')}
@@ -209,12 +226,35 @@ const AstrologyCardDetailScreen: React.FC = () => {
                 <Text style={[styles.actionLabel, { color: colors.white }]}>Share</Text>
               </GradientBox>
             </TouchableOpacity>
-            <TouchableOpacity activeOpacity={0.7} style={styles.actionTouchable} onPress={() => {}}>
+            {/* <TouchableOpacity activeOpacity={0.7} style={styles.actionTouchable} onPress={() => {}}>
               <GradientBox colors={[colors.black, colors.bgBox]} style={styles.actionButton}>
                 <Image source={require('../../../../../assets/icons/saveIcon.png')} style={[styles.actionIcon, { tintColor: colors.white }]} resizeMode="contain" />
                 <Text style={[styles.actionLabel, { color: colors.white }]}>Save</Text>
               </GradientBox>
-            </TouchableOpacity>
+              
+            </TouchableOpacity> */}
+
+            <TouchableOpacity
+  activeOpacity={0.7}
+  style={styles.actionTouchable}
+  onPress={handleSave}
+  disabled={isSaving}
+>
+  <GradientBox colors={[colors.black, colors.bgBox]} style={styles.actionButton}>
+    {isSaving ? (
+      <ActivityIndicator color={colors.white} size="small" />
+    ) : (
+      <>
+        <Image
+          source={require('../../../../../assets/icons/saveIcon.png')}
+          style={[styles.actionIcon, { tintColor: colors.white }]}
+          resizeMode="contain"
+        />
+        <Text style={[styles.actionLabel, { color: colors.white }]}>Save</Text>
+      </>
+    )}
+  </GradientBox>
+</TouchableOpacity>
           </View>
         </ScrollView>
       </SafeAreaView>

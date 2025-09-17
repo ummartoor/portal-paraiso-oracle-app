@@ -265,21 +265,24 @@ export const DEFAULT_CARDS: CardItem[] = [
     title: "Tarot Reading",
     subtitle: "Decode the stars and your cosmic blueprint.",
     image: require("../../../assets/images/TarotReading.png"),
-    route: "TarotCardDetail",
+    // route: "TarotCardDetail",
+      route: "AskQuestionTarotScreen",
   },
   {
     id: "numero",
     title: "Cauris, Buzious, odu",
     subtitle: "Numbers that shape your destiny.",
     image: require("../../../assets/images/odu.png"),
-    route: "NumerologyCardDetail",
+    // route: "CariusCardDetail",
+         route: "AskQuestionCariusScreen",
   },
    {
     id: "astro",
     title: "Astrology",
     subtitle: "Unveil your path through ancient cards of intuition.",
     image: require("../../../assets/images/astrology.png"),
-    route: "AstrologyCardDetail",
+    // route: "AstrologyCardDetail",
+        route: "AskQuestionAstrologyScreen",
   },
 ];
 

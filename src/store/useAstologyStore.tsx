@@ -26,6 +26,14 @@ interface AstrologyState {
   isLoading: boolean;
   error: string | null;
   createHoroscope: (sign: string, date: string) => Promise<HoroscopeData | null>;
+
+    isSaving: boolean;
+  errorSaving: string | null;
+  saveHoroscope: (
+    sign: string, 
+    date: string, 
+    horoscopeData: HoroscopeData
+  ) => Promise<boolean>;
 }
 
 /**
@@ -36,7 +44,8 @@ export const useAstrologyStore = create<AstrologyState>((set) => ({
   horoscope: null,
   isLoading: false,
   error: null,
-
+  isSaving: false,      // <-- ADD THIS
+  errorSaving: null,    // <-- ADD THIS
   // --- ACTIONS ---
 
   /**
@@ -84,4 +93,49 @@ export const useAstrologyStore = create<AstrologyState>((set) => ({
       return null; // Return null on failure
     }
   },
+  // Add this function inside your create() block
+
+saveHoroscope: async (sign, date, horoscopeData) => {
+    set({ isSaving: true, errorSaving: null });
+    try {
+      // 1. Get auth token
+      const token = await AsyncStorage.getItem('x-auth-token');
+      if (!token) {
+        throw new Error('Authentication token not found.');
+      }
+
+      // 2. Prepare the full request body
+      const body = {
+        sign,
+        date,
+        ...horoscopeData, // Spreads all properties from horoscopeData
+      };
+
+      const headers = { 'x-auth-token': token };
+
+      // 3. Make the API call to save the horoscope
+      const response = await axios.post(
+        `${API_BASEURL}/horoscope/save-horoscope`,
+        body,
+        { headers }
+      );
+
+      console.log('SAVE HOROSCOPE RESPONSE:', response.data);
+
+      // 4. Handle the response
+      if (response.data && response.data.success) {
+        set({ isSaving: false });
+        Alert.alert('Success', 'Horoscope saved successfully!');
+        return true; // Return true on success
+      } else {
+        throw new Error(response.data.message || 'Failed to save horoscope.');
+      }
+    } catch (error: any) {
+      console.log('SAVE HOROSCOPE ERROR:', error.response?.data || error.message);
+      const errorMessage = error.response?.data?.message || 'An unknown error occurred while saving.';
+      set({ errorSaving: errorMessage, isSaving: false });
+      Alert.alert('Error', errorMessage);
+      return false; // Return false on failure
+    }
+},
 }));

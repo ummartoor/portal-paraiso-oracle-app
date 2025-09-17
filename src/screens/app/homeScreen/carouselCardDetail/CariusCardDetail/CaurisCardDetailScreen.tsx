@@ -1135,11 +1135,11 @@ import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, withSpring, withDelay } from 'react-native-reanimated';
 
-import GradientBox from '../../../../components/GradientBox';
-import { Fonts } from '../../../../constants/fonts';
-import { useThemeStore } from '../../../../store/useThemeStore';
-import { AppStackParamList } from '../../../../navigation/routeTypes';
-import SubscriptionPlanModal from '../../../../components/SubscriptionPlanModal';
+import GradientBox from '../../../../../components/GradientBox';
+import { Fonts } from '../../../../../constants/fonts';
+import { useThemeStore } from '../../../../../store/useThemeStore';
+import { AppStackParamList } from '../../../../../navigation/routeTypes';
+import SubscriptionPlanModal from '../../../../../components/SubscriptionPlanModal';
 
 // 🔊 TTS
 import Tts from 'react-native-tts';
@@ -1148,15 +1148,15 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const CONTAINER_W = SCREEN_WIDTH - 40;
 
 /* Assets */
-const BG_IMG = require('../../../../assets/images/backgroundImage.png');
-const DECAL_IMG = require('../../../../assets/images/decalImage.png');
-const SHELL_IMG_1 = require('../../../../assets/images/shell1.png');
-const SHELL_IMG_2 = require('../../../../assets/images/shell2.png');
+const BG_IMG = require('../../../../../assets/images/backgroundImage.png');
+const DECAL_IMG = require('../../../../../assets/images/decalImage.png');
+const SHELL_IMG_1 = require('../../../../../assets/images/shell1.png');
+const SHELL_IMG_2 = require('../../../../../assets/images/shell2.png');
 
-const PLAY_ICON = require('../../../../assets/icons/playIcon.png');
-const PAUSE_ICON = require('../../../../assets/icons/pauseIcon.png');
-const SHARE_ICON = require('../../../../assets/icons/shareIcon.png');
-const SAVE_ICON = require('../../../../assets/icons/saveIcon.png');
+const PLAY_ICON = require('../../../../../assets/icons/playIcon.png');
+const PAUSE_ICON = require('../../../../../assets/icons/pauseIcon.png');
+const SHARE_ICON = require('../../../../../assets/icons/shareIcon.png');
+const SAVE_ICON = require('../../../../../assets/icons/saveIcon.png');
 
 /* Sizes */
 const DECAL_SIZE = 352;
@@ -1404,7 +1404,7 @@ const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
         <View style={styles.header}>
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
             <Image
-              source={require('../../../../assets/icons/backIcon.png')}
+              source={require('../../../../../assets/icons/backIcon.png')}
               style={[styles.backIcon, { tintColor: colors.white }]}
               resizeMode="contain"
             />

@@ -228,7 +228,7 @@ import {
 import GradientBox from '../../../../../components/GradientBox';
 import { Fonts } from '../../../../../constants/fonts';
 import { useThemeStore } from '../../../../../store/useThemeStore';
-// --- NEW: Import the data type from the store ---
+
 import { HoroscopeData } from '../../../../../store/useAstologyStore';
 
 export type InsightTab = {
@@ -247,7 +247,7 @@ type InsightTabsProps = {
 const TAB_SIZE = 47;
 const TAB_SPACING = 7;
 
-// This remains as the template for our tabs
+
 const DEFAULT_TABS: Omit<InsightTab, 'description'>[] = [
   { key: 'morning', title: 'Morning Vibe', icon: require('../../../../../assets/icons/morningVibeIcon.png') },
   { key: 'career', title: 'Career & Work', icon: require('../../../../../assets/icons/careerWorkIcon.png') },
@@ -277,9 +277,9 @@ const InsightTabs: React.FC<InsightTabsProps> = ({ horoscopeData, style }) => {
             default: return { ...tab, description: '' }; // Fallback
         }
     });
-  }, [horoscopeData]); // Re-calculates when horoscopeData changes
+  }, [horoscopeData]); 
 
-  // If tabs are not ready, don't render anything
+  
   if (tabs.length === 0) {
     return null;
   }

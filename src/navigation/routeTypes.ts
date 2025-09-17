@@ -2,10 +2,13 @@
 export type AppStackParamList = {
   MainTabs: undefined;
   Profile: undefined;
-   
-    TarotCardDetail:undefined;
+  AskQuestionTarotScreen:undefined;
+    TarotCardDetail:undefined; 
+    AskQuestionAstrologyScreen:undefined;
     AstrologyCardDetail:undefined;
-    NumerologyCardDetail:undefined;
+   
+    AskQuestionCariusScreen:undefined;
+    CaurisCardDetail:undefined;
   DeleteAccount: undefined;
     SupportScreen: undefined;
       EditProfile: undefined;
