@@ -64,7 +64,7 @@ interface AuthState {
   logout: () => Promise<void>;
   forgotPassword: (email: string) => Promise<boolean>;
   verifyOtp: (email: string, otp: string) => Promise<boolean>;
-  resendOtp: (email: string) => Promise<boolean>;
+
   resetPassword: (
     email: string,
     password: string,
@@ -72,6 +72,7 @@ interface AuthState {
   ) => Promise<boolean>;
    fetchCurrentUser: () => Promise<boolean>; 
   checkAuthStatus: () => Promise<void>;
+   deleteAccount: () => Promise<boolean>; 
 }
 
 // --- Auth Store ---
@@ -283,7 +284,7 @@ checkAuthStatus: async () => {
   verifyOtp: async (email: string, otp: string) => {
     try {
       const response = await axios.post(
-        `${API_BASEURL}/auth/verify-otp`,
+        `${API_BASEURL}/auth/verify-reset-otp`,
         {
           email,
           otp,
@@ -304,44 +305,21 @@ checkAuthStatus: async () => {
     }
   },
 
-  // RESEND OTP
-  resendOtp: async (email: string) => {
-    try {
-      const response = await axios.post(
-        `${API_BASEURL}/auth/resend-otp`,
-        {
-          email,
-        },
-        {
-          headers: { 'Content-Type': 'application/json' },
-        },
-      );
-
-      console.log('RESEND OTP SUCCESS:', response.data);
-      Alert.alert(
-        'Success',
-        response.data?.message || 'OTP resent successfully!',
-      );
-      return true;
-    } catch (error: any) {
-      const msg = error?.response?.data?.message || 'Failed to resend OTP';
-      console.log('RESEND OTP ERROR:', msg);
-      Alert.alert('Error', msg);
-      return false;
-    }
-  },
+ 
   // reset password
-  resetPassword: async (
+ resetPassword: async (
     email: string,
-    password: string,
+
+    newPassword: string,
     confirmPassword: string,
   ): Promise<boolean> => {
     try {
-      const response = await axios.post(
-        `${API_BASEURL}/auth/reset-password`,
+      const response = await axios.put( // Ensure this is .put
+        `${API_BASEURL}/auth/resetpassword`,
         {
           email,
-          password,
+          // --- CHANGE THIS KEY IN THE REQUEST BODY ---
+          newPassword, // Change from `password: password` to `newPassword: newPassword`
           confirmPassword,
         },
         {
@@ -359,6 +337,55 @@ checkAuthStatus: async () => {
       const msg = Array.isArray(raw) ? raw[0] : raw || 'Password reset failed';
       console.log('RESET PASSWORD ERROR:', msg);
       Alert.alert('Error', msg);
+      return false;
+    }
+  },
+
+   // --- DELETE ACCOUNT ---
+  deleteAccount: async (): Promise<boolean> => {
+    try {
+      const token = get().token || (await AsyncStorage.getItem('auth_token'));
+
+      if (!token) {
+        Alert.alert('Error', 'No authentication token found. Please log in.');
+        return false;
+      }
+
+      const response = await axios.delete(
+        `${API_BASEURL}/user/deleteaccount`,
+        {
+          headers: {
+            'x-auth-token': token,
+            'Content-Type': 'application/json', 
+          },
+        },
+      );
+
+      console.log('DELETE ACCOUNT SUCCESS:', response.data);
+
+      if (response.data && response.data.success) {
+        Alert.alert('Success', 'Your account has been successfully deleted.');
+        // After deleting the account, perform a logout
+        await get().logout(); 
+        return true;
+      } else {
+        // This else block might be hit if success is false but no error was thrown by axios
+        const msg = response.data?.message || 'Failed to delete account.';
+        Alert.alert('Error', msg);
+        return false;
+      }
+    } catch (error: any) {
+      console.log(
+        'DELETE ACCOUNT ERROR:',
+        error.response?.data?.message || error.message,
+      );
+      const msg = error?.response?.data?.message || 'Failed to delete account. Please try again.';
+      Alert.alert('Error', msg);
+
+      // If the error indicates an invalid or expired token, also log out.
+      if (error.response?.status === 401 || error.response?.status === 403) {
+        await get().logout();
+      }
       return false;
     }
   },

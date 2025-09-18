@@ -43,7 +43,7 @@ const OTPScreen = () => {
   const { email } = route.params;
 
   // --- ADDED: Get store functions ---
-  const { verifyOtp, resendOtp } = useAuthStore();
+  const { verifyOtp, forgotPassword} = useAuthStore();
 
   const [otp, setOtp] = useState<string[]>(Array(6).fill(''));
   const [timer, setTimer] = useState(120);
@@ -102,14 +102,21 @@ const OTPScreen = () => {
   };
   
   // --- ADDED: Handle Resend OTP ---
-  const handleResend = async () => {
-    setIsResending(true);
-    const success = await resendOtp(email);
-    if (success) {
-      setTimer(120); // Reset timer on successful resend
-    }
-    setIsResending(false);
-  };
+const handleResend = async () => {
+  setIsResending(true);
+  // Call forgotPassword from the store to resend OTP
+  const success = await forgotPassword(email); // <--- Use forgotPassword here
+  if (success) {
+    // If the backend successfully sent a new OTP, reset the timer
+    setTimer(120);
+    // Clear current OTP digits for a better user experience,
+    // so they don't try to submit the old OTP.
+    setOtp(Array(6).fill(''));
+    // Optionally, focus the first input for convenience
+    inputRefs.current[0]?.focus();
+  }
+  setIsResending(false);
+};
 
   return (
     <ImageBackground

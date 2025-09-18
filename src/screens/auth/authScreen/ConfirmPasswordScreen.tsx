@@ -15,12 +15,13 @@ import {
   Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Formik } from 'formik';
 import * as Yup from 'yup';
 
 import { useThemeStore } from '../../../store/useThemeStore';
+import { useAuthStore } from '../../../store/useAuthStore';
 import { Fonts } from '../../../constants/fonts';
 import { AuthStackParamsList } from '../../../navigation/routeTypes';
 import GradientBox from '../../../components/GradientBox';
@@ -30,27 +31,46 @@ import eyeOffIcon from '../../../assets/icons/eyeOff.png';
 
 const { height: SCREEN_HEIGHT, width: SCREEN_WIDTH } = Dimensions.get('screen');
 
+type ConfirmPasswordScreenRouteProp = RouteProp<AuthStackParamsList, 'ConfirmPassword'>;
+
 const ConfirmPasswordScreen = () => {
   const theme = useThemeStore(state => state.theme);
   const colors = theme.colors;
   const navigation = useNavigation<NativeStackNavigationProp<AuthStackParamsList>>();
+  const route = useRoute<ConfirmPasswordScreenRouteProp>(); 
+
+  const emailFromRoute = route.params?.email || ''; 
+  const resetPassword = useAuthStore(state => state.resetPassword);
 
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const validationSchema = Yup.object().shape({
-    password: Yup.string().required('Password is required').min(6, 'Minimum 6 characters'),
+    newPassword: Yup.string()
+      .required('Password is required')
+      .min(6, 'Minimum 6 characters'),
     confirmPassword: Yup.string()
-      .oneOf([Yup.ref('password')], 'Passwords must match')
+      .oneOf([Yup.ref('newPassword')], 'Passwords must match') 
       .required('Confirm Password is required'),
   });
 
-  const handleSubmitPassword = (values: { password: string; confirmPassword: string }) => {
-    if (values.password === values.confirmPassword) {
-      Alert.alert("Success", "Password reset successfully!");
-      navigation.navigate('Login'); 
-    } else {
-      Alert.alert("Error", "Passwords do not match!");
+  const handleSubmitPassword = async (values: { newPassword: string; confirmPassword: string }) => {
+    if (!emailFromRoute) {
+      Alert.alert("Error", "User email is missing. Please restart the password reset process.");
+      return;
+    }
+
+    console.log("Attempting to reset password for email:", emailFromRoute);
+    console.log("With newPassword:", values.newPassword, "and confirmPassword:", values.confirmPassword);
+
+    const success = await resetPassword(
+      emailFromRoute,
+      values.newPassword,
+      values.confirmPassword
+    );
+
+    if (success) {
+      navigation.navigate('Login');
     }
   };
 
@@ -79,28 +99,28 @@ const ConfirmPasswordScreen = () => {
             </Text>
 
             <Formik
-              initialValues={{ password: '', confirmPassword: '' }}
+              initialValues={{ newPassword: '', confirmPassword: '' }} 
               validationSchema={validationSchema}
               onSubmit={handleSubmitPassword}
             >
               {({ handleChange, handleBlur, handleSubmit, values, errors, touched }) => (
                 <>
                   {/* Password */}
-                  <Text style={[styles.label, { color: colors.white }]}>Password</Text>
+                  <Text style={[styles.label, { color: colors.white }]}>New Password</Text> 
                   <View
                     style={[
                       styles.input,
                       styles.passwordWrapper,
-                      { backgroundColor: colors.bgBox, },
+                      { backgroundColor: colors.bgBox },
                     ]}
                   >
                     <TextInput
                       placeholder="Enter new password"
                       placeholderTextColor="#ccc"
                       secureTextEntry={!showPassword}
-                      onChangeText={handleChange('password')}
-                      onBlur={handleBlur('password')}
-                      value={values.password}
+                      onChangeText={handleChange('newPassword')} 
+                      onBlur={handleBlur('newPassword')}       
+                      value={values.newPassword}          
                       style={{ flex: 1, color: colors.white }}
                     />
                     <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
@@ -110,8 +130,8 @@ const ConfirmPasswordScreen = () => {
                       />
                     </TouchableOpacity>
                   </View>
-                  {errors.password && touched.password && (
-                    <Text style={styles.errorText}>{errors.password}</Text>
+                  {errors.newPassword && touched.newPassword && (
+                    <Text style={styles.errorText}>{errors.newPassword}</Text>
                   )}
 
                   {/* Confirm Password */}
@@ -211,7 +231,6 @@ const styles = StyleSheet.create({
     height: 59,
     borderRadius: 20,
     paddingHorizontal: 16,
-
     marginBottom: 8,
   },
   passwordWrapper: {
