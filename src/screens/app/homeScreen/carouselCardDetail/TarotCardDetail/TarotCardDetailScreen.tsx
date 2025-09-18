@@ -87,11 +87,11 @@ const TarotCardDetailScreen: React.FC = () => {
 
 
 const handleSaveReading = async () => {
-  // Prevent user from pressing again while it's already saving
+  // Agar pehle se save ho raha hai to kuch na karein
   if (isSavingLoading) return;
 
   await saveReading();
-  // Your store already handles showing the success/error alert
+  // Success/Error alert store khud handle kar lega
 };
   const availableDeck = useMemo(() => {
     const selectedIds = new Set(selectedCards.map(c => c._id));
@@ -254,9 +254,29 @@ const handleSaveReading = async () => {
     <Text style={styles.smallBtnText}>Share</Text>
     </GradientBox>
 
-    <GradientBox colors={[colors.black, colors.bgBox]} style={styles.smallBtn}>
+    {/* <GradientBox colors={[colors.black, colors.bgBox]} style={styles.smallBtn}>
       <Image source={require('../../../../../assets/icons/saveIcon.png')} style={styles.smallIcon} resizeMode="contain" />
-      <Text style={styles.smallBtnText}>Save</Text></GradientBox>
+      <Text style={styles.smallBtnText}>Save</Text></GradientBox> */}
+      <TouchableOpacity 
+  activeOpacity={0.7} 
+  onPress={handleSaveReading} 
+  disabled={isSavingLoading}
+>
+  <GradientBox colors={[colors.black, colors.bgBox]} style={styles.smallBtn}>
+    {isSavingLoading ? (
+      <ActivityIndicator color="#fff" size="small" />
+    ) : (
+      <>
+        <Image 
+          source={require('../../../../../assets/icons/saveIcon.png')} 
+          style={styles.smallIcon} 
+          resizeMode="contain" 
+        />
+        <Text style={styles.smallBtnText}>Save</Text>
+      </>
+    )}
+  </GradientBox>
+</TouchableOpacity>
       </View>
                     <TouchableOpacity style={{ marginTop: 40, alignItems: 'center' }} onPress={() => setShowSubscriptionModal(true)}>
   <View style={styles.buttonBorder}>

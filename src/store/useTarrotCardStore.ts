@@ -66,7 +66,7 @@ interface TarotCardState {
     clearSelectedCards: () => void;
 }
 
-export const useTarotCardStore = create<TarotCardState>((set) => ({
+export const useTarotCardStore = create<TarotCardState>((set, get) => ({
   // Initial state for fetching cards
   cards: [],
   isLoading: false,
@@ -136,33 +136,52 @@ export const useTarotCardStore = create<TarotCardState>((set) => ({
   },
 
   // --- NEW: SAVE TAROT READING ---
-  saveReading: async () => {
+
+saveReading: async () => {
     set({ isSavingLoading: true, savingError: null });
     try {
         const token = await AsyncStorage.getItem('x-auth-token');
         if (!token) throw new Error('Authentication token not found.');
 
-        // The request body is empty as per the screenshot
-        const response = await axios.post(`${API_BASEURL}/tarotcard/save-reading`, {}, {
-            headers: { 'x-auth-token': token },
-        });
+        // --- FIX: Get the reading data from the store's state ---
+        const { readingData } = get(); // Use get() to access current state
+
+        // Check if there are cards to save
+        if (!readingData || !readingData.selected_cards) {
+            throw new Error('No selected cards found to save.');
+        }
+
+        // --- FIX: Create the correct request body ---
+        const body = {
+            selected_cards: readingData.selected_cards,
+              reading: readingData.reading, 
+        };
+
+        const response = await axios.post(
+            `${API_BASEURL}/tarotcard/save-reading`, 
+            body, // <-- Use the correct body here
+            {
+                headers: { 'x-auth-token': token },
+            }
+        );
 
         if (response.data && response.data.success) {
             set({ isSavingLoading: false });
             Alert.alert('Success', 'Tarot reading saved successfully!');
-            return true; // Indicate success
+            console.log(response.data)
+            return true;
         } else {
             throw new Error(response.data.message || 'Failed to save the reading.');
         }
 
     } catch (error: any) {
         console.log('SAVE READING ERROR:', error.response?.data || error.message);
-        const errorMessage = error.response?.data?.message || error.message || 'An unknown error occurred while saving the reading.';
+        const errorMessage = error.response?.data?.message || 'An unknown error occurred while saving.';
         set({ savingError: errorMessage, isSavingLoading: false });
         Alert.alert('Error', errorMessage);
-        return false; // Indicate failure
+        return false;
     }
-  },
+},
 }));
 
 
