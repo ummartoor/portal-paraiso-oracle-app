@@ -22,6 +22,10 @@ import TarotCardDetailScreen from '../screens/app/homeScreen/carouselCardDetail/
 import AskQuestionTarotScreen from '../screens/app/homeScreen/carouselCardDetail/TarotCardDetail/AskQuestionTarotScreen';
 import AskQuestionCariusScreen from '../screens/app/homeScreen/carouselCardDetail/CariusCardDetail/AskQuestionCariusScreen';
 import CaurisCardDetailScreen from '../screens/app/homeScreen/carouselCardDetail/CariusCardDetail/CaurisCardDetailScreen';
+import DailyWisdomCardScreen from '../screens/app/homeScreen/dailyWisdomCard/DailyWisdomCardScreen';
+import RitualTipScreen from '../screens/app/homeScreen/ritualTip/RitualTipScreen';
+import FeaturedOrishaScreen from '../screens/app/homeScreen/featuredOrisha/FeaturedOrishaScreen';
+import RecentReadingsScreen from '../screens/app/homeScreen/recentReadings/RecentReadingsScreen';
 
 
 
@@ -42,6 +46,10 @@ const AppNavigator = () => {
       <Stack.Screen name='AstrologyCardDetail' component={AstrologyCardDetailScreen} />
         <Stack.Screen name='AskQuestionCariusScreen' component={AskQuestionCariusScreen} />
       <Stack.Screen name='CaurisCardDetail' component={CaurisCardDetailScreen} />
+         <Stack.Screen name='DailyWisdomCardScreen' component={DailyWisdomCardScreen} />
+           <Stack.Screen name='FeaturedOrishaScreen' component={FeaturedOrishaScreen} />
+           <Stack.Screen name='RitualTipScreen' component={RitualTipScreen} />
+              <Stack.Screen name='RecentReadingsScreen' component={RecentReadingsScreen} />
       <Stack.Screen name='DeleteAccount' component={DeleteAccountScreen} />
       <Stack.Screen name='SupportScreen' component={SupportScreen} />
       <Stack.Screen name='EditProfile' component={EditProfileScreen} />

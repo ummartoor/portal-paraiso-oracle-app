@@ -304,9 +304,7 @@
 
 
 
-
-
-import React, {useState} from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -317,8 +315,8 @@ import {
   Image,
   Platform,
   Modal,
-  Alert, // Import Alert for additional error handling if needed
-  ActivityIndicator, // For showing loading state on the button
+  Alert, // Keep Alert for potential API errors, but not for confirmation
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Fonts } from '../../../../../constants/fonts';
@@ -327,11 +325,11 @@ import GradientBox from '../../../../../components/GradientBox';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { AuthStackParamsList } from '../../../../../navigation/routeTypes';
-import { useAuthStore } from '../../../../../store/useAuthStore'; // Import useAuthStore
+import { useAuthStore } from '../../../../../store/useAuthStore';
 
 const radioOff = require('../../../../../assets/icons/unfillIcon.png');
 const tickIcon = require('../../../../../assets/icons/checkIcon.png');
-const successIcon = require('../../../../../assets/icons/successfullIcon.png'); // success icon
+const successIcon = require('../../../../../assets/icons/successfullIcon.png');
 
 const BOX_TEXTS = [
   'Your saved records, history, and personal data will be permanently removed.',
@@ -344,73 +342,41 @@ const DeleteAccountScreen = () => {
   const colors = useThemeStore(s => s.theme.colors);
   const navigation = useNavigation<NativeStackNavigationProp<AuthStackParamsList>>();
 
-  // Get the deleteAccount function from your auth store
   const deleteAccount = useAuthStore(state => state.deleteAccount);
-  const logout = useAuthStore(state => state.logout); // Also need logout for success navigation
+  // logout is handled internally by deleteAccount in useAuthStore upon success
 
-  const [selectedIndex, setSelectedIndex] = useState<number | null>(null); // Changed initial state to null, meaning nothing is selected
+  // State to manage individual checkbox selections
+  const [selectedBoxes, setSelectedBoxes] = useState(Array(BOX_TEXTS.length).fill(false));
   const [showSuccess, setShowSuccess] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false); // State for loading indicator
+  const [isDeleting, setIsDeleting] = useState(false);
 
-  // This `onSelect` now ensures all checkboxes are selected before enabling the button.
-  // If you only want one to be selected, keep it as `setSelectedIndex(i)`.
-  // Given the "Please confirm before proceeding" nature, selecting all might be desired.
-  const onSelect = (i: number) => {
-    // If you want all to be checked before proceeding, you'd need a different state management,
-    // like an array of booleans. For now, assuming selecting the last one is enough confirmation,
-    // or you want a single confirmation checkbox.
-    // If you intend for *all* points to be checked, uncomment the logic below
-    // and change `selectedIndex` to `selectedItems: boolean[]`.
+  // Check if all boxes are selected
+  const allBoxesConfirmed = selectedBoxes.every(item => item === true);
 
-    // For simplicity, let's assume `selectedIndex` becomes `3` means all acknowledged.
-    // Or, if `null`, it means nothing is confirmed.
-    setSelectedIndex(i);
+  const onSelect = (index: number) => {
+    setSelectedBoxes(prev => {
+      const newSelections = [...prev];
+      newSelections[index] = !newSelections[index]; // Toggle the selected state of the clicked box
+      return newSelections;
+    });
   };
 
   const onPressDelete = async () => {
-    // Ensure all points are acknowledged (or at least the last one, as per typical UI patterns for confirmation)
-    // If you want all four checkboxes to be explicitly checked:
-    // You would need a `const [confirmedItems, setConfirmedItems] = useState(Array(BOX_TEXTS.length).fill(false));`
-    // And modify `onSelect` to toggle a specific index in `confirmedItems`.
-    // Then `if (!confirmedItems.every(item => item))` would be the check.
-    // For this implementation, we'll assume the simple `selectedIndex === 3` is the final confirmation.
-
-    if (selectedIndex !== 3) { // Assuming checking the last box implies agreement to all
-      Alert.alert('Confirmation Required', 'Please acknowledge all points before deleting your account.');
+    if (!allBoxesConfirmed) {
+      Alert.alert('Confirmation Required', 'Please acknowledge all points by checking the boxes before deleting your account.');
       return;
     }
 
-    Alert.alert(
-      'Confirm Deletion',
-      'Are you absolutely sure you want to delete your account? This action cannot be undone.',
-      [
-        {
-          text: 'Cancel',
-          style: 'cancel',
-        },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            setIsDeleting(true); // Start loading
-            const success = await deleteAccount(); // Call the API
-            setIsDeleting(false); // End loading
+    setIsDeleting(true); // Start loading
+    const success = await deleteAccount(); // Call the API
+    setIsDeleting(false); // End loading
 
-            if (success) {
-              setShowSuccess(true); // Show the success modal
-              // The `deleteAccount` function in the store already calls `logout` on success.
-              // The modal's continue button will then likely navigate to Login.
-            } else {
-              // The deleteAccount function already shows an Alert for failure.
-              // No further action needed here unless you want custom screen-specific handling.
-            }
-          },
-        },
-      ]
-    );
+    if (success) {
+      setShowSuccess(true); // Show the success modal directly
+    }
+    // Error handling (Alerts) is managed within useAuthStore's deleteAccount function
   };
 
-  // When the success modal is dismissed, navigate to the Login screen
   const onDismissSuccessModal = () => {
     setShowSuccess(false);
     navigation.reset({
@@ -418,7 +384,6 @@ const DeleteAccountScreen = () => {
       routes: [{ name: 'Login' }],
     });
   };
-
 
   const m = modalStyles(colors);
 
@@ -457,22 +422,22 @@ const DeleteAccountScreen = () => {
           {/* Boxes */}
           <View style={styles.listWrap}>
             {BOX_TEXTS.map((txt, i) => {
-              const isActive = selectedIndex === i; // Check if this specific box is selected
+              const isActive = selectedBoxes[i]; // Check state for this specific box
               return (
                 <TouchableOpacity
                   key={i}
                   activeOpacity={0.9}
-                  onPress={() => onSelect(i)} // This will mark the clicked item as selected
+                  onPress={() => onSelect(i)} // Toggle this specific box
                   style={[
                     styles.itemBox,
                     {
                       backgroundColor: colors.bgBox,
-                      borderColor: isActive ? colors.primary : 'transparent', // Highlight selected
+                      borderColor: isActive ? colors.primary : 'transparent',
                     },
                   ]}
                 >
                   <Image
-                    source={isActive ? tickIcon : radioOff} // Show tick if active
+                    source={isActive ? tickIcon : radioOff}
                     style={[styles.leftIcon, { tintColor: isActive ? colors.primary : colors.white }]}
                     resizeMode="contain"
                   />
@@ -494,7 +459,7 @@ const DeleteAccountScreen = () => {
             activeOpacity={0.8}
             style={{ width: '100%' }}
             onPress={onPressDelete}
-            disabled={isDeleting || selectedIndex !== 3} // Disable if deleting or not all confirmed
+            disabled={isDeleting || !allBoxesConfirmed} // Disabled if deleting or not all boxes confirmed
           >
             <GradientBox
               colors={[colors.black, colors.bgBox]}
@@ -502,7 +467,8 @@ const DeleteAccountScreen = () => {
                 styles.actionBtn,
                 {
                   borderWidth: 1.5,
-                  borderColor: (selectedIndex === 3 && !isDeleting) ? colors.primary : colors.bgBox, // Adjust border color based on disabled state
+                  // Border is primary when active, colors.bgBox (static grey) when disabled
+                  borderColor: (allBoxesConfirmed && !isDeleting) ? colors.primary : colors.bgBox,
                 },
               ]}
             >
@@ -512,7 +478,9 @@ const DeleteAccountScreen = () => {
                 <Text
                   style={[
                     styles.actionText,
-                    { color: (selectedIndex === 3 && !isDeleting) ? colors.white : colors.bgBox }
+                    {
+                      color: colors.white // Static white text color as requested
+                    }
                   ]}
                 >
                   Delete Account
@@ -527,7 +495,7 @@ const DeleteAccountScreen = () => {
           visible={showSuccess}
           animationType="slide"
           transparent
-          onRequestClose={onDismissSuccessModal} // Use the new handler here
+          onRequestClose={onDismissSuccessModal}
         >
           <View style={[StyleSheet.absoluteFill, m.overlayBackground]}>
             <View style={m.overlay}>
@@ -539,7 +507,7 @@ const DeleteAccountScreen = () => {
                 </Text>
 
                 <TouchableOpacity
-                  onPress={onDismissSuccessModal} // Navigate to Login on continue
+                  onPress={onDismissSuccessModal}
                   activeOpacity={0.9}
                   style={m.singleBtnTouchable}
                 >

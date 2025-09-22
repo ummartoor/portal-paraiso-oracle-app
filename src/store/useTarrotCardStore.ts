@@ -49,12 +49,14 @@ interface TarotCardState {
   isLoading: boolean;
   error: string | null;
   fetchTarotCards: () => Promise<void>;
-
+  
   // State for generating a reading
   readingData: GenerateReadingData | null;
   isReadingLoading: boolean;
   readingError: string | null;
-  generateReading: (card_ids: string[]) => Promise<GenerateReadingData | null>;
+userQuestion: string | null;
+
+generateReading: (card_ids: string[], user_question: string) => Promise<GenerateReadingData | null>;
 
   // --- NEW: State for saving a reading ---
   isSavingLoading: boolean;
@@ -76,7 +78,7 @@ export const useTarotCardStore = create<TarotCardState>((set, get) => ({
   readingData: null,
   isReadingLoading: false,
   readingError: null,
-
+  userQuestion: null,
   // --- NEW: Initial state for saving reading ---
   isSavingLoading: false,
   savingError: null,
@@ -93,7 +95,7 @@ export const useTarotCardStore = create<TarotCardState>((set, get) => ({
       const response = await axios.get(`${API_BASEURL}/tarotcard/cards`, {
         headers: { 'x-auth-token': token },
       });
-      
+      console.log("Get all cards",response.data)
       if (response.data && response.data.success) {
         set({ cards: response.data.data, isLoading: false });
       } else {
@@ -108,80 +110,100 @@ export const useTarotCardStore = create<TarotCardState>((set, get) => ({
   },
 
   // --- GENERATE TAROT READING ---
-  generateReading: async (card_ids: string[]) => {
-    set({ isReadingLoading: true, readingError: null });
-    try {
-        const token = await AsyncStorage.getItem('x-auth-token');
-        if (!token) throw new Error('Authentication token not found.');
 
-        const body = { card_ids };
-        const response = await axios.post(`${API_BASEURL}/tarotcard/select-cards`, body, {
-            headers: { 'x-auth-token': token },
-        });
 
-        if (response.data && response.data.success) {
-            const responseData = response.data.data as GenerateReadingData;
-            set({ readingData: responseData, isReadingLoading: false });
-            return responseData;
-        } else {
-            throw new Error(response.data.message || 'Failed to generate reading.');
-        }
-
-    } catch (error: any) {
-        const errorMessage = error.response?.data?.message || error.message || 'An unknown error occurred while generating the reading.';
-        set({ readingError: errorMessage, isReadingLoading: false });
-        Alert.alert('Error', errorMessage);
-        return null;
-    }
-  },
+  generateReading: async (card_ids: string[], user_question: string) => {
+    // Set loading state, but clear previous data
+    set({ isReadingLoading: true, readingError: null, readingData: null, userQuestion: null });
+    try {
+      const token = await AsyncStorage.getItem('x-auth-token');
+      if (!token) throw new Error('Authentication token not found.');
+      const body = { user_question, card_ids };
+      const response = await axios.post(`${API_BASEURL}/tarotcard/select-cards`, body, {
+        headers: { 'x-auth-token': token },
+      });
+      if (response.data && response.data.success) {
+        const responseData = response.data.data as GenerateReadingData;
+        // FIX: Set the reading data and user question together on success
+        set({ 
+          readingData: responseData, 
+          userQuestion: user_question, 
+          isReadingLoading: false 
+        });
+        return responseData;
+      } else {
+        throw new Error(response.data.message || 'Failed to generate reading.');
+      }
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.message || error.message || 'An unknown error occurred while generating the reading.';
+      set({ readingError: errorMessage, isReadingLoading: false });
+      Alert.alert('Error', errorMessage);
+      return null;
+    }
+  },
 
   // --- NEW: SAVE TAROT READING ---
 
 saveReading: async () => {
     set({ isSavingLoading: true, savingError: null });
     try {
-        const token = await AsyncStorage.getItem('x-auth-token');
-        if (!token) throw new Error('Authentication token not found.');
+      const token = await AsyncStorage.getItem('x-auth-token');
+      if (!token) throw new Error('Authentication token not found.');
+      
+      const { readingData, userQuestion } = get();
 
-        // --- FIX: Get the reading data from the store's state ---
-        const { readingData } = get(); // Use get() to access current state
+      if (!readingData || !readingData.selected_cards || !readingData.reading) {
+        throw new Error('No complete reading data found to save.');
+      }
+      if (!userQuestion) {
+        throw new Error('No user question found to save.');
+      }
 
-        // Check if there are cards to save
-        if (!readingData || !readingData.selected_cards) {
-            throw new Error('No selected cards found to save.');
-        }
+      const body = {
+        user_question: userQuestion,
+        selected_cards: readingData.selected_cards,
+        reading: readingData.reading,
+      };
 
-        // --- FIX: Create the correct request body ---
-        const body = {
-            selected_cards: readingData.selected_cards,
-              reading: readingData.reading, 
-        };
+      // ADDED: Log the request body to check what is being sent
+      console.log('--- SAVING READING ---');
+      console.log('Request Body:', JSON.stringify(body, null, 2));
 
-        const response = await axios.post(
-            `${API_BASEURL}/tarotcard/save-reading`, 
-            body, // <-- Use the correct body here
-            {
-                headers: { 'x-auth-token': token },
-            }
-        );
+      const response = await axios.post(
+        `${API_BASEURL}/tarotcard/save-reading`,
+        body,
+        { headers: { 'x-auth-token': token } }
+      );
 
-        if (response.data && response.data.success) {
-            set({ isSavingLoading: false });
-            Alert.alert('Success', 'Tarot reading saved successfully!');
-            console.log(response.data)
-            return true;
-        } else {
-            throw new Error(response.data.message || 'Failed to save the reading.');
-        }
-
+      if (response.data && response.data.success) {
+        set({ isSavingLoading: false });
+        Alert.alert('Success', 'Tarot reading saved successfully!');
+        return true;
+      } else {
+        throw new Error(response.data.message || 'Failed to save the reading.');
+      }
     } catch (error: any) {
-        console.log('SAVE READING ERROR:', error.response?.data || error.message);
-        const errorMessage = error.response?.data?.message || 'An unknown error occurred while saving.';
-        set({ savingError: errorMessage, isSavingLoading: false });
-        Alert.alert('Error', errorMessage);
-        return false;
+      // --- MODIFIED: ADDED DETAILED ERROR LOGGING ---
+      console.error('--- SAVE READING API ERROR ---');
+      if (error.response) {
+        // The server responded with an error status code (4xx or 5xx)
+        console.error('Response Data:', JSON.stringify(error.response.data, null, 2));
+        console.error('Response Status:', error.response.status);
+      } else if (error.request) {
+        // The request was made but no response was received (e.g., network error)
+        console.error('No response received. Request details:', error.request);
+      } else {
+        // Something else happened while setting up the request
+        console.error('Error setting up request:', error.message);
+      }
+      // --- END OF MODIFICATION ---
+
+      const errorMessage = error.response?.data?.message || 'An unknown error occurred while saving.';
+      set({ savingError: errorMessage, isSavingLoading: false });
+      Alert.alert('Error', errorMessage);
+      return false;
     }
-},
+  },
 }));
 
 

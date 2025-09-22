@@ -41,6 +41,8 @@ interface User {
   _id: string;
   name: string;
   email: string;
+   bio?: string;
+  goals?: string;
   gender: string;
   dob: string;
   time_of_birth: string;
@@ -48,8 +50,29 @@ interface User {
   relationship_status: string;
   sign_in_zodiac: string;
   is_premium_user: boolean;
-  // You can add other fields from the response here if you need them
+
+    profile_image?: {
+    key: string | null;
+    url: string | null;
+  };
 }
+
+
+
+type UpdateProfileData = {
+  name?: string;
+  email?: string;
+  bio?: string;
+  gender?: string;
+  goals?: string;
+  dob?: string;
+  time_of_birth?: string;
+  place_of_birth?: string;
+  relationship_status?: string;
+  sign_in_zodiac?: string;
+};
+
+
 interface AuthState {
   isLoggedIn: boolean;
   token: string | null;
@@ -73,6 +96,17 @@ interface AuthState {
    fetchCurrentUser: () => Promise<boolean>; 
   checkAuthStatus: () => Promise<void>;
    deleteAccount: () => Promise<boolean>; 
+    uploadProfilePicture: (image: {
+    uri: string;
+    type: string;
+    name: string;
+  }) => Promise<boolean>;
+    updateUserProfile: (data: UpdateProfileData) => Promise<boolean>;
+      updatePassword: (
+    currentPassword: string,
+    newPassword: string,
+    confirmPassword: string,
+  ) => Promise<boolean>;
 }
 
 // --- Auth Store ---
@@ -132,7 +166,7 @@ login: async (email, password, deviceToken) => {
   }
 },
 
-// Add this entire function inside your create() block
+
 
 // --- FETCH CURRENT USER ---
 fetchCurrentUser: async () => {
@@ -141,12 +175,12 @@ fetchCurrentUser: async () => {
     const token = await AsyncStorage.getItem('auth_token');
 
     if (!token) {
-      // If no token, there's no user to fetch
+
       set({ isLoggedIn: false, user: null, token: null });
       return false;
     }
 
-    // 2. Make the API call to the /auth/me endpoint
+
     const response = await axios.get(`${API_BASEURL}/auth/me`, {
       headers: {
         'x-auth-token': token,
@@ -155,11 +189,11 @@ fetchCurrentUser: async () => {
     
     console.log('FETCH CURRENT USER RESPONSE:', response.data);
 
-    // 3. On success, update the user state
+
     if (response.data && response.data.success) {
       const updatedUser = response.data.user as User;
       
-      // Update user data in both the store and AsyncStorage
+
       set({ user: updatedUser, isLoggedIn: true, token });
       await AsyncStorage.setItem('user', JSON.stringify(updatedUser));
       
@@ -245,7 +279,7 @@ fetchCurrentUser: async () => {
   
 // --- CHECK AUTH STATUS  ---
 checkAuthStatus: async () => {
-  // This will now verify the token with the server and get the latest user data
+
   await get().fetchCurrentUser();
 },
   //forgot password
@@ -318,8 +352,8 @@ checkAuthStatus: async () => {
         `${API_BASEURL}/auth/resetpassword`,
         {
           email,
-          // --- CHANGE THIS KEY IN THE REQUEST BODY ---
-          newPassword, // Change from `password: password` to `newPassword: newPassword`
+    
+          newPassword, 
           confirmPassword,
         },
         {
@@ -389,4 +423,158 @@ checkAuthStatus: async () => {
       return false;
     }
   },
+  // --- UPLOAD PROFILE PICTURE ---
+uploadProfilePicture: async (image) => {
+  try {
+    const token = get().token || await AsyncStorage.getItem('auth_token');
+    if (!token) {
+      Alert.alert('Error', 'Authentication token not found.');
+      return false;
+    }
+
+    // 1. Create a FormData object
+    // This is necessary for file uploads
+    const formData = new FormData();
+
+
+    formData.append('profile_image', {
+      uri: image.uri,
+      type: image.type,
+      name: image.name,
+    });
+
+
+    const response = await axios.post(
+      `${API_BASEURL}/user/uploadprofilepicture`,
+      formData, 
+      {
+        headers: {
+          'x-auth-token': token,
+          // For FormData, this header is crucial
+          'Content-Type': 'multipart/form-data',
+        },
+      },
+    );
+
+    console.log('UPLOAD PICTURE SUCCESS:', response.data);
+
+    // 4. On success, update the user state with the new data
+    if (response.data && response.data.success) {
+      const updatedUser = response.data.user as User;
+      
+      // Update the user in the store and in local storage
+      set({ user: updatedUser });
+      await AsyncStorage.setItem('user', JSON.stringify(updatedUser));
+      
+      Alert.alert('Success', 'Profile picture updated successfully!');
+      return true;
+    } else {
+      throw new Error(response.data.message || 'Failed to upload image.');
+    }
+  } catch (error: any) {
+    const msg = error.response?.data?.message || 'An unknown error occurred.';
+    console.log('UPLOAD PICTURE ERROR:', msg);
+    Alert.alert('Error', msg);
+    return false;
+  }
+},
+// --- UPDATE USER PROFILE ---
+updateUserProfile: async (data: UpdateProfileData) => {
+  try {
+
+    const token = get().token || await AsyncStorage.getItem('auth_token');
+    if (!token) {
+      Alert.alert('Error', 'Authentication token not found.');
+      return false;
+    }
+
+
+    const response = await axios.patch(
+      `${API_BASEURL}/user/updateuserprofile`,
+      data, // Request body mein data pass karein
+      {
+        headers: {
+          'x-auth-token': token,
+          'Content-Type': 'application/json',
+        },
+      },
+    );
+
+    console.log('UPDATE PROFILE SUCCESS:', response.data);
+
+
+    if (response.data && response.data.success) {
+      const updatedUser = response.data.user as User;
+
+    
+      set({ user: updatedUser });
+      await AsyncStorage.setItem('user', JSON.stringify(updatedUser));
+
+      Alert.alert('Success', 'Profile updated successfully!');
+      return true;
+    } else {
+      throw new Error(response.data.message || 'Failed to update profile.');
+    }
+  } catch (error: any) {
+    const msg = error.response?.data?.message || 'An unknown error occurred.';
+    console.log('UPDATE PROFILE ERROR:', msg);
+    Alert.alert('Error', msg);
+    return false;
+  }
+},
+// --- UPDATE PASSWORD ---
+updatePassword: async (currentPassword, newPassword, confirmPassword) => {
+  try {
+    // Store se ya AsyncStorage se token haasil karein
+    const token = get().token || await AsyncStorage.getItem('auth_token');
+    if (!token) {
+      Alert.alert('Error', 'Authentication token not found. Please log in again.');
+      return false;
+    }
+
+    // Request body tayyar karein
+    const body = {
+      currentPassword,
+      newPassword,
+      confirmPassword,
+    };
+
+    // PUT request bheejein
+    const response = await axios.put(
+      `${API_BASEURL}/auth/updatepassword`,
+      body,
+      {
+        headers: {
+          'x-auth-token': token,
+          'Content-Type': 'application/json',
+        },
+      },
+    );
+
+    console.log('UPDATE PASSWORD SUCCESS:', response.data);
+
+ 
+    if (response.data && response.data.success) {
+      const newToken = response.data.data.token;
+
+      if (newToken) {
+     
+        await AsyncStorage.setItem('auth_token', newToken);
+        set({ token: newToken });
+
+        Alert.alert('Success', 'Password updated successfully!');
+        return true;
+      } else {
+        throw new Error('New token not found in response.');
+      }
+    } else {
+      throw new Error(response.data.message || 'Failed to update password.');
+    }
+  } catch (error: any) {
+    const msg = error.response?.data?.message || 'An unknown error occurred.';
+    console.log('UPDATE PASSWORD ERROR:', msg);
+    Alert.alert('Error', msg);
+    return false;
+  }
+},
 }));

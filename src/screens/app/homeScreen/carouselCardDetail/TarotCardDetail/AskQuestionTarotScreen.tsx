@@ -32,16 +32,17 @@ const AskQuestionTarotScreen = () => {
 
   const [question, setQuestion] = useState('');
 
-  const handleNext = () => {
-    if (!question.trim()) {
-      Alert.alert(
-        'Input Required',
-        'Please enter your question or ask for general guidance.'
-      );
-      return;
-    }
-    navigation.navigate('TarotCardDetail');
-  };
+const handleNext = () => {
+  if (!question.trim()) {
+    Alert.alert(
+      'Input Required',
+      'Please enter your question or ask for general guidance.'
+    );
+    return;
+  }
+  // This is the important change: send the question to the next screen
+  navigation.navigate('TarotCardDetail', { userQuestion: question });
+};
 
   return (
     <ImageBackground

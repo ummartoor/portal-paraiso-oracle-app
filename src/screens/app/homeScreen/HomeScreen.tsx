@@ -11,40 +11,42 @@ import {
   ScrollView,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-
 import { Fonts } from "../../../constants/fonts";
 import { useThemeStore } from "../../../store/useThemeStore";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { AppStackParamList } from "../../../navigation/routeTypes"; // <-- use App stack
-import CarouselCard, { DEFAULT_CARDS, CardItem } from "./CarouselCards";
+import { AppStackParamList } from "../../../navigation/routeTypes";
+import CarouselCard, { CardItem } from "./CarouselCards";
 
 const { height: SCREEN_HEIGHT, width: SCREEN_WIDTH } = Dimensions.get("screen");
 
 type CardBoxProps = {
   label: string;
-  isSelected?: boolean;
+  icon: any;
   onPress?: () => void;
 };
 
-const CardBox: React.FC<CardBoxProps> = ({ label, isSelected, onPress }) => {
+const CardBox: React.FC<CardBoxProps> = ({ label, icon, onPress }) => {
   const { colors } = useThemeStore((s) => s.theme);
+
   return (
     <TouchableOpacity
-      activeOpacity={0.9}
+      activeOpacity={0.8}
       onPress={onPress}
       style={[
         styles.cardBox,
         {
           backgroundColor: colors.bgBox,
-          borderColor: isSelected ? colors.primary : "transparent",
-          borderWidth: isSelected ? 1 : 0,
         },
       ]}
     >
+      {/* Left: Text */}
       <Text style={[styles.cardBoxText, { color: colors.white }]} numberOfLines={1}>
         {label}
       </Text>
+
+      {/* Right: Icon */}
+      <Image source={icon} style={styles.cardBoxIcon} resizeMode="contain" />
     </TouchableOpacity>
   );
 };
@@ -53,18 +55,8 @@ const HomeScreen: React.FC = () => {
   const theme = useThemeStore((state) => state.theme);
   const { colors } = theme;
 
-  // IMPORTANT: App stack navigation, not Auth
   const navigation =
     useNavigation<NativeStackNavigationProp<AppStackParamList>>();
-
-  const [selectedKey, setSelectedKey] = useState<string | null>(null);
-
-  const BOX_ITEMS = [
-    { key: "daily", label: "Daily Wisdom card" },
-    { key: "orisha", label: "Featured Orisha" },
-    { key: "ritual", label: "Ritual Tip" },
-    { key: "recent", label: "Recent Readings" },
-  ];
 
   const onPressCarouselCard = (item: CardItem) => {
     if (item.route) {
@@ -82,8 +74,6 @@ const HomeScreen: React.FC = () => {
     >
       <SafeAreaView style={styles.container}>
         <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
-
-        {/* FULL SCREEN SCROLL */}
         <ScrollView
           contentContainerStyle={{ paddingBottom: 90 }}
           showsVerticalScrollIndicator={false}
@@ -97,15 +87,13 @@ const HomeScreen: React.FC = () => {
                 resizeMode="contain"
               />
             </TouchableOpacity>
-
             <View style={styles.profileWrap}>
               <Image
                 source={require("../../../assets/icons/userprofile.png")}
                 style={[styles.profileImg, { borderColor: colors.white }]}
               />
-              <View  style={[styles.onlineDot, { borderColor: colors.white }]} />
+              <View style={[styles.onlineDot, { borderColor: colors.white }]} />
             </View>
-
             <TouchableOpacity style={styles.headerIconBtn}>
               <Image
                 source={require("../../../assets/icons/notificationIcon.png")}
@@ -115,7 +103,7 @@ const HomeScreen: React.FC = () => {
             </TouchableOpacity>
           </View>
 
-          {/* Title & Subtitle */}
+          {/* Titles */}
           <View style={styles.titlesBox}>
             <Text style={[styles.title, { color: colors.white }]} numberOfLines={1}>
               PORTAL PARAISO
@@ -125,23 +113,26 @@ const HomeScreen: React.FC = () => {
             </Text>
           </View>
 
-          {/* Carousel (fixed height, isolated) */}
+          {/* Carousel */}
           <View style={{ marginTop: 22 }}>
-            <CarouselCard data={DEFAULT_CARDS} onPressCard={onPressCarouselCard} />
+            <CarouselCard onPressCard={onPressCarouselCard} />
           </View>
 
-          {/* CardBox Section */}
+          {/* Boxes without map */}
           <View style={styles.cardBoxSection}>
-            {BOX_ITEMS.map((item) => (
-              <CardBox
-                key={item.key}
-                label={item.label}
-                isSelected={selectedKey === item.key}
-                onPress={() =>
-                  setSelectedKey((prev) => (prev === item.key ? null : item.key))
-                }
-              />
-            ))}
+            {/* First Box */}
+            <CardBox
+              label="Daily Wisdom Card"
+              icon={require("../../../assets/icons/dailyWisdomIcon.png")}
+              onPress={() => navigation.navigate("DailyWisdomCardScreen")}
+            />
+
+            {/* Second Box */}
+            <CardBox
+              label="Ritual Tip"
+              icon={require("../../../assets/icons/RitualTipIcon.png")}
+              onPress={() => navigation.navigate("RitualTipScreen")}
+            />
           </View>
         </ScrollView>
       </SafeAreaView>
@@ -157,8 +148,6 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingTop: 14,
   },
-
-  /* Header */
   headerRow: {
     paddingHorizontal: 20,
     flexDirection: "row",
@@ -172,7 +161,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   headerIcon: { height: 24, width: 24 },
-
   profileWrap: {
     height: 60,
     width: 60,
@@ -183,6 +171,7 @@ const styles = StyleSheet.create({
     height: 60,
     width: 60,
     borderRadius: 30,
+    borderWidth: 1,
   },
   onlineDot: {
     position: "absolute",
@@ -194,8 +183,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#27C93F",
     borderWidth: 2,
   },
-
-  /* Titles */
   titlesBox: {
     marginTop: 21,
     alignItems: "center",
@@ -209,9 +196,13 @@ const styles = StyleSheet.create({
     textAlign: "center",
     fontFamily: Fonts.cormorantSCBold,
   },
-  subtitle: { marginTop: 6, fontSize: 14, lineHeight: 16, textAlign: "center" },
-
-  /* CardBox Section */
+  subtitle: {
+    marginTop: 6,
+    fontSize: 14,
+    lineHeight: 16,
+    textAlign: "center",
+    fontFamily: Fonts.aeonikRegular,
+  },
   cardBoxSection: {
     marginTop: 24,
     paddingHorizontal: 20,
@@ -220,7 +211,9 @@ const styles = StyleSheet.create({
   cardBox: {
     height: 70,
     borderRadius: 25,
-    justifyContent: "center",
+    justifyContent: "space-between",
+    flexDirection: "row",
+    alignItems: "center",
     paddingHorizontal: 20,
   },
   cardBoxText: {
@@ -228,5 +221,9 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.cormorantSCBold,
     letterSpacing: 0.4,
     textTransform: "capitalize",
+  },
+  cardBoxIcon: {
+    height:50,
+    width: 50,
   },
 });
