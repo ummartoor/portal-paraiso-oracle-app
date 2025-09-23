@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useCallback, useState } from "react";
 import {
   View,
   Text,
@@ -13,10 +13,11 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Fonts } from "../../../constants/fonts";
 import { useThemeStore } from "../../../store/useThemeStore";
-import { useNavigation } from "@react-navigation/native";
+import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { AppStackParamList } from "../../../navigation/routeTypes";
 import CarouselCard, { CardItem } from "./CarouselCards";
+import { useAuthStore } from "../../../store/useAuthStore";
 
 const { height: SCREEN_HEIGHT, width: SCREEN_WIDTH } = Dimensions.get("screen");
 
@@ -28,6 +29,7 @@ type CardBoxProps = {
 
 const CardBox: React.FC<CardBoxProps> = ({ label, icon, onPress }) => {
   const { colors } = useThemeStore((s) => s.theme);
+
 
   return (
     <TouchableOpacity
@@ -54,7 +56,12 @@ const CardBox: React.FC<CardBoxProps> = ({ label, icon, onPress }) => {
 const HomeScreen: React.FC = () => {
   const theme = useThemeStore((state) => state.theme);
   const { colors } = theme;
-
+  const { user, fetchCurrentUser } = useAuthStore();
+  useFocusEffect(
+    useCallback(() => {
+      fetchCurrentUser();
+    }, [])
+  );
   const navigation =
     useNavigation<NativeStackNavigationProp<AppStackParamList>>();
 
@@ -89,9 +96,15 @@ const HomeScreen: React.FC = () => {
             </TouchableOpacity>
             <View style={styles.profileWrap}>
               <Image
-                source={require("../../../assets/icons/userprofile.png")}
-                style={[styles.profileImg, { borderColor: colors.white }]}
+                    style={[styles.profileImg, { borderColor: colors.white }]}
+                source={
+                  // Check karein ke profile_image object ke andar URL mojood hai
+                  user?.profile_image?.url 
+                    ? { uri: user.profile_image.url } // Yahan .url ka istemal karein
+                    : require('../../../assets/icons/userprofile.png')
+                }
               />
+           
               <View style={[styles.onlineDot, { borderColor: colors.white }]} />
             </View>
             <TouchableOpacity style={styles.headerIconBtn}>
@@ -171,7 +184,7 @@ const styles = StyleSheet.create({
     height: 60,
     width: 60,
     borderRadius: 30,
-    borderWidth: 1,
+    borderWidth: 2,
   },
   onlineDot: {
     position: "absolute",

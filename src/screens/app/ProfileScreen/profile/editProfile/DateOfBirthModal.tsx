@@ -5,46 +5,41 @@ import {
   Modal,
   TouchableOpacity,
   StyleSheet,
-  Image,
   ActivityIndicator,
 } from 'react-native';
 import { useThemeStore } from '../../../../../store/useThemeStore';
 import { Fonts } from '../../../../../constants/fonts';
 import GradientBox from '../../../../../components/GradientBox';
+import DatePicker from 'react-native-date-picker';
 
-// Gender Icons
-const maleIcon = require('../../../../../assets/icons/maleIcon.png');
-const femaleIcon = require('../../../../../assets/icons/femaleIcon.png');
-const nonBinaryIcon = require('../../../../../assets/icons/nonBinaryIcon.png');
-
-interface GenderModalProps {
+interface DateOfBirthModalProps {
   isVisible: boolean;
   onClose: () => void;
-  onConfirm: (gender: string) => void;
-   defaultValue?: string | null;
+  onConfirm: (dob: string) => void;
+  defaultValue?: Date | null;
 }
 
-const GenderModal: React.FC<GenderModalProps> = ({
+const DateOfBirthModal: React.FC<DateOfBirthModalProps> = ({
   isVisible,
   onClose,
   onConfirm,
-   defaultValue,
+    defaultValue,
 }) => {
   const colors = useThemeStore((state) => state.theme.colors);
 
-  const [selectedGender, setSelectedGender] = useState<string | null>(defaultValue || null);
+  const [date, setDate] = useState(defaultValue || new Date(2000, 0, 1));
   const [isLoading, setIsLoading] = useState(false);
-  
- useEffect(() => {
-    if (isVisible) {
-      setSelectedGender(defaultValue || null);
-    }
+
+  useEffect(() => {
+      if (isVisible) {
+          setDate(defaultValue || new Date(2000, 0, 1));
+      }
   }, [isVisible, defaultValue]);
 
   const handleConfirm = async () => {
-    if (!selectedGender) return;
     setIsLoading(true);
-    await onConfirm(selectedGender);
+    const formattedDate = date.toISOString().split('T')[0];
+    await onConfirm(formattedDate);
     setIsLoading(false);
   };
 
@@ -54,69 +49,25 @@ const GenderModal: React.FC<GenderModalProps> = ({
         <View style={styles(colors).overlay}>
           <View style={styles(colors).modal}>
             {/* Heading */}
-            <Text style={styles(colors).heading}>Select Gender</Text>
+            <Text style={styles(colors).heading}>Select Date of Birth</Text>
             {/* <Text style={styles(colors).subheading}>
-              Gender reveals the balance of your masculine and feminine energy
+              Please enter your date of birth
             </Text> */}
 
-            {/* Gender Options */}
-            <View style={styles(colors).genderRow}>
-              {[
-                { key: 'male', label: 'Male', icon: maleIcon },
-                { key: 'female', label: 'Female', icon: femaleIcon },
-                { key: 'other', label: 'Non Binary', icon: nonBinaryIcon },
-              ].map((item) => {
-                const isSelected = selectedGender === item.key;
-                return (
-                  <View
-                    key={item.key}
-                    style={{ flex: 1, alignItems: 'center' }}
-                  >
-                    <TouchableOpacity
-                      activeOpacity={0.8}
-                      onPress={() => setSelectedGender(item.key)}
-                    >
-                      <GradientBox
-                        colors={[colors.black, colors.bgBox]}
-                        style={[
-                          styles(colors).genderBox,
-                          {
-                            borderWidth: isSelected ? 1.5 : 1,
-                            borderColor: isSelected
-                              ? colors.primary
-                              : colors.white,
-                          },
-                        ]}
-                      >
-                        <Image
-                          source={item.icon}
-                          style={{
-                            width: 50,
-                            height: 50,
-                            tintColor: isSelected
-                              ? colors.primary
-                              : '#8D8B8E',
-                          }}
-                          resizeMode="contain"
-                        />
-                      </GradientBox>
-                    </TouchableOpacity>
-                    <Text
-                      style={[
-                        styles(colors).genderLabel,
-                        {
-                          color: isSelected ? colors.primary : '#fff',
-                          fontFamily: isSelected
-                            ? Fonts.aeonikBold
-                            : Fonts.aeonikRegular,
-                        },
-                      ]}
-                    >
-                      {item.label}
-                    </Text>
-                  </View>
-                );
-              })}
+            {/* Date Picker */}
+            <View
+              style={[
+                styles(colors).dobBox,
+                { backgroundColor: colors.bgBox, borderColor: colors.white },
+              ]}
+            >
+              <DatePicker
+                date={date}
+                mode="date"
+                onDateChange={setDate}
+                theme="dark"
+                style={styles(colors).datePicker}
+              />
             </View>
 
             {/* Buttons */}
@@ -130,12 +81,12 @@ const GenderModal: React.FC<GenderModalProps> = ({
                 <Text style={styles(colors).cancelText}>Cancel</Text>
               </TouchableOpacity>
 
-              {/* Next (Confirm) */}
+              {/* Update */}
               <TouchableOpacity
                 onPress={handleConfirm}
                 activeOpacity={0.9}
                 style={styles(colors).gradientTouchable}
-                disabled={isLoading || !selectedGender}
+                disabled={isLoading}
               >
                 <GradientBox
                   colors={[colors.black, colors.bgBox]}
@@ -156,7 +107,7 @@ const GenderModal: React.FC<GenderModalProps> = ({
   );
 };
 
-export default GenderModal;
+export default DateOfBirthModal;
 
 const styles = (colors: any) =>
   StyleSheet.create({
@@ -178,9 +129,9 @@ const styles = (colors: any) =>
     },
     heading: {
       fontFamily: Fonts.cormorantSCBold,
-      fontSize: 24,
-      color: colors.primary,
-      marginBottom: 20,
+      fontSize: 22,
+      color: colors.white,
+      marginBottom: 25,
       textAlign: 'center',
     },
     subheading: {
@@ -188,25 +139,20 @@ const styles = (colors: any) =>
       fontSize: 14,
       color: colors.primary,
       textAlign: 'center',
-      marginBottom: 24,
+      marginBottom: 20,
     },
-    genderRow: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      marginBottom: 30,
-    },
-    genderBox: {
-      height: 85,
-      width: 85,
+    dobBox: {
+      borderWidth: 1,
       borderRadius: 16,
       justifyContent: 'center',
       alignItems: 'center',
+      paddingVertical: 20,
+      marginBottom: 20,
     },
-    genderLabel: {
-      fontSize: 14,
-      marginTop: 8,
-      textAlign: 'center',
+    datePicker: {
+      width: 280,
+      height: 200,
+      alignSelf: 'center',
     },
     buttonRow: {
       width: '100%',

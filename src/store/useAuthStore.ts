@@ -42,7 +42,7 @@ interface User {
   name: string;
   email: string;
    bio?: string;
-  goals?: string;
+  goals?: string[];
   gender: string;
   dob: string;
   time_of_birth: string;
@@ -64,7 +64,7 @@ type UpdateProfileData = {
   email?: string;
   bio?: string;
   gender?: string;
-  goals?: string;
+  goals?: string[];
   dob?: string;
   time_of_birth?: string;
   place_of_birth?: string;
@@ -96,11 +96,13 @@ interface AuthState {
    fetchCurrentUser: () => Promise<boolean>; 
   checkAuthStatus: () => Promise<void>;
    deleteAccount: () => Promise<boolean>; 
+
     uploadProfilePicture: (image: {
     uri: string;
     type: string;
     name: string;
   }) => Promise<boolean>;
+   isUpdating: boolean;
     updateUserProfile: (data: UpdateProfileData) => Promise<boolean>;
       updatePassword: (
     currentPassword: string,
@@ -114,7 +116,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   isLoggedIn: false,
   token: null,
   user: null,
-
+ isUpdating: false,
   // --- LOGIN ---
 login: async (email, password, deviceToken) => {
   try {
@@ -478,50 +480,45 @@ uploadProfilePicture: async (image) => {
     return false;
   }
 },
-// --- UPDATE USER PROFILE ---
-updateUserProfile: async (data: UpdateProfileData) => {
-  try {
 
-    const token = get().token || await AsyncStorage.getItem('auth_token');
-    if (!token) {
-      Alert.alert('Error', 'Authentication token not found.');
+  // --- UPDATE USER PROFILE ---
+  updateUserProfile: async (data: UpdateProfileData) => {
+    set({ isUpdating: true }); // <-- MODIFIED: Set loading state
+    try {
+      const token = get().token || await AsyncStorage.getItem('auth_token');
+      if (!token) {
+        Alert.alert('Error', 'Authentication token not found.');
+        set({ isUpdating: false }); // <-- MODIFIED
+        return false;
+      }
+
+      const response = await axios.patch(
+        `${API_BASEURL}/user/updateuserprofile`,
+        data,
+        {
+          headers: {
+            'x-auth-token': token,
+            'Content-Type': 'application/json',
+          },
+        },
+      );
+
+      if (response.data && response.data.success) {
+        const updatedUser = response.data.user as User;
+        set({ user: updatedUser, isUpdating: false }); // <-- MODIFIED
+        await AsyncStorage.setItem('user', JSON.stringify(updatedUser));
+        Alert.alert('Success', 'Profile updated successfully!');
+        return true;
+      } else {
+        throw new Error(response.data.message || 'Failed to update profile.');
+      }
+    } catch (error: any) {
+      const msg = error.response?.data?.message || 'An unknown error occurred.';
+      Alert.alert('Error', msg);
+      set({ isUpdating: false }); // <-- MODIFIED
       return false;
     }
-
-
-    const response = await axios.patch(
-      `${API_BASEURL}/user/updateuserprofile`,
-      data, // Request body mein data pass karein
-      {
-        headers: {
-          'x-auth-token': token,
-          'Content-Type': 'application/json',
-        },
-      },
-    );
-
-    console.log('UPDATE PROFILE SUCCESS:', response.data);
-
-
-    if (response.data && response.data.success) {
-      const updatedUser = response.data.user as User;
-
-    
-      set({ user: updatedUser });
-      await AsyncStorage.setItem('user', JSON.stringify(updatedUser));
-
-      Alert.alert('Success', 'Profile updated successfully!');
-      return true;
-    } else {
-      throw new Error(response.data.message || 'Failed to update profile.');
-    }
-  } catch (error: any) {
-    const msg = error.response?.data?.message || 'An unknown error occurred.';
-    console.log('UPDATE PROFILE ERROR:', msg);
-    Alert.alert('Error', msg);
-    return false;
-  }
-},
+  },
 // --- UPDATE PASSWORD ---
 updatePassword: async (currentPassword, newPassword, confirmPassword) => {
   try {

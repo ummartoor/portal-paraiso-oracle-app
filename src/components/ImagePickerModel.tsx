@@ -17,11 +17,17 @@ import {
   openSettings,
 } from 'react-native-permissions';
 
-interface Props {
+type ImagePickerResponse = {
+  uri: string;
+  type: string;
+  name: string;
+};
+
+type Props = {
   isVisible: boolean;
   onClose: () => void;
-  onImagePicked: (imagePath: string) => void;
-}
+  onImagePicked: (image: ImagePickerResponse) => void;
+};
 
 const ImagePickerModal = ({ isVisible, onClose, onImagePicked }: Props) => {
   const handlePermission = async (type: 'Camera' | 'Gallery') => {
@@ -37,63 +43,50 @@ const ImagePickerModal = ({ isVisible, onClose, onImagePicked }: Props) => {
         : PERMISSIONS.IOS.PHOTO_LIBRARY;
 
     const status = await check(permission);
-    console.log('Camera permission status:', status); //output 'denied'
 
     if (status === RESULTS.GRANTED) return true;
 
     if (status === RESULTS.DENIED) {
       const result = await request(permission);
-      console.log('result is', result); //output 'blocked'
-
-      if (result === RESULTS.BLOCKED) {
-        Alert.alert(
-          `${type} Permission Blocked`,
-          `Please enable ${type} permission from settings.`,
-          [
-            { text: 'Cancel', style: 'cancel' },
-            { text: 'Open Settings', onPress: () => openSettings() }, // FIXED: call the function
-          ],
-        );
-        return false;
+      if (result === RESULTS.GRANTED) {
+        return true;
       }
-
-      return result === RESULTS.GRANTED;
     }
 
-    if (status === RESULTS.BLOCKED) {
-      Alert.alert(
-        `${type} Permission Blocked`,
-        `Please enable ${type} permission from settings.`,
-        [
-          { text: 'Cancel', style: 'cancel' },
-          { text: 'Open Settings', onPress: () => openSettings },
-        ],
-      );
-    }
+    // If we reach here, permission is blocked or was denied again
+    Alert.alert(
+      `${type} Permission Required`,
+      `To continue, please enable ${type} permission from your device settings.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Open Settings', onPress: () => openSettings() },
+      ],
+    );
     return false;
   };
 
   const openCamera = async () => {
-    console.log('carmera is called');
     const granted = await handlePermission('Camera');
-
-    console.log('permission is', granted);
     if (!granted) return;
 
     try {
       const image = await ImagePicker.openCamera({
-        width: 300,
-        height: 300,
+        width: 500,
+        height: 500,
         cropping: true,
-        cropperToolbarTitle: 'Edit Image',
-        cropperToolbarColor: '#000000',
-        cropperToolbarWidgetColor: '#ffffff',
-        cropperStatusBarColor: '#000000',
       });
-      onImagePicked(image.path);
+
+      // --- FIX: Create the full image object ---
+      onImagePicked({
+        uri: image.path,
+        type: image.mime,
+        name: image.path.split('/').pop() || 'camera_photo.jpg', // Create a name from the path
+      });
+
       onClose();
     } catch (error) {
-      // user cancelled
+      // User cancelled the action
+      console.log('Camera cancelled by user.');
     }
   };
 
@@ -103,19 +96,23 @@ const ImagePickerModal = ({ isVisible, onClose, onImagePicked }: Props) => {
 
     try {
       const image = await ImagePicker.openPicker({
-        // width: 300,
-        // height: 300,
+        width: 500,
+        height: 500,
         cropping: true,
-        compressImageQuality:1,
-        cropperToolbarTitle: 'Edit Image',
-        cropperToolbarColor: '#000000',
-        cropperToolbarWidgetColor: '#ffffff',
-        cropperStatusBarColor: '#000000',
+        compressImageQuality: 1,
       });
-      onImagePicked(image.path);
+
+      // --- FIX: Create the full image object ---
+      onImagePicked({
+        uri: image.path,
+        type: image.mime,
+        name: image.filename || image.path.split('/').pop() || 'gallery_photo.jpg', // Use original filename or create one
+      });
+
       onClose();
     } catch (error) {
-      // user cancelled
+      // User cancelled the action
+      console.log('Gallery picker cancelled by user.');
     }
   };
 

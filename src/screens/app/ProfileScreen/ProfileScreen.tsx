@@ -74,7 +74,7 @@ const ProfileScreen: React.FC = () => {
     if (!user?.sign_in_zodiac) return null;
     return ZODIACS.find(z => z.key === user.sign_in_zodiac);
   }, [user]);
-
+console.log('Checking User Profile Image URL:', user?.profile_image);
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: 'black' }]} edges={['top', 'left', 'right', 'bottom']}>
       <ImageBackground
@@ -112,11 +112,16 @@ const ProfileScreen: React.FC = () => {
 >
   <View style={styles.leftProfile}>
     <View style={styles.avatarWrap}>
-      <Image
-        source={require('../../../assets/icons/userprofile.png')}
-        style={styles.avatar}
-      />
-      <View style={styles.onlineDot} />
+<Image
+  style={styles.avatar}
+  source={
+    // Check karein ke profile_image object ke andar URL mojood hai
+    user?.profile_image?.url 
+      ? { uri: user.profile_image.url } // Yahan .url ka istemal karein
+      : require('../../../assets/icons/userprofile.png')
+  }
+/>
+    
     </View>
     <View style={{ marginLeft: 10 }}>
       <Text style={[styles.name, { color: colors.white }]}>
@@ -297,23 +302,17 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
-  avatarWrap: {
+avatarWrap: {
     width: 37,
     height: 37,
     borderRadius: 18.5,
+    overflow: 'hidden', 
   },
-  avatar: { width: '100%', height: '100%' },
-  onlineDot: {
-    position: 'absolute',
-    right: -1,
-    bottom: -1,
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: '#2ecc71',
-    borderWidth: 2,
-    borderColor: '#1a1a1a',
+  avatar: {
+    width: '100%',
+    height: '100%',
   },
+
   name: {
     fontSize: 16,
     fontFamily: Fonts.aeonikBold,
