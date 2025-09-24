@@ -7,7 +7,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // --- Interfaces ---
 
-interface TarotCard {
+export interface TarotCard {
   _id: string;
   card_image: {
     url: string;
@@ -18,13 +18,13 @@ interface TarotCard {
   card_keywords: string[];
 }
 
-interface Reading {
+ export interface Reading {
     introduction: string;
     love: string;
     career: string;
 }
 
-interface SelectedCardDetail {
+ export interface SelectedCardDetail {
     card_id: string;
     name: string;
     description: string;
@@ -36,12 +36,35 @@ interface SelectedCardDetail {
     };
 }
 
-interface GenerateReadingData {
+ export interface GenerateReadingData {
     user_id: string;
     selected_cards: SelectedCardDetail[];
     reading: Reading;
 }
 
+
+// --- Interfaces for Reading History ---
+
+ export interface FullReading {
+  introduction: string;
+  love: string;
+  career: string;
+  spirituality: string;
+  reflection: string;
+  guidance: string;
+  affirmation: string;
+}
+
+  export interface TarotReadingHistoryItem {
+  _id: string;
+  user_id: string;
+  user_question: string;
+  selected_cards: SelectedCardDetail[]; // You can reuse your existing interface
+  reading: FullReading;
+  reading_date: string;
+  createdAt: string;
+  updatedAt: string;
+}
 // --- UPDATED: Main store state interface ---
 interface TarotCardState {
   // State for fetching all cards
@@ -66,6 +89,12 @@ generateReading: (card_ids: string[], user_question: string) => Promise<Generate
     selectedCards: any[]; // Use 'any[]' for simplicity, or your DeckCard[] type
     setSelectedCards: (cards: any[]) => void;
     clearSelectedCards: () => void;
+
+
+      history: TarotReadingHistoryItem[];
+  isHistoryLoading: boolean;
+  historyError: string | null;
+  fetchReadingHistory: () => Promise<void>;
 }
 
 export const useTarotCardStore = create<TarotCardState>((set, get) => ({
@@ -83,6 +112,10 @@ export const useTarotCardStore = create<TarotCardState>((set, get) => ({
   isSavingLoading: false,
   savingError: null,
    selectedCards: [],
+
+    history: [],
+  isHistoryLoading: false,
+  historyError: null,
     setSelectedCards: (cards) => set({ selectedCards: cards }),
     clearSelectedCards: () => set({ selectedCards: [] }),
   // --- FETCH ALL TAROT CARDS ---
@@ -124,7 +157,7 @@ export const useTarotCardStore = create<TarotCardState>((set, get) => ({
       });
       if (response.data && response.data.success) {
         const responseData = response.data.data as GenerateReadingData;
-        // FIX: Set the reading data and user question together on success
+     
         set({ 
           readingData: responseData, 
           userQuestion: user_question, 
@@ -202,6 +235,30 @@ saveReading: async () => {
       set({ savingError: errorMessage, isSavingLoading: false });
       Alert.alert('Error', errorMessage);
       return false;
+    }
+  },
+    fetchReadingHistory: async () => {
+    set({ isHistoryLoading: true, historyError: null });
+    try {
+      const token = await AsyncStorage.getItem('x-auth-token');
+      if (!token) throw new Error('Authentication token not found.');
+
+      const response = await axios.get(`${API_BASEURL}/tarotcard/get-tarot-reading-history`, {
+        headers: { 'x-auth-token': token },
+      });
+      
+      console.log('--- READING HISTORY RESPONSE ---');
+      console.log(response.data);
+
+      if (response.data && response.data.success) {
+        set({ history: response.data.data, isHistoryLoading: false });
+      } else {
+        throw new Error(response.data.message || 'Failed to fetch reading history.');
+      }
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.message || error.message || 'An unknown error occurred.';
+      set({ historyError: errorMessage, isHistoryLoading: false });
+      Alert.alert('Error', errorMessage);
     }
   },
 }));

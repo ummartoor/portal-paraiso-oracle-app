@@ -35,7 +35,7 @@ import { useThemeStore } from '../../../../../store/useThemeStore';
 import { AppStackParamList } from '../../../../../navigation/routeTypes';
 import Tts from 'react-native-tts';
 import Video from 'react-native-video';
-import { useTarotCardStore } from '../../../../../store/useTarrotCardStore';
+import { useTarotCardStore } from '../../../../../store/useTarotCardStore';
 
 const { height: SCREEN_HEIGHT, width: SCREEN_WIDTH } = Dimensions.get('window');
 

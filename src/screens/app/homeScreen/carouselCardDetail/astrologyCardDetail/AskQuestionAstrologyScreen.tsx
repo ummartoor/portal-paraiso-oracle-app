@@ -32,7 +32,7 @@ const AskQuestionAstrologyScreen = () => {
 
   const [question, setQuestion] = useState('');
 
-  const handleNext = () => {
+const handleNext = () => {
     if (!question.trim()) {
       Alert.alert(
         'Input Required',
@@ -40,7 +40,8 @@ const AskQuestionAstrologyScreen = () => {
       );
       return;
     }
-    navigation.navigate('AstrologyCardDetail');
+    // Yahan hum question ko as a parameter bhej rahay hain
+    navigation.navigate('AstrologyCardDetail', { userQuestion: question });
   };
 
   return (

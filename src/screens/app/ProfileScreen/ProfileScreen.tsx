@@ -69,7 +69,7 @@ const ProfileScreen: React.FC = () => {
     }, [])
   );
 
-  // --- NEW: Finds the user's zodiac object from the ZODIACS array ---
+  
   const userZodiac = useMemo(() => {
     if (!user?.sign_in_zodiac) return null;
     return ZODIACS.find(z => z.key === user.sign_in_zodiac);

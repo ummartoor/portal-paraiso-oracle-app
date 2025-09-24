@@ -26,6 +26,8 @@ import DailyWisdomCardScreen from '../screens/app/homeScreen/dailyWisdomCard/Dai
 import RitualTipScreen from '../screens/app/homeScreen/ritualTip/RitualTipScreen';
 import FeaturedOrishaScreen from '../screens/app/homeScreen/featuredOrisha/FeaturedOrishaScreen';
 import RecentReadingsScreen from '../screens/app/homeScreen/recentReadings/RecentReadingsScreen';
+import TarotReadingHistoryDetail from '../screens/app/libraryScreen/TarotReadingHistoryDetail';
+import AstrologyHistoryDetail from '../screens/app/libraryScreen/AstrologyHistoryDetail';
 
 
 
@@ -50,6 +52,9 @@ const AppNavigator = () => {
            <Stack.Screen name='FeaturedOrishaScreen' component={FeaturedOrishaScreen} />
            <Stack.Screen name='RitualTipScreen' component={RitualTipScreen} />
               <Stack.Screen name='RecentReadingsScreen' component={RecentReadingsScreen} />
+
+              <Stack.Screen name='TarotReadingHistoryDetail' component={TarotReadingHistoryDetail} />
+  <Stack.Screen name='AstrologyHistoryDetail' component={AstrologyHistoryDetail} />
       <Stack.Screen name='DeleteAccount' component={DeleteAccountScreen} />
       <Stack.Screen name='SupportScreen' component={SupportScreen} />
       <Stack.Screen name='EditProfile' component={EditProfileScreen} />

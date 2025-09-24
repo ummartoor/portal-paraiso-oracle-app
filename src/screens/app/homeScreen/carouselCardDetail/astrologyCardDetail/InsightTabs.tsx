@@ -268,12 +268,12 @@ const InsightTabs: React.FC<InsightTabsProps> = ({ horoscopeData, style }) => {
     // Map the API data to the description of each default tab
     return DEFAULT_TABS.map(tab => {
         switch (tab.key) {
-            case 'morning': return { ...tab, description: horoscopeData.morning_vibe };
-            case 'career': return { ...tab, description: horoscopeData.career_and_work };
-            case 'love': return { ...tab, description: horoscopeData.love_and_relationship };
-            case 'money': return { ...tab, description: horoscopeData.money_and_finance };
-            case 'health': return { ...tab, description: horoscopeData.health_and_wellbeing };
-            case 'divine': return { ...tab, description: horoscopeData.divine_guidance };
+        case 'morning': return { ...tab, description: horoscopeData.data.morning_vibe }; // <-- .data add karein
+case 'career': return { ...tab, description: horoscopeData.data.career_and_work }; // <-- .data add karein
+case 'love': return { ...tab, description: horoscopeData.data.love_and_relationship }; // <-- .data add karein
+case 'money': return { ...tab, description: horoscopeData.data.money_and_finance }; // <-- .data add karein
+case 'health': return { ...tab, description: horoscopeData.data.health_and_wellbeing }; // <-- .data add karein
+case 'divine': return { ...tab, description: horoscopeData.data.divine_guidance }; // <-- .data add karein
             default: return { ...tab, description: '' }; // Fallback
         }
     });

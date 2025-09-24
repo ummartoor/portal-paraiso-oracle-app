@@ -199,9 +199,9 @@ type DivineItem = {
 };
 
 const DIVINE_ITEMS: DivineItem[] = [
-  { id: 'tarot',     title: 'Tarot Reading',  icon: require('../../../assets/images/TarotReading.png'), route: 'TarotCardDetail' },
-  { id: 'astrology', title: 'Astrology',      icon: require('../../../assets/images/astrology.png'),    route: 'AstrologyCardDetail' },
-  { id: 'cauris',    title: 'Cauris',         icon: require('../../../assets/images/Caris.png'),        route: 'NumerologyCardDetail' },
+  { id: 'tarot',     title: 'Tarot Reading',  icon: require('../../../assets/images/TarotReading.png'),   route: "AskQuestionTarotScreen", },
+  { id: 'astrology', title: 'Astrology',      icon: require('../../../assets/images/astrology.png'),        route: "AskQuestionCariusScreen", },
+  { id: 'cauris',    title: 'Cauris',         icon: require('../../../assets/images/Caris.png'),           route: "AskQuestionAstrologyScreen", },
 
 ];
 

@@ -14,7 +14,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute, RouteProp } from '@react-navigation/native'; 
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useAstrologyStore } from '../../../../../store/useAstologyStore';
 import { useAuthStore } from '../../../../../store/useAuthStore';
@@ -57,7 +57,11 @@ const AstrologyCardDetailScreen: React.FC = () => {
   const colors = useThemeStore(s => s.theme.colors);
   const navigation = useNavigation<NativeStackNavigationProp<AppStackParamList>>();
 
-  const { user, fetchCurrentUser } = useAuthStore();
+
+    const route = useRoute<RouteProp<AppStackParamList, 'AstrologyCardDetail'>>();
+  const { userQuestion } = route.params; 
+
+ const { user, fetchCurrentUser } = useAuthStore();
   const { horoscope, isLoading, createHoroscope, saveHoroscope, isSaving } = useAstrologyStore();
 
   const days = useMemo(() => {
@@ -93,11 +97,11 @@ const AstrologyCardDetailScreen: React.FC = () => {
   useEffect(() => {
     const selectedSign = ZODIACS[zIndex]?.key;
     const selectedDate = days[selectedIdx]?.date;
-    if (selectedSign && selectedDate) {
+   if (selectedSign && selectedDate && userQuestion) {
       const dateISO = selectedDate.toISOString();
-      createHoroscope(selectedSign, dateISO);
+      createHoroscope(selectedSign, dateISO, userQuestion); 
     }
-  }, [zIndex, selectedIdx, createHoroscope]);
+  }, [zIndex, selectedIdx, createHoroscope, userQuestion]);
 
   const current = ZODIACS[zIndex];
   const prevZ = ZODIACS[wrapIndex(zIndex - 1)];
@@ -107,22 +111,20 @@ const AstrologyCardDetailScreen: React.FC = () => {
   const goNext = () => setZIndex(i => wrapIndex(i + 1));
 
 
-  const handleSave = async () => {
-  // Agar horoscope data nahi hai ya pehle se save ho raha hai, to kuch na karein
-  if (!horoscope || isSaving) return;
+const handleSave = async () => {
+    // userQuestion route se pehle hi is screen per mojood hai
+    if (!horoscope || isSaving || !userQuestion) return;
 
-  // Current selected sign aur date hasil karein
-  const selectedSign = ZODIACS[zIndex]?.key;
-  const selectedDate = days[selectedIdx]?.date;
+    const selectedSign = ZODIACS[zIndex]?.key;
+    const selectedDate = days[selectedIdx]?.date;
 
-  if (selectedSign && selectedDate) {
-    const dateISO = selectedDate.toISOString();
-    
-    // Store se saveHoroscope function ko call karein
-    await saveHoroscope(selectedSign, dateISO, horoscope);
-    // Success/Error alert store khud handle kar lega
-  }
-};
+    if (selectedSign && selectedDate) {
+      const dateISO = selectedDate.toISOString();
+      
+      // Yahan userQuestion ko as a fourth argument bhejein
+      await saveHoroscope(selectedSign, dateISO, horoscope, userQuestion);
+    }
+  };
   return (
     <ImageBackground
       source={require('../../../../../assets/images/backgroundImage.png')}

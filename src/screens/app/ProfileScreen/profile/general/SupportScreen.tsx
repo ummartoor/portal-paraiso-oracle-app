@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -12,6 +12,8 @@ import {
   ScrollView,
   Image,
   Dimensions,
+  Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -19,6 +21,7 @@ import { useNavigation } from '@react-navigation/native';
 import { Fonts } from '../../../../../constants/fonts';
 import { useThemeStore } from '../../../../../store/useThemeStore';
 import GradientBox from '../../../../../components/GradientBox';
+import { useAuthStore } from '../../../../../store/useAuthStore';
 
 const { height: SCREEN_HEIGHT, width: SCREEN_WIDTH } = Dimensions.get('screen');
 
@@ -26,13 +29,39 @@ const SupportScreen = () => {
   const colors = useThemeStore(s => s.theme.colors);
   const navigation = useNavigation<any>();
 
+
+  const submitSupportTicket = useAuthStore(state => state.submitSupportTicket);
+  const user = useAuthStore(state => state.user);
+
   const [subject, setSubject] = useState('');
   const [email, setEmail] = useState('');
   const [message, setMessage] = useState('');
+  const [isSending, setIsSending] = useState(false);
 
-  const onSend = () => {
-    // TODO: call support API
-    // sendSupport({ subject, email, message })
+  // Pre-fill the email from the logged-in user's profile
+  useEffect(() => {
+    if (user?.email) {
+      setEmail(user.email);
+    }
+  }, [user]);
+
+  const onSend = async () => {
+    // Basic validation
+    if (!subject.trim() || !email.trim() || !message.trim()) {
+      Alert.alert('Missing Information', 'Please fill out all fields before sending.');
+      return;
+    }
+
+    setIsSending(true);
+    const success = await submitSupportTicket(subject, email, message);
+    setIsSending(false);
+
+    if (success) {
+      // On success, clear the form and navigate back
+      // The success alert is already shown by the authStore
+      navigation.goBack();
+    }
+    // Error alerts are also handled within the authStore
   };
 
   return (
@@ -64,7 +93,7 @@ const SupportScreen = () => {
         {/* Form area (avoids keyboard) */}
         <KeyboardAvoidingView
           style={{ flex: 1 }}
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
         >
           <ScrollView
@@ -72,77 +101,88 @@ const SupportScreen = () => {
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}
           >
-            {/* Subject */}
-            <Text style={[styles.label, { color: colors.white }]}>Question for Support</Text>
-            <TextInput
-              value={subject}
-              onChangeText={setSubject}
-              placeholder="Type your question"
-              placeholderTextColor="rgba(255,255,255,0.6)"
-              style={[
-                styles.input,
-                {
-                  backgroundColor: colors.bgBox,
-                  color: colors.white,
-                  borderColor: 'transparent',
-                },
-              ]}
-            />
+            <View>
+              {/* Subject */}
+              <Text style={[styles.label, { color: colors.white }]}>Question for Support</Text>
+              <TextInput
+                value={subject}
+                onChangeText={setSubject}
+                placeholder="Type your question"
+                placeholderTextColor="rgba(255,255,255,0.6)"
+                style={[
+                  styles.input,
+                  {
+                    backgroundColor: colors.bgBox,
+                    color: colors.white,
+                    borderColor: 'transparent',
+                  },
+                ]}
+              />
 
-            {/* Email */}
-            <Text style={[styles.label, { color: colors.white }]}>Email</Text>
-            <TextInput
-              value={email}
-              onChangeText={setEmail}
-              placeholder="you@example.com"
-              keyboardType="email-address"
-              autoCapitalize="none"
-              autoCorrect={false}
-              placeholderTextColor="rgba(255,255,255,0.6)"
-              style={[
-                styles.input,
-                {
-                  backgroundColor: colors.bgBox,
-                  color: colors.white,
-                  borderColor: 'transparent',
-                },
-              ]}
-            />
+              {/* Email */}
+              <Text style={[styles.label, { color: colors.white }]}>Email</Text>
+              <TextInput
+                value={email}
+                onChangeText={setEmail}
+                placeholder="you@example.com"
+                keyboardType="email-address"
+                autoCapitalize="none"
+                autoCorrect={false}
+                editable={!user?.email} 
+                placeholderTextColor="rgba(255,255,255,0.6)"
+                style={[
+                  styles.input,
+                  {
+                    backgroundColor: colors.bgBox,
+                    color: user?.email ? `${colors.white}80` : colors.white,
+                    borderColor: 'transparent',
+                  },
+                ]}
+              />
 
-            {/* Message */}
-            <Text style={[styles.label, { color: colors.white }]}>Text</Text>
-            <TextInput
-              value={message}
-              onChangeText={setMessage}
-              placeholder="Write your message…"
-              placeholderTextColor="rgba(255,255,255,0.6)"
-              multiline
-              textAlignVertical="top"
-              style={[
-                styles.textArea,
-                {
-                  backgroundColor: colors.bgBox,
-                  color: colors.white,
-                  borderColor: 'transparent',
-                },
-              ]}
-            />
+              {/* Message */}
+              <Text style={[styles.label, { color: colors.white }]}>Message</Text>
+              <TextInput
+                value={message}
+                onChangeText={setMessage}
+                placeholder="Write your message…"
+                placeholderTextColor="rgba(255,255,255,0.6)"
+                multiline
+                textAlignVertical="top"
+                style={[
+                  styles.textArea,
+                  {
+                    backgroundColor: colors.bgBox,
+                    color: colors.white,
+                    borderColor: 'transparent',
+                  },
+                ]}
+              />
+            </View>
 
-                {/* Footer pinned to bottom (outside KAV) */}
-        <View style={styles.footer}>
-          <TouchableOpacity activeOpacity={0.85} style={{ width: '100%' }} onPress={onSend}>
-            <GradientBox
-              colors={[colors.black, colors.bgBox]}
-              style={[styles.actionBtn, { borderWidth: 1.5, borderColor: colors.primary }]}
-            >
-              <Text style={styles.actionText}>Send</Text>
-            </GradientBox>
-          </TouchableOpacity>
-        </View>
+            {/* Footer pinned to bottom */}
+            <View style={styles.footer}>
+              <TouchableOpacity
+                activeOpacity={0.85}
+                style={{ width: '100%' }}
+                onPress={onSend}
+                disabled={isSending} // Disable button while sending
+              >
+                <GradientBox
+                  colors={[colors.black, colors.bgBox]}
+                  style={[styles.actionBtn, { borderWidth: 1.5, borderColor: colors.primary }]}
+                >
+                  {isSending ? (
+                    <ActivityIndicator color={colors.white} />
+                  ) : (
+                    <Text style={styles.actionText}>Send</Text>
+                  )}
+                </GradientBox>
+              </TouchableOpacity>
+            </View>
           </ScrollView>
         </KeyboardAvoidingView>
 
-    
       </SafeAreaView>
     </ImageBackground>
   );
@@ -160,7 +200,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: Platform.select({ ios: 0, android: 10 }),
   },
-
   header: {
     height: 56,
     justifyContent: 'center',
@@ -184,11 +223,10 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
     textTransform: 'capitalize',
   },
-
   scrollInner: {
-    paddingBottom: 20,
+    flexGrow: 1,
+    justifyContent: 'space-between',
   },
-
   label: {
     fontFamily: Fonts.aeonikRegular,
     fontSize: 14,
@@ -196,7 +234,6 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     marginTop: 16,
   },
-
   input: {
     height: 48,
     borderRadius: 14,
@@ -205,7 +242,6 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.aeonikRegular,
     fontSize: 14,
   },
-
   textArea: {
     minHeight: 120,
     borderRadius: 14,
@@ -215,12 +251,10 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.aeonikRegular,
     fontSize: 14,
   },
-
   footer: {
     paddingTop: 40,
     paddingBottom: Platform.select({ ios: 8, android: 28 }),
   },
-
   actionBtn: {
     height: 56,
     width: '100%',
@@ -235,3 +269,4 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.aeonikRegular,
   },
 });
+

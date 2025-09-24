@@ -95,7 +95,7 @@ interface AuthState {
   ) => Promise<boolean>;
    fetchCurrentUser: () => Promise<boolean>; 
   checkAuthStatus: () => Promise<void>;
-   deleteAccount: () => Promise<boolean>; 
+ deleteAccount: (reason_for_deletion: string, other_reason?: string) => Promise<boolean>; 
 
     uploadProfilePicture: (image: {
     uri: string;
@@ -108,6 +108,12 @@ interface AuthState {
     currentPassword: string,
     newPassword: string,
     confirmPassword: string,
+  ) => Promise<boolean>;
+
+  submitSupportTicket: (
+    question_for_support: string,
+    email: string,
+    message: string,
   ) => Promise<boolean>;
 }
 
@@ -142,7 +148,7 @@ login: async (email, password, deviceToken) => {
     const user = response.data?.user;
 
     if (token) {
-      await AsyncStorage.setItem('auth_token', token);
+      await AsyncStorage.setItem('x-auth-token', token);
       await AsyncStorage.setItem('isLoggedIn', 'true');
       await AsyncStorage.setItem('user', JSON.stringify(user));
 
@@ -174,7 +180,7 @@ login: async (email, password, deviceToken) => {
 fetchCurrentUser: async () => {
   try {
     // 1. Get token from storage, as this often runs on app start
-    const token = await AsyncStorage.getItem('auth_token');
+    const token = await AsyncStorage.getItem('x-auth-token');
 
     if (!token) {
 
@@ -256,7 +262,7 @@ fetchCurrentUser: async () => {
   // --- LOGOUT ---
   logout: async () => {
     try {
-      await AsyncStorage.removeItem('auth_token');
+      await AsyncStorage.removeItem('x-auth-token');
       await AsyncStorage.removeItem('isLoggedIn');
       await AsyncStorage.removeItem('user');
       set({ isLoggedIn: false, token: null, user: null });
@@ -378,21 +384,27 @@ checkAuthStatus: async () => {
   },
 
    // --- DELETE ACCOUNT ---
-  deleteAccount: async (): Promise<boolean> => {
+  deleteAccount: async (reason_for_deletion: string, other_reason?: string): Promise<boolean> => {
     try {
-      const token = get().token || (await AsyncStorage.getItem('auth_token'));
+      const token = get().token || (await AsyncStorage.getItem('x-auth-token'));
 
       if (!token) {
         Alert.alert('Error', 'No authentication token found. Please log in.');
         return false;
       }
 
-      const response = await axios.delete(
+      const body = {
+        reason_for_deletion,
+        other_reason: other_reason || '',
+      };
+
+      const response = await axios.post( 
         `${API_BASEURL}/user/deleteaccount`,
+        body,
         {
           headers: {
             'x-auth-token': token,
-            'Content-Type': 'application/json', 
+            'Content-Type': 'application/json',
           },
         },
       );
@@ -402,7 +414,7 @@ checkAuthStatus: async () => {
       if (response.data && response.data.success) {
         Alert.alert('Success', 'Your account has been successfully deleted.');
         // After deleting the account, perform a logout
-        await get().logout(); 
+        await get().logout();
         return true;
       } else {
         // This else block might be hit if success is false but no error was thrown by axios
@@ -574,4 +586,46 @@ updatePassword: async (currentPassword, newPassword, confirmPassword) => {
     return false;
   }
 },
+  // --- NEW FUNCTION IMPLEMENTATION ---
+  submitSupportTicket: async (question_for_support, email, message) => {
+    try {
+        const token = get().token || (await AsyncStorage.getItem('x-auth-token'));
+        if (!token) {
+            Alert.alert('Error', 'Authentication required. Please log in.');
+            return false;
+        }
+
+        const response = await axios.post(
+            `${API_BASEURL}/user/support`,
+            {
+                question_for_support,
+                email,
+                message,
+            },
+            {
+                headers: {
+                    'x-auth-token': token,
+                    'Content-Type': 'application/json',
+                },
+            },
+        );
+
+        console.log('SUPPORT TICKET SUCCESS:', response.data);
+
+        if (response.data && response.data.success) {
+            Alert.alert('Success', 'Your support request has been submitted successfully.');
+            return true;
+        } else {
+            throw new Error(response.data.message || 'Failed to submit support ticket.');
+        }
+    } catch (error: any) {
+        console.log(
+            'SUPPORT TICKET ERROR:',
+            error.response?.data?.message || error.message,
+        );
+        const msg = error?.response?.data?.message || 'Failed to submit your request. Please try again.';
+        Alert.alert('Error', msg);
+        return false;
+    }
+  },
 }));

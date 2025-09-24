@@ -5,7 +5,7 @@ export type AppStackParamList = {
   AskQuestionTarotScreen:undefined;
   TarotCardDetail: { userQuestion: string };
     AskQuestionAstrologyScreen:undefined;
-    AstrologyCardDetail:undefined;
+    AstrologyCardDetail:{userQuestion:string};
    
     AskQuestionCariusScreen:undefined;
     CaurisCardDetail:undefined;
@@ -15,6 +15,8 @@ export type AppStackParamList = {
     RitualTipScreen:undefined;
     RecentReadingsScreen:undefined;
     
+    TarotReadingHistoryDetail:{readingItem:any};
+    AstrologyHistoryDetail:{horoscopeItem:any}
   DeleteAccount: undefined;
     SupportScreen: undefined;
       EditProfile: undefined;
