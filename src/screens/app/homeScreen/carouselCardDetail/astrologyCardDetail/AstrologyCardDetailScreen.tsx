@@ -123,6 +123,7 @@ const handleSave = async () => {
       
       // Yahan userQuestion ko as a fourth argument bhejein
       await saveHoroscope(selectedSign, dateISO, horoscope, userQuestion);
+        navigation.navigate('MainTabs')
     }
   };
   return (

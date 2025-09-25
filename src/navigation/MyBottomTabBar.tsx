@@ -15,7 +15,8 @@ import GradientBox from '../components/GradientBox';
 import HomeIcon from '../assets/icons/homeIcon.png';
 import DivineIcon from '../assets/icons/divineIcon.png';
 import LibraryIcon from '../assets/icons/libraryIcon.png';
-import ProfileIcon from '../assets/icons/ProfileIcon.png';
+import ChatIcon from '../assets/icons/chatIcon.png';
+import { useUIStore } from '../store/useUiStore';
 
 const getIcon = (routeName: string): ImageSourcePropType => {
   switch (routeName) {
@@ -25,8 +26,8 @@ const getIcon = (routeName: string): ImageSourcePropType => {
       return DivineIcon;
     case 'Library':
       return LibraryIcon;
-    case 'Profile':
-      return ProfileIcon;
+    case 'Chat':
+      return ChatIcon;
     default:
       return HomeIcon;
   }
@@ -39,7 +40,9 @@ export const MyBottomTabBar = ({
 }: BottomTabBarProps) => {
   const theme = useThemeStore(state => state.theme);
   const colors = theme.colors;
+  const isKeyboardVisible = useUIStore(state => state.isKeyboardVisible);
 
+  if (isKeyboardVisible) return null;
   return (
     <GradientBox
       colors={[colors.black, colors.bgBox]} 

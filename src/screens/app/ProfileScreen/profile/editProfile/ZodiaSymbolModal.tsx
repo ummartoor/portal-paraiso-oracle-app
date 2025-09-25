@@ -24,8 +24,8 @@ interface ZodiacSymbolModalProps {
 }
 
 const ZODIACS: Zodiac[] = [
-  { key: "aries", name: "Aries", icon: require("../../../../../assets/icons/aries.png") },
-  { key: "taurus", name: "Taurus", icon: require("../../../../../assets/icons/taurus.png") },
+  { key: "aries", name: "Aries", icon: require("../../../../../assets/icons/leo.png") },
+  { key: "taurus", name: "Taurus", icon: require("../../../../../assets/icons/cancer.png") },
   { key: "gemini", name: "Gemini", icon: require("../../../../../assets/icons/gemini.png") },
   { key: "cancer", name: "Cancer", icon: require("../../../../../assets/icons/cancer.png") },
   { key: "leo", name: "Leo", icon: require("../../../../../assets/icons/leo.png") },

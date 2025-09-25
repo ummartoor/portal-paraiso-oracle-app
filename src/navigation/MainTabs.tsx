@@ -7,8 +7,9 @@ import { MyBottomTabBar } from './MyBottomTabBar'
 
 import DivineScreen from '../screens/app/divineScreen/DivineScreen'
 import LibraryScreen from '../screens/app/libraryScreen/LibraryScreen'
-import ProfileScreen from '../screens/app/ProfileScreen/ProfileScreen'
+
 import HomeScreen from '../screens/app/homeScreen/HomeScreen'
+import ChatScreen from '../screens/app/chatScreen/ChatScreen'
 
 
 
@@ -23,7 +24,7 @@ const MainTabs = () => {
       <Tab.Screen name='Home' component={HomeScreen} />
            <Tab.Screen name='Divine' component={DivineScreen} />
             <Tab.Screen name='Library' component={LibraryScreen} />
-               <Tab.Screen name='Profile' component={ProfileScreen} />
+               <Tab.Screen name='Chat' component={ChatScreen} />
  
 
     </Tab.Navigator>

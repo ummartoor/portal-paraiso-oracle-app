@@ -1,4 +1,3 @@
-
 // import { StatusBar, StyleSheet, useColorScheme, View ,Text} from 'react-native';
 // import {
 //   SafeAreaProvider,
@@ -16,35 +15,36 @@
 //   );
 // }
 
-
-
-
-
 // export default App;
 
 import { NewAppScreen } from '@react-native/new-app-screen';
 
-import { StatusBar, StyleSheet, useColorScheme, View,Text } from 'react-native';
+import {
+  StatusBar,
+  StyleSheet,
+  useColorScheme,
+  View,
+  Text,
+} from 'react-native';
 
 import RouteNavigator from './src/navigation/RouteNavigator';
 import { NavigationContainer } from '@react-navigation/native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import KeyboardVisibilityProvider from './src/components/KeyboardVisiblilityProvider';
 
 function App() {
-
-
   return (
-
     <SafeAreaProvider>
       <GestureHandlerRootView>
-    <NavigationContainer>
-       <RouteNavigator />
-       </NavigationContainer>
-       </GestureHandlerRootView>
-       </SafeAreaProvider>
-     
-
+        <KeyboardVisibilityProvider>
+          <NavigationContainer>
+            <RouteNavigator />
+          </NavigationContainer>
+      
+        </KeyboardVisibilityProvider>
+      </GestureHandlerRootView>
+    </SafeAreaProvider>
   );
 }
 

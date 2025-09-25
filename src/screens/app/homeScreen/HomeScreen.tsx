@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useState } from 'react';
 import {
   View,
   Text,
@@ -9,17 +9,18 @@ import {
   Dimensions,
   ImageBackground,
   ScrollView,
-} from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { Fonts } from "../../../constants/fonts";
-import { useThemeStore } from "../../../store/useThemeStore";
-import { useFocusEffect, useNavigation } from "@react-navigation/native";
-import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { AppStackParamList } from "../../../navigation/routeTypes";
-import CarouselCard, { CardItem } from "./CarouselCards";
-import { useAuthStore } from "../../../store/useAuthStore";
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Fonts } from '../../../constants/fonts';
+import { useThemeStore } from '../../../store/useThemeStore';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { AppStackParamList } from '../../../navigation/routeTypes';
+import CarouselCard, { CardItem } from './CarouselCards';
+import { useAuthStore } from '../../../store/useAuthStore';
 
-const { height: SCREEN_HEIGHT, width: SCREEN_WIDTH } = Dimensions.get("screen");
+
+const { height: SCREEN_HEIGHT, width: SCREEN_WIDTH } = Dimensions.get('screen');
 
 type CardBoxProps = {
   label: string;
@@ -28,8 +29,7 @@ type CardBoxProps = {
 };
 
 const CardBox: React.FC<CardBoxProps> = ({ label, icon, onPress }) => {
-  const { colors } = useThemeStore((s) => s.theme);
-
+  const { colors } = useThemeStore(s => s.theme);
 
   return (
     <TouchableOpacity
@@ -43,7 +43,10 @@ const CardBox: React.FC<CardBoxProps> = ({ label, icon, onPress }) => {
       ]}
     >
       {/* Left: Text */}
-      <Text style={[styles.cardBoxText, { color: colors.white }]} numberOfLines={1}>
+      <Text
+        style={[styles.cardBoxText, { color: colors.white }]}
+        numberOfLines={1}
+      >
         {label}
       </Text>
 
@@ -54,13 +57,14 @@ const CardBox: React.FC<CardBoxProps> = ({ label, icon, onPress }) => {
 };
 
 const HomeScreen: React.FC = () => {
-  const theme = useThemeStore((state) => state.theme);
+  const theme = useThemeStore(state => state.theme);
+
   const { colors } = theme;
   const { user, fetchCurrentUser } = useAuthStore();
   useFocusEffect(
     useCallback(() => {
       fetchCurrentUser();
-    }, [])
+    }, []),
   );
   const navigation =
     useNavigation<NativeStackNavigationProp<AppStackParamList>>();
@@ -69,47 +73,48 @@ const HomeScreen: React.FC = () => {
     if (item.route) {
       navigation.navigate(item.route);
     } else {
-      console.warn("No route defined for card:", item.id);
+      console.warn('No route defined for card:', item.id);
     }
   };
 
   return (
     <ImageBackground
-      source={require("../../../assets/images/backgroundImage.png")}
+      source={require('../../../assets/images/backgroundImage.png')}
       style={[styles.bgImage, { height: SCREEN_HEIGHT, width: SCREEN_WIDTH }]}
       resizeMode="cover"
     >
       <SafeAreaView style={styles.container}>
-        <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
+        <StatusBar
+          barStyle="light-content"
+          backgroundColor="transparent"
+          translucent
+        />
         <ScrollView
           contentContainerStyle={{ paddingBottom: 90 }}
           showsVerticalScrollIndicator={false}
         >
           {/* Header */}
           <View style={styles.headerRow}>
+        
+<TouchableOpacity
+    style={styles.profileWrap}
+    activeOpacity={0.8}
+    onPress={() => navigation.navigate('Profile')} 
+>
+    <Image
+        style={[styles.profileImg, { borderColor: colors.white }]}
+        source={
+            user?.profile_image?.url
+                ? { uri: user.profile_image.url }
+                : require('../../../assets/icons/userprofile.png')
+        }
+    />
+    <View style={[styles.onlineDot, { borderColor: colors.white }]} />
+</TouchableOpacity>
+       
             <TouchableOpacity style={styles.headerIconBtn}>
               <Image
-                source={require("../../../assets/icons/menuIcon.png")}
-                style={styles.headerIcon}
-                resizeMode="contain"
-              />
-            </TouchableOpacity>
-            <View style={styles.profileWrap}>
-              <Image
-                    style={[styles.profileImg, { borderColor: colors.white }]}
-                source={
-                  // Check karein ke profile_image object ke andar URL mojood hai
-                  user?.profile_image?.url 
-                    ? { uri: user.profile_image.url } // Yahan .url ka istemal karein
-                    : require('../../../assets/icons/userprofile.png')
-                }
-              />
-           
-              <View style={[styles.onlineDot, { borderColor: colors.white }]} />
-            </View>
-            <TouchableOpacity style={styles.headerIconBtn}>
-              <Image
-                source={require("../../../assets/icons/notificationIcon.png")}
+                source={require('../../../assets/icons/notificationIcon.png')}
                 style={styles.headerIcon}
                 resizeMode="contain"
               />
@@ -118,10 +123,16 @@ const HomeScreen: React.FC = () => {
 
           {/* Titles */}
           <View style={styles.titlesBox}>
-            <Text style={[styles.title, { color: colors.white }]} numberOfLines={1}>
+            <Text
+              style={[styles.title, { color: colors.white }]}
+              numberOfLines={1}
+            >
               PORTAL PARAISO
             </Text>
-            <Text style={[styles.subtitle, { color: colors.primary }]} numberOfLines={2}>
+            <Text
+              style={[styles.subtitle, { color: colors.primary }]}
+              numberOfLines={2}
+            >
               Choose your path to divine guidance
             </Text>
           </View>
@@ -136,18 +147,21 @@ const HomeScreen: React.FC = () => {
             {/* First Box */}
             <CardBox
               label="Daily Wisdom Card"
-              icon={require("../../../assets/icons/dailyWisdomIcon.png")}
-              onPress={() => navigation.navigate("DailyWisdomCardScreen")}
+              icon={require('../../../assets/icons/dailyWisdomIcon.png')}
+              onPress={() => navigation.navigate('DailyWisdomCardScreen')}
             />
 
             {/* Second Box */}
             <CardBox
               label="Ritual Tip"
-              icon={require("../../../assets/icons/RitualTipIcon.png")}
-              onPress={() => navigation.navigate("RitualTipScreen")}
+              icon={require('../../../assets/icons/RitualTipIcon.png')}
+              onPress={() => navigation.navigate('RitualTipScreen')}
             />
           </View>
         </ScrollView>
+      
+
+       
       </SafeAreaView>
     </ImageBackground>
   );
@@ -162,58 +176,58 @@ const styles = StyleSheet.create({
     paddingTop: 14,
   },
   headerRow: {
-    paddingHorizontal: 20,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
+    paddingHorizontal: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
   headerIconBtn: {
     height: 44,
     width: 44,
-    alignItems: "center",
-    justifyContent: "center",
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   headerIcon: { height: 24, width: 24 },
   profileWrap: {
     height: 60,
     width: 60,
-    alignItems: "center",
-    justifyContent: "center",
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   profileImg: {
-    height: 60,
-    width: 60,
+    height: 50,
+    width: 50,
     borderRadius: 30,
     borderWidth: 2,
   },
   onlineDot: {
-    position: "absolute",
-    bottom: 2,
-    right: 2,
+    position: 'absolute',
+    bottom:4,
+    right: 7,
     height: 12,
     width: 12,
     borderRadius: 6,
-    backgroundColor: "#27C93F",
+    backgroundColor: '#27C93F',
     borderWidth: 2,
   },
   titlesBox: {
     marginTop: 21,
-    alignItems: "center",
+    alignItems: 'center',
     paddingHorizontal: 20,
   },
   title: {
     fontSize: 24,
     lineHeight: 26,
     letterSpacing: 1.2,
-    textTransform: "uppercase",
-    textAlign: "center",
+    textTransform: 'uppercase',
+    textAlign: 'center',
     fontFamily: Fonts.cormorantSCBold,
   },
   subtitle: {
     marginTop: 6,
     fontSize: 14,
     lineHeight: 16,
-    textAlign: "center",
+    textAlign: 'center',
     fontFamily: Fonts.aeonikRegular,
   },
   cardBoxSection: {
@@ -224,19 +238,29 @@ const styles = StyleSheet.create({
   cardBox: {
     height: 70,
     borderRadius: 25,
-    justifyContent: "space-between",
-    flexDirection: "row",
-    alignItems: "center",
+    justifyContent: 'space-between',
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: 20,
   },
   cardBoxText: {
     fontSize: 20,
     fontFamily: Fonts.cormorantSCBold,
     letterSpacing: 0.4,
-    textTransform: "capitalize",
+    textTransform: 'capitalize',
   },
   cardBoxIcon: {
-    height:50,
+    height: 50,
     width: 50,
+  },
+
+  bottomAvatarButton: {
+    position: 'absolute',
+    bottom: 65,
+    right: 14,
+  },
+  bottomAvatarImage: {
+    height: 75,
+    width: 75,
   },
 });

@@ -31,7 +31,8 @@ export type BottomTabBarParamList = {
   Home: undefined;
   Divine: undefined;
   Library: undefined;
-  Profile: undefined;
+ 
+  Chat:undefined;
 };
 
 export type AuthStackParamsList = {
