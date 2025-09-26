@@ -115,11 +115,11 @@ const TarotCardDetailScreen: React.FC = () => {
   const selectedCardsScrollViewRef = useRef<ScrollView>(null);
 
   const handleSaveReading = async () => {
-    // Agar pehle se save ho raha hai to kuch na karein
+   
     if (isSavingLoading) return;
 
     await saveReading();
-    // Success/Error alert store khud handle kar lega
+
     navigation.navigate('MainTabs')
   };
   const availableDeck = useMemo(() => {

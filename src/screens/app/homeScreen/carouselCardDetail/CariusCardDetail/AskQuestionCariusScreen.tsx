@@ -40,7 +40,7 @@ const AskQuestionCariusScreen= () => {
       );
       return;
     }
-    navigation.navigate('CaurisCardDetail');
+     navigation.navigate('CaurisCardDetail', { userQuestion: question });
   };
 
   return (

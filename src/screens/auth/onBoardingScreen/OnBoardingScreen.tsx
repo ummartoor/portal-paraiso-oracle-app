@@ -12,6 +12,7 @@ import {
   NativeSyntheticEvent,
   NativeScrollEvent,
   Image, // --- ADDED ---
+   Vibration,
 } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import Video from "react-native-video";
@@ -172,7 +173,10 @@ const OnBoardingScreen: React.FC = () => {
           {/* Button */}
           <View style={styles.footer}>
             <TouchableOpacity
-              onPress={() => navigation.navigate("WelcomeScreen")}
+              onPress={() =>{  Vibration.vibrate(500)
+              navigation.navigate("WelcomeScreen")
+            }
+            }
               activeOpacity={0.8}
               style={{ width: "100%" }}
             >

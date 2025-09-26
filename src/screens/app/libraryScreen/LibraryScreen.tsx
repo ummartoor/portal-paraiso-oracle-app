@@ -14,6 +14,7 @@ import { useThemeStore } from '../../../store/useThemeStore';
 import GradientBox from '../../../components/GradientBox';
 import TarotHistoryList from './TarotHistoryList';
 import AstrologyHistoryList from './AstrologyHistoryList';
+import BuziosHistoryList from './BuziosHistoryList';
 
 const tabs = ['Tarot', 'Astrology', 'Buzious'];
 
@@ -35,7 +36,7 @@ const LibraryScreen: React.FC = () => {
       case 'Astrology':
         return <AstrologyHistoryList/>;
       case 'Buzious':
-        return <PlaceholderComponent title="Buzious" />;
+        return <BuziosHistoryList/>;
       default:
         return null;
     }

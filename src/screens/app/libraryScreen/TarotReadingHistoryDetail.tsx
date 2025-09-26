@@ -53,7 +53,7 @@ const TarotReadingHistoryDetail: React.FC = () => {
 
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
-
+console.log("readingItem", readingItem)
   // --- TTS ---
   useEffect(() => {
     Tts.setDefaultLanguage('en-US').catch(() => {});

@@ -8,7 +8,7 @@ export type AppStackParamList = {
     AstrologyCardDetail:{userQuestion:string};
    
     AskQuestionCariusScreen:undefined;
-    CaurisCardDetail:undefined;
+    CaurisCardDetail:{userQuestion:string};
 
     DailyWisdomCardScreen:undefined;
     FeaturedOrishaScreen:undefined;
@@ -17,6 +17,7 @@ export type AppStackParamList = {
     
     TarotReadingHistoryDetail:{readingItem:any};
     AstrologyHistoryDetail:{horoscopeItem:any}
+    BuziosHistoryDetail:{history_uid: string };
   DeleteAccount: undefined;
     SupportScreen: undefined;
       EditProfile: undefined;

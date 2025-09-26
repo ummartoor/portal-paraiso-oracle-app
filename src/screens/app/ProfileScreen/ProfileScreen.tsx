@@ -27,21 +27,22 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const H_PADDING = 20;
 const CARD_GAP = 12;
 const CARD_WIDTH = (SCREEN_WIDTH - H_PADDING * 2 - CARD_GAP) / 2;
+type Zodiac = { key: string; name: string; icon: any };
 
-// --- ADDED: Data array for all Zodiac signs ---
-const ZODIACS: { key: string; name: string; icon: ImageSourcePropType }[] = [
-  { key: 'aries', name: 'Aries', icon: require('../../../assets/icons/aries.png') },
-  { key: 'taurus', name: 'Taurus', icon: require('../../../assets/icons/taurus.png') },
-  { key: 'gemini', name: 'Gemini', icon: require('../../../assets/icons/gemini.png') },
-  { key: 'cancer', name: 'Cancer', icon: require('../../../assets/icons/cancer.png') },
-  { key: 'leo', name: 'Leo', icon: require('../../../assets/icons/leo.png') },
-  { key: 'virgo', name: 'Virgo', icon: require('../../../assets/icons/virgo.png') },
-  { key: 'libra', name: 'Libra', icon: require('../../../assets/icons/libra.png') },
-  { key: 'scorpio', name: 'Scorpio', icon: require('../../../assets/icons/scorpio.png') },
-  { key: 'sagittarius', name: 'Sagittarius', icon: require('../../../assets/icons/sagittarius.png') },
-  { key: 'capricorn', name: 'Capricorn', icon: require('../../../assets/icons/capricorn.png') },
-  { key: 'aquarius', name: 'Aquarius', icon: require('../../../assets/icons/aquarius.png') },
-  { key: 'pisces', name: 'Pisces', icon: require('../../../assets/icons/pisces.png') },
+
+const ZODIACS: Zodiac[] = [
+  { key: "aries", name: "Aries", icon: require("../../../assets/icons/AriesIcon.png") },
+  { key: "taurus", name: "Taurus", icon: require("../../../assets/icons/TaurusIcon.png") },
+  { key: "gemini", name: "Gemini", icon: require("../../../assets/icons/GeminiIcon.png") },
+  { key: "cancer", name: "Cancer", icon: require("../../../assets/icons/CancerIcon.png") },
+  { key: "leo", name: "Leo", icon: require("../../../assets/icons/leoIcon.png") },
+  { key: "virgo", name: "Virgo", icon: require("../../../assets/icons/VirgoIcon.png") },
+  { key: "libra", name: "Libra", icon: require("../../../assets/icons/libraIcon.png") },
+  { key: "scorpio", name: "Scorpio", icon: require("../../../assets/icons/ScorpioIcon.png") },
+  { key: "sagittarius", name: "Sagittarius", icon: require("../../../assets/icons/SagittariusIcon.png")},
+  { key: "capricorn", name: "Capricorn", icon: require("../../../assets/icons/CapricornIcon.png") },
+  { key: "aquarius", name: "Aquarius", icon: require("../../../assets/icons/AquariusIcon.png") },
+  { key: "pisces", name: "Pisces", icon: require("../../../assets/icons/PiscesIcon.png") },
 ];
 
 // Helper function to format the date string
@@ -86,7 +87,7 @@ console.log('Checking User Profile Image URL:', user?.profile_image);
           style={{ flex: 1 }}
           contentContainerStyle={{
             paddingTop: 10,
-            paddingBottom: insets.bottom + 70,
+            paddingBottom: insets.bottom + 10,
             paddingHorizontal: H_PADDING,
           }}
           showsVerticalScrollIndicator={false}
