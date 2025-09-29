@@ -14,7 +14,7 @@ import { Fonts } from '../../../constants/fonts';
 import GradientBox from '../../../components/GradientBox';
 import { useThemeStore } from '../../../store/useThemeStore';
 
-// Buzios store aur uski types import karein
+
 import {
   useBuziosStore,
   BuziosHistoryItem,
@@ -26,7 +26,7 @@ const BuziosHistoryList: React.FC = () => {
   const navigation = useNavigation<NativeStackNavigationProp<AppStackParamList>>();
   const { colors } = useThemeStore(s => s.theme);
 
-  // Store se Buzios history functions aur state lein
+  // Store 
   const { history, isLoadingHistory, getBuziosHistory } = useBuziosStore(
     useShallow((state) => ({
       history: state.history,
@@ -35,7 +35,7 @@ const BuziosHistoryList: React.FC = () => {
     }))
   );
 
-  // Screen focus per history fetch karein
+
   useFocusEffect(
     React.useCallback(() => {
       getBuziosHistory();

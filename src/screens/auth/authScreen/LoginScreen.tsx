@@ -28,6 +28,7 @@ import { useNavigation } from '@react-navigation/native';
 import { useAuthStore } from '../../../store/useAuthStore';
 import GradientBox from '../../../components/GradientBox';
 import { Fonts } from '../../../constants/fonts';
+import { useTranslation } from 'react-i18next';
 
 const { height: SCREEN_HEIGHT, width: SCREEN_WIDTH } = Dimensions.get('screen');
 
@@ -36,14 +37,14 @@ const LoginScreen = () => {
   const colors = theme.colors;
   const [showPassword, setShowPassword] = useState(false);
   const login = useAuthStore(state => state.login); // Your login function from store
-
+const { t } = useTranslation();
   const navigation =
     useNavigation<NativeStackNavigationProp<AuthStackParamsList>>();
 
-  const validationSchema = Yup.object().shape({
-    email: Yup.string().email('Invalid email').required('Email is required'),
-    password: Yup.string().required('Password is required'),
-  });
+const validationSchema = Yup.object().shape({
+  email: Yup.string().email(t('validation_email_invalid')).required(t('validation_email_required')),
+  password: Yup.string().required(t('validation_password_required')),
+});
 
   return (
     <ImageBackground
@@ -69,10 +70,10 @@ const LoginScreen = () => {
             keyboardShouldPersistTaps="handled"
           >
             <Text style={[styles.heading, { color: colors.white }]}>
-              Sign in
+                   {t('login_header')}
             </Text>
             <Text style={[styles.subheading, { color: colors.primary }]}>
-              Welcome back Portal Paraiso
+               {t('login_subheader')}
             </Text>
 
             <Formik
@@ -106,10 +107,10 @@ const LoginScreen = () => {
               }) => (
                 <>
                   <Text style={[styles.label, { color: colors.white }]}>
-                    Email
+                   {t('email_label')}
                   </Text>
                   <TextInput
-                    placeholder="Email"
+                     placeholder={t('email_placeholder')}
                     placeholderTextColor="#ccc"
                     onChangeText={handleChange('email')}
                     onBlur={handleBlur('email')}
@@ -126,7 +127,7 @@ const LoginScreen = () => {
                   )}
 
                   <Text style={[styles.label, { color: colors.white }]}>
-                    Password
+            {t('password_label')}
                   </Text>
                   <View
                     style={[
@@ -136,7 +137,7 @@ const LoginScreen = () => {
                     ]}
                   >
                     <TextInput
-                      placeholder="Password"
+                     placeholder={t('password_placeholder')}
                       placeholderTextColor="#ccc"
                       secureTextEntry={!showPassword}
                       onChangeText={handleChange('password')}
@@ -165,7 +166,7 @@ const LoginScreen = () => {
                     style={styles.forgotContainer}
                     onPress={() => navigation.navigate('ForgotPasswordScreen')}
                   >
-                    <Text style={styles.forgotText}>Forgot Password?</Text>
+                    <Text style={styles.forgotText}>{t('forgot_password_link')}</Text>
                   </TouchableOpacity>
 
                   {/* --- CHANGE 2: Updated Button --- */}
@@ -185,7 +186,7 @@ const LoginScreen = () => {
                       {isSubmitting ? (
                         <ActivityIndicator color={colors.primary} />
                       ) : (
-                        <Text style={styles.signinText}>Sign in</Text>
+                        <Text style={styles.signinText}>{t('signin_button')}</Text>
                       )}
                     </GradientBox>
                   </TouchableOpacity>
@@ -194,13 +195,13 @@ const LoginScreen = () => {
             </Formik>
 
             <View style={styles.footer}>
-              <Text style={styles.footerText}>Don’t have an account ?</Text>
+              <Text style={styles.footerText}>{t('dont_have_account')}</Text>
               <TouchableOpacity
                 onPress={() => navigation.navigate('SignUp')}
               >
                 <Text style={[styles.signupLink, { color: colors.primary }]}>
                   {' '}
-                  Sign up
+              {t('signup_link')}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -213,7 +214,7 @@ const LoginScreen = () => {
 
 export default LoginScreen;
 
-// Aap ke styles bilkul theek hain, unhein change karne ki zaroorat nahi
+
 const styles = StyleSheet.create({
   bgImage: {
     flex: 1,

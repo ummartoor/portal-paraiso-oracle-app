@@ -18,9 +18,9 @@ import { AuthStackParamsList } from '../../../navigation/routeTypes';
 import { useNavigation } from '@react-navigation/native';
 import GradientBox from '../../../components/GradientBox';
 import { Fonts } from '../../../constants/fonts';
-// --- UPDATED: useRegisterStore ko import karein ---
-import { useRegisterStore } from '../../../store/useRegisterStore'; 
 
+import { useRegisterStore } from '../../../store/useRegisterStore'; 
+import { useTranslation } from 'react-i18next';
 const { height: SCREEN_HEIGHT, width: SCREEN_WIDTH } = Dimensions.get('screen');
 
 const GenderScreen_1 = () => {
@@ -29,11 +29,12 @@ const GenderScreen_1 = () => {
   const navigation =
     useNavigation<NativeStackNavigationProp<AuthStackParamsList>>();
 
+     const { t } = useTranslation();
   const [selectedGender, setSelectedGender] = useState<string | null>(null);
   // --- ADDED: Local loading state ---
   const [isLoading, setIsLoading] = useState(false);
 
-  // --- UPDATED: useRegisterStore se function lein ---
+  // --- UPDATED: useRegisterStore  ---
   const { updateUserDetails } = useRegisterStore();
 
   const handleNext = async () => {
@@ -82,10 +83,10 @@ const GenderScreen_1 = () => {
 
         {/* Heading */}
         <Text style={[styles.heading, { color: colors.white }]}>
-          What's your gender?
+                {t('gender_header')}
         </Text>
         <Text style={[styles.subheading, { color: colors.primary }]}>
-          Gender reveals the balance of your masculine and feminine energy
+      {t('gender_subheader')}
         </Text>
 
         {/* Gender Options Centered */}
@@ -94,17 +95,17 @@ const GenderScreen_1 = () => {
             {[
               {
                 key: 'male',
-                label: 'Male',
+                label: t('gender_male'),
                 icon: require('../../../assets/icons/maleIcon.png'),
               },
               {
                 key: 'female',
-                label: 'Female',
+                label:  t('gender_female'),
                 icon: require('../../../assets/icons/femaleIcon.png'),
               },
               {
                 key: 'other',
-                label: 'Non Binary',
+                label: t('gender_non_binary'),
                 icon: require('../../../assets/icons/nonBinaryIcon.png'),
               },
             ].map(item => {
@@ -173,7 +174,7 @@ const GenderScreen_1 = () => {
               {isLoading ? (
                 <ActivityIndicator color={colors.primary} />
               ) : (
-                <Text style={styles.nextText}>Next</Text>
+                <Text style={styles.nextText}>{t('next_button')}</Text>
               )}
             </GradientBox>
           </TouchableOpacity>

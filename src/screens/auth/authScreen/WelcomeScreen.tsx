@@ -15,12 +15,13 @@ import { useThemeStore } from '../../../store/useThemeStore';
 import { Fonts } from '../../../constants/fonts';
 import GradientBox from '../../../components/GradientBox';
 
+import { useTranslation } from 'react-i18next';
 const WelcomeScreen: React.FC = () => {
   const theme = useThemeStore(state => state.theme);
   const { colors } = theme;
   const navigation =
     useNavigation<NativeStackNavigationProp<AuthStackParamsList>>();
-
+ const { t } = useTranslation();
   return (
     <ImageBackground
       source={require('../../../assets/images/welcomeImage.png')}
@@ -37,10 +38,10 @@ const WelcomeScreen: React.FC = () => {
         {/* Center Content */}
         <View style={styles.centerContent}>
           <Text style={[styles.title, { color: colors.white }]}>
-            Welcome to Portal{'\n'}Paraíso Oracle
+            {t('welcome_title')}
           </Text>
           <Text style={[styles.subtitle, { color: colors.primary }]}>
-            Choose your path to divine guidance
+         {t('welcome_subtitle')}
           </Text>
         </View>
 
@@ -57,7 +58,7 @@ const WelcomeScreen: React.FC = () => {
     style={[styles.button, { borderColor: colors.primary }]} 
   >
     <Text style={[styles.buttonText, { color: colors.white }]}>
-      Sign up
+  {t('signup_button')}
     </Text>
   </GradientBox>
 </TouchableOpacity>
@@ -73,7 +74,7 @@ const WelcomeScreen: React.FC = () => {
             ]}
           >
             <Text style={[styles.buttonText, { color: colors.white }]}>
-              Log in
+        {t('login_button')}
             </Text>
           </TouchableOpacity>
         </View>

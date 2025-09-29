@@ -19,7 +19,7 @@ import { Fonts } from '../../../constants/fonts';
 import DatePicker from 'react-native-date-picker';
 import GradientBox from '../../../components/GradientBox';
 import { useRegisterStore } from '../../../store/useRegisterStore'; // --- ADDED ---
-
+import { useTranslation } from 'react-i18next';
 const { height: SCREEN_HEIGHT, width: SCREEN_WIDTH } = Dimensions.get('screen');
 
 const TimeofBirthScreen_4 = () => {
@@ -27,7 +27,7 @@ const TimeofBirthScreen_4 = () => {
   const colors = theme.colors;
   const navigation =
     useNavigation<NativeStackNavigationProp<AuthStackParamsList>>();
-
+  const { t } = useTranslation();
   // Default time (08:00 AM)
   const [time, setTime] = useState(new Date(2000, 0, 1, 8, 0));
 
@@ -79,10 +79,10 @@ const TimeofBirthScreen_4 = () => {
 
         {/* Heading */}
         <Text style={[styles.heading, { color: colors.white }]}>
-          Time of Birth
+            {t('tob_header')}
         </Text>
         <Text style={[styles.subheading, { color: colors.primary }]}>
-          Please enter your time of birth
+            {t('tob_subheader')}
         </Text>
 
         {/* Time Picker inside bgBox */}
@@ -122,7 +122,7 @@ const TimeofBirthScreen_4 = () => {
               {isUpdating ? (
                 <ActivityIndicator color={colors.primary} />
               ) : (
-                <Text style={styles.nextText}>Next</Text>
+                <Text style={styles.nextText}>{t('next_button')}</Text>
               )}
             </GradientBox>
           </TouchableOpacity>

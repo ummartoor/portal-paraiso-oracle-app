@@ -1,0 +1,155 @@
+{
+  "onboarding1_title": "Discover New Worlds",
+  "onboarding1_subtitle": "Explore amazing content tailored for you.",
+  "onboarding2_title": "Connect with Friends",
+  "onboarding2_subtitle": "Share your favorite moments with others.",
+  "onboarding3_title": "Stay Entertained",
+  "onboarding3_subtitle": "Endless fun, just a swipe away.",
+  "getStartedButton": "Get Started",
+
+
+   "welcome_title": "Welcome to Portal\nParaíso Oracle",
+  "welcome_subtitle": "Choose your path to divine guidance",
+  "signup_button": "Sign up",
+  "login_button": "Log in",
+
+
+
+  "login_header": "Sign in",
+  "login_subheader": "Welcome back Portal Paraiso",
+  "forgot_password_link": "Forgot Password?",
+  "signin_button": "Sign in",
+  "dont_have_account": "Don’t have an account?",
+  "signup_link": "Sign up",
+
+
+
+  "forgot_password_header": "Forgot Password",
+  "forgot_password_subheader": "Enter the email associated with your account and we’ll send you a code.",
+  "continue_button": "Continue",
+  "back_to_footer": "Back to",
+  "signin_footer_link": "Sign In",
+
+
+
+  "otp_header": "OTP Verification",
+  "otp_subheader": "Enter the 6-digit code sent to your email.",
+  "otp_label": "Enter the OTP",
+  "resend_button": "Resend",
+  "alert_error_title": "Error",
+  "alert_otp_incomplete_message": "Please enter the complete 6-digit OTP.",
+
+
+
+
+"reset_password_header": "Reset Password",
+  "reset_password_subheader": "Set a new password for your account",
+  "new_password_label": "New Password",
+  "new_password_placeholder": "Enter new password",
+  "confirm_password_placeholder_2": "Confirm new password",
+  "login_footer_link": "Login",
+  "alert_email_missing_message": "User email is missing. Please restart the password reset process.",
+
+
+  
+
+  "signup_header": "Create an Account",
+  "signup_subheader": "Welcome to Portal Paraíso",
+  "name_label": "Name",
+  "name_placeholder": "Enter your name",
+  "email_label": "Email",
+  "email_placeholder": "Enter your email",
+  "password_label": "Password",
+  "password_placeholder": "Enter your password",
+  "confirm_password_label": "Confirm Password",
+  "confirm_password_placeholder": "Confirm your password",
+  "agree_with": "Agree with ",
+  "terms_and_conditions": "Terms & Conditions",
+  "create_account_button": "Create Account",
+  "already_have_account": "Already have an account?",
+  "login_link": "Log in",
+   "validation_name_required": "Name is required",
+  "validation_email_invalid": "Invalid email",
+  "validation_email_required": "Email is required",
+  "validation_password_required": "Password is required",
+  "validation_password_min": "Password must be at least 6 characters",
+  "validation_passwords_match": "Passwords must match",
+  "validation_confirm_password_required": "Confirm Password is required",
+  "validation_agree_required": "You must agree to Terms & Conditions",
+
+
+
+
+
+  "gender_header": "What's your gender?",
+  "gender_subheader": "Gender reveals the balance of your masculine and feminine energy",
+  "gender_male": "Male",
+  "gender_female": "Female",
+  "gender_non_binary": "Non Binary",
+  "next_button": "Next",
+  "alert_selection_required_title": "Selection Required",
+  "alert_selection_required_message": "Please select your gender to continue.",
+
+
+
+
+  "goals_header": "What are your goals?",
+  "goals_subheader": "Goals reveal the balance between your ambition and patience",
+  "goal_find_partner": "Find my perfect partner",
+  "goal_improve_relationship": "Improve current relationship",
+  "goal_understand_self": "Understand myself better",
+  "goal_become_happier": "Become happier",
+  "goal_personal_growth": "Foster personal growth",
+  "goal_love_compatibility": "Check love compatibility",
+  "goal_others": "Others",
+  "alert_at_least_one_goal_message": "Please select at least one goal to continue.",
+
+
+  "dob_header": "Date of Birth",
+  "dob_subheader": "Please enter your date of birth",
+
+
+
+
+  "tob_header": "Time of Birth",
+  "tob_subheader": "Please enter your time of birth",
+
+
+
+
+  "pob_header": "Place of Birth",
+  "pob_subheader": "Please enter your Place of birth",
+  "pob_placeholder": "Enter the place of birth",
+  "alert_input_required_title": "Input Required",
+  "alert_input_required_message_pob": "Please enter your place of birth.",
+
+
+
+  "relationship_header": "Your Relationship Status",
+  "relationship_subheader": "Select your relationship status?",
+  "status_single": "Single",
+  "status_relationship": "In a relationship",
+  "status_married": "Married",
+  "status_engaged": "Engaged",
+  "status_complicated": "Complicated",
+  "status_divorced": "Divorced",
+  "alert_relationship_status_message": "Please select your relationship status.",
+   "finish_button": "Finish",
+
+
+
+
+     "zodiac_aries": "Aries",
+  "zodiac_taurus": "Taurus",
+  "zodiac_gemini": "Gemini",
+  "zodiac_cancer": "Cancer",
+  "zodiac_leo": "Leo",
+  "zodiac_virgo": "Virgo",
+  "zodiac_libra": "Libra",
+  "zodiac_scorpio": "Scorpio",
+  "zodiac_sagittarius": "Sagittarius",
+  "zodiac_capricorn": "Capricorn",
+  "zodiac_aquarius": "Aquarius",
+  "zodiac_pisces": "Pisces"
+}
+

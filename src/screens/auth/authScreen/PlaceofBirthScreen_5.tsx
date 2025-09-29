@@ -21,7 +21,7 @@ import { useNavigation } from '@react-navigation/native';
 import { Fonts } from '../../../constants/fonts';
 import GradientBox from '../../../components/GradientBox';
 import { useRegisterStore } from '../../../store/useRegisterStore'; // --- ADDED ---
-
+import { useTranslation } from 'react-i18next';
 const { height: SCREEN_HEIGHT, width: SCREEN_WIDTH } = Dimensions.get('screen');
 
 const PlaceofBirthScreen_5 = () => {
@@ -29,7 +29,7 @@ const PlaceofBirthScreen_5 = () => {
   const colors = theme.colors;
   const navigation =
     useNavigation<NativeStackNavigationProp<AuthStackParamsList>>();
-
+ const { t } = useTranslation();
   const [place, setPlace] = useState('');
 
   // --- ADDED: Get store function and loading state ---
@@ -38,7 +38,10 @@ const PlaceofBirthScreen_5 = () => {
   // --- ADDED: Handle 'Next' button press and API call ---
   const handleNext = async () => {
     if (!place.trim()) {
-      Alert.alert('Input Required', 'Please enter your place of birth.');
+    Alert.alert(
+        t('alert_input_required_title'),
+        t('alert_input_required_message_pob')
+      );
       return;
     }
 
@@ -78,16 +81,16 @@ const PlaceofBirthScreen_5 = () => {
 
         {/* Heading */}
         <Text style={[styles.heading, { color: colors.white }]}>
-          Place of Birth
+         {t('pob_header')}
         </Text>
         <Text style={[styles.subheading, { color: colors.primary }]}>
-          Please enter your Place of birth
+           {t('pob_subheader')}
         </Text>
 
         {/* Input field */}
         <TextInput
           style={styles.inputField}
-          placeholder="Enter the place of birth"
+        placeholder={t('pob_placeholder')}
           placeholderTextColor="#999"
           value={place}
           onChangeText={setPlace}
@@ -112,7 +115,7 @@ const PlaceofBirthScreen_5 = () => {
             {isUpdating ? (
               <ActivityIndicator color={colors.primary} />
             ) : (
-              <Text style={styles.nextText}>Next</Text>
+              <Text style={styles.nextText}>{t('next_button')}</Text>
             )}
           </GradientBox>
         </TouchableOpacity>

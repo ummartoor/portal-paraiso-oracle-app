@@ -1,0 +1,158 @@
+{
+  "onboarding1_title": "Descubra Novos Mundos",
+  "onboarding1_subtitle": "Explore conteúdo incrível feito para você.",
+  "onboarding2_title": "Conecte-se com Amigos",
+  "onboarding2_subtitle": "Compartilhe seus momentos favoritos com outros.",
+  "onboarding3_title": "Fique Entretido",
+  "onboarding3_subtitle": "Diversão sem fim, a um toque de distância.",
+  "getStartedButton": "Começar",
+
+
+   "welcome_title": "Bem-vindo ao Portal\nParaíso Oracle",
+  "welcome_subtitle": "Escolha o seu caminho para a orientação divina",
+  "signup_button": "Inscrever-se",
+  "login_button": "Entrar",
+
+
+
+   "login_header": "Entrar",
+  "login_subheader": "Bem-vindo de volta ao Portal Paraíso",
+  "forgot_password_link": "Esqueceu a senha?",
+  "signin_button": "Entrar",
+  "dont_have_account": "Não tem uma conta?",
+  "signup_link": "Inscrever-se",
+
+
+
+
+  "forgot_password_header": "Esqueceu a Senha",
+  "forgot_password_subheader": "Digite o email associado à sua conta e enviaremos um código.",
+  "continue_button": "Continuar",
+  "back_to_footer": "Voltar para",
+  "signin_footer_link": "Entrar",
+
+
+
+  "otp_header": "Verificação OTP",
+  "otp_subheader": "Digite o código de 6 dígitos enviado para o seu email.",
+  "otp_label": "Digite o OTP",
+  "resend_button": "Reenviar",
+  "alert_error_title": "Erro",
+  "alert_otp_incomplete_message": "Por favor, digite o OTP completo de 6 dígitos.",
+
+
+
+
+
+  "reset_password_header": "Redefinir Senha",
+  "reset_password_subheader": "Defina uma nova senha para sua conta",
+  "new_password_label": "Nova Senha",
+  "new_password_placeholder": "Digite a nova senha",
+  "confirm_password_placeholder_2": "Confirme a nova senha",
+  "login_footer_link": "Entrar",
+  "alert_email_missing_message": "O email do usuário está ausente. Por favor, reinicie o processo de redefinição de senha.",
+
+
+  "signup_header": "Criar uma Conta",
+  "signup_subheader": "Bem-vindo ao Portal Paraíso",
+  "name_label": "Nome",
+  "name_placeholder": "Digite seu nome",
+  "email_label": "Email",
+  "email_placeholder": "Digite seu email",
+  "password_label": "Senha",
+  "password_placeholder": "Digite sua senha",
+  "confirm_password_label": "Confirmar Senha",
+  "confirm_password_placeholder": "Confirme sua senha",
+  "agree_with": "Concordo com os ",
+  "terms_and_conditions": "Termos & Condições",
+  "create_account_button": "Criar Conta",
+  "already_have_account": "Já tem uma conta?",
+  "login_link": "Entrar",
+ "validation_name_required": "O nome é obrigatório",
+  "validation_email_invalid": "Email inválido",
+  "validation_email_required": "O email é obrigatório",
+  "validation_password_required": "A senha é obrigatória",
+  "validation_password_min": "A senha deve ter pelo menos 6 caracteres",
+  "validation_passwords_match": "As senhas devem ser iguais",
+  "validation_confirm_password_required": "A confirmação da senha é obrigatória",
+  "validation_agree_required": "Você deve concordar com os Termos & Condições",
+
+
+
+
+  "gender_header": "Qual é o seu gênero?",
+  "gender_subheader": "O gênero revela o equilíbrio da sua energia masculina e feminina",
+  "gender_male": "Masculino",
+  "gender_female": "Feminino",
+  "gender_non_binary": "Não Binário",
+  "next_button": "Próximo",
+  "alert_selection_required_title": "Seleção Necessária",
+  "alert_selection_required_message": "Por favor, selecione seu gênero para continuar.",
+
+
+
+
+
+  "goals_header": "Quais são seus objetivos?",
+  "goals_subheader": "Os objetivos revelam o equilíbrio entre sua ambição e paciência",
+  "goal_find_partner": "Encontrar meu parceiro perfeito",
+  "goal_improve_relationship": "Melhorar o relacionamento atual",
+  "goal_understand_self": "Entender-me melhor",
+  "goal_become_happier": "Tornar-me mais feliz",
+  "goal_personal_growth": "Promover o crescimento pessoal",
+  "goal_love_compatibility": "Verificar a compatibilidade amorosa",
+  "goal_others": "Outros",
+  "alert_at_least_one_goal_message": "Por favor, selecione pelo menos um objetivo para continuar.",
+
+
+
+
+  "dob_header": "Data de Nascimento",
+  "dob_subheader": "Por favor, insira sua data de nascimento",
+
+
+
+
+  "tob_header": "Hora de Nascimento",
+  "tob_subheader": "Por favor, insira sua hora de nascimento",
+
+
+
+
+  "pob_header": "Local de Nascimento",
+  "pob_subheader": "Por favor, insira o seu local de nascimento",
+  "pob_placeholder": "Digite o local de nascimento",
+  "alert_input_required_title": "Entrada Necessária",
+  "alert_input_required_message_pob": "Por favor, insira o seu local de nascimento.",
+
+
+
+  "relationship_header": "Seu Estado Civil",
+  "relationship_subheader": "Selecione seu estado civil?",
+  "status_single": "Solteiro(a)",
+  "status_relationship": "Em um relacionamento",
+  "status_married": "Casado(a)",
+  "status_engaged": "Noivo(a)",
+  "status_complicated": "Complicado",
+  "status_divorced": "Divorciado(a)",
+  "alert_relationship_status_message": "Por favor, selecione seu estado civil.",
+  "finish_button": "Finalizar",
+
+
+
+
+   "zodiac_aries": "Áries",
+  "zodiac_taurus": "Touro",
+  "zodiac_gemini": "Gêmeos",
+  "zodiac_cancer": "Câncer",
+  "zodiac_leo": "Leão",
+  "zodiac_virgo": "Virgem",
+  "zodiac_libra": "Libra",
+  "zodiac_scorpio": "Escorpião",
+  "zodiac_sagittarius": "Sagitário",
+  "zodiac_capricorn": "Capricórnio",
+  "zodiac_aquarius": "Aquário",
+  "zodiac_pisces": "Peixes"
+
+ 
+}

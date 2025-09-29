@@ -19,7 +19,7 @@ import { useNavigation } from '@react-navigation/native';
 import GradientBox from '../../../components/GradientBox';
 import { Fonts } from '../../../constants/fonts';
 import { useRegisterStore } from '../../../store/useRegisterStore'; // --- ADDED ---
-
+import { useTranslation } from 'react-i18next';
 const { height: SCREEN_HEIGHT, width: SCREEN_WIDTH } = Dimensions.get('screen');
 
 // Define type for relationship options
@@ -34,32 +34,38 @@ const RelationshipScreen_6: React.FC = () => {
   const colors = theme.colors;
   const navigation =
     useNavigation<NativeStackNavigationProp<AuthStackParamsList>>();
-
+  const { t } = useTranslation();
   const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
 
   // --- ADDED: Get store function and loading state ---
   const { updateUserDetails, isUpdating } = useRegisterStore();
 
   const relationshipOptions: RelationshipOption[] = [
-    { key: 'single', label: 'Single', icon: require('../../../assets/icons/goalIcon1.png') },
-    { key: 'relationship', label: 'In a relationship', icon: require('../../../assets/icons/goalIcon1.png') },
-    { key: 'married', label: 'Married', icon: require('../../../assets/icons/goalIcon1.png') },
-    { key: 'engaged', label: 'Engaged', icon: require('../../../assets/icons/goalIcon1.png') },
-    { key: 'complicated', label: 'Complicated', icon: require('../../../assets/icons/goalIcon1.png') },
-    { key: 'divorced', label: 'Divorced', icon: require('../../../assets/icons/goalIcon1.png') },
+    { key: 'single', label: t('status_single'), icon: require('../../../assets/icons/goalIcon1.png') },
+    { key: 'relationship', label: t('status_relationship'), icon: require('../../../assets/icons/goalIcon1.png') },
+    { key: 'married', label: t('status_married'), icon: require('../../../assets/icons/goalIcon1.png') },
+    { key: 'engaged', label: t('status_engaged'), icon: require('../../../assets/icons/goalIcon1.png') },
+    { key: 'complicated', label: t('status_complicated'), icon: require('../../../assets/icons/goalIcon1.png') },
+    { key: 'divorced', label: t('status_divorced'), icon: require('../../../assets/icons/goalIcon1.png') },
   ];
 
   // --- ADDED: Handle 'Next' button press and API call ---
   const handleNext = async () => {
     if (!selectedStatus) {
-      Alert.alert('Selection Required', 'Please select your relationship status.');
+   Alert.alert(
+        t('alert_selection_required_title'),
+        t('alert_relationship_status_message')
+      );
       return;
     }
     
     const success = await updateUserDetails({ relationship_status: selectedStatus });
     
-    if (success) {
-   navigation.navigate('ZodiacSymbol')
+   if (success) {
+      navigation.reset({
+        index: 0,
+        routes: [{ name: 'Login' }],
+      });
     }
   };
 
@@ -92,10 +98,10 @@ const RelationshipScreen_6: React.FC = () => {
 
         {/* Heading */}
         <Text style={[styles.heading, { color: colors.white }]}>
-          Your Relationship Status
+     {t('relationship_header')}
         </Text>
         <Text style={[styles.subheading, { color: colors.primary }]}>
-          Select your relationship status?
+     {t('relationship_subheader')}
         </Text>
 
         {/* Relationship Status Options */}
@@ -171,7 +177,7 @@ const RelationshipScreen_6: React.FC = () => {
               {isUpdating ? (
                 <ActivityIndicator color={colors.primary} />
               ) : (
-                <Text style={styles.nextText}>Next</Text> 
+                <Text style={styles.nextText}>{t('finish_button')}</Text> 
               )}
             </GradientBox>
           </TouchableOpacity>

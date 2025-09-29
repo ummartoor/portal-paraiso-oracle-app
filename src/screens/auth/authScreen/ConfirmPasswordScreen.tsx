@@ -13,6 +13,7 @@ import {
   Dimensions,
   ImageBackground,
   Alert,
+    ActivityIndicator
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
@@ -28,7 +29,7 @@ import GradientBox from '../../../components/GradientBox';
 
 import eyeIcon from '../../../assets/icons/eye.png';
 import eyeOffIcon from '../../../assets/icons/eyeOff.png';
-
+import { useTranslation } from 'react-i18next';
 const { height: SCREEN_HEIGHT, width: SCREEN_WIDTH } = Dimensions.get('screen');
 
 type ConfirmPasswordScreenRouteProp = RouteProp<AuthStackParamsList, 'ConfirmPassword'>;
@@ -38,7 +39,7 @@ const ConfirmPasswordScreen = () => {
   const colors = theme.colors;
   const navigation = useNavigation<NativeStackNavigationProp<AuthStackParamsList>>();
   const route = useRoute<ConfirmPasswordScreenRouteProp>(); 
-
+ const { t } = useTranslation();
   const emailFromRoute = route.params?.email || ''; 
   const resetPassword = useAuthStore(state => state.resetPassword);
 
@@ -47,21 +48,23 @@ const ConfirmPasswordScreen = () => {
 
   const validationSchema = Yup.object().shape({
     newPassword: Yup.string()
-      .required('Password is required')
-      .min(6, 'Minimum 6 characters'),
+      .required(t('validation_password_required'))
+      .min(6, t('validation_password_min')),
     confirmPassword: Yup.string()
-      .oneOf([Yup.ref('newPassword')], 'Passwords must match') 
-      .required('Confirm Password is required'),
+      .oneOf([Yup.ref('newPassword')], t('validation_passwords_match'))
+      .required(t('validation_confirm_password_required')),
   });
 
-  const handleSubmitPassword = async (values: { newPassword: string; confirmPassword: string }) => {
+  const handleSubmitPassword = async (
+    values: { newPassword: string; confirmPassword: string },
+    { setSubmitting }: { setSubmitting: (isSubmitting: boolean) => void } 
+  ) => {
     if (!emailFromRoute) {
-      Alert.alert("Error", "User email is missing. Please restart the password reset process.");
+      // --- CHANGED: Translated alert ---
+      Alert.alert(t('alert_error_title'), t('alert_email_missing_message'));
+      setSubmitting(false);
       return;
     }
-
-    console.log("Attempting to reset password for email:", emailFromRoute);
-    console.log("With newPassword:", values.newPassword, "and confirmPassword:", values.confirmPassword);
 
     const success = await resetPassword(
       emailFromRoute,
@@ -72,6 +75,8 @@ const ConfirmPasswordScreen = () => {
     if (success) {
       navigation.navigate('Login');
     }
+    
+    setSubmitting(false); // Stop loading indicator
   };
 
   return (
@@ -93,9 +98,9 @@ const ConfirmPasswordScreen = () => {
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
           >
-            <Text style={[styles.heading, { color: colors.white }]}>Reset Password</Text>
+            <Text style={[styles.heading, { color: colors.white }]}>{t('reset_password_header')}</Text>
             <Text style={[styles.subheading, { color: colors.primary }]}>
-              Set a new password for your account
+               {t('reset_password_subheader')}
             </Text>
 
             <Formik
@@ -103,10 +108,10 @@ const ConfirmPasswordScreen = () => {
               validationSchema={validationSchema}
               onSubmit={handleSubmitPassword}
             >
-              {({ handleChange, handleBlur, handleSubmit, values, errors, touched }) => (
+              {({ handleChange, handleBlur, handleSubmit, values, errors, touched,isSubmitting }) => (
                 <>
                   {/* Password */}
-                  <Text style={[styles.label, { color: colors.white }]}>New Password</Text> 
+                 <Text style={[styles.label, { color: colors.white }]}>{t('new_password_label')}</Text>
                   <View
                     style={[
                       styles.input,
@@ -115,7 +120,7 @@ const ConfirmPasswordScreen = () => {
                     ]}
                   >
                     <TextInput
-                      placeholder="Enter new password"
+                           placeholder={t('new_password_placeholder')}
                       placeholderTextColor="#ccc"
                       secureTextEntry={!showPassword}
                       onChangeText={handleChange('newPassword')} 
@@ -135,7 +140,7 @@ const ConfirmPasswordScreen = () => {
                   )}
 
                   {/* Confirm Password */}
-                  <Text style={[styles.label, { color: colors.white }]}>Confirm Password</Text>
+                <Text style={[styles.label, { color: colors.white }]}>{t('confirm_password_label')}</Text>
                   <View
                     style={[
                       styles.input,
@@ -144,7 +149,7 @@ const ConfirmPasswordScreen = () => {
                     ]}
                   >
                     <TextInput
-                      placeholder="Confirm password"
+                      placeholder={t('confirm_password_placeholder_2')}
                       placeholderTextColor="#ccc"
                       secureTextEntry={!showConfirmPassword}
                       onChangeText={handleChange('confirmPassword')}
@@ -172,15 +177,15 @@ const ConfirmPasswordScreen = () => {
                         { borderWidth: 1.5, borderColor: colors.primary },
                       ]}
                     >
-                      <Text style={styles.signinText}>Continue</Text>
+                       <Text style={styles.signinText}>{t('continue_button')}</Text>
                     </GradientBox>
                   </TouchableOpacity>
 
                   {/* Footer */}
                   <View style={styles.footer}>
-                    <Text style={styles.footerText}>Back to</Text>
+                   <Text style={styles.footerText}>{t('back_to_footer')}</Text>
                     <TouchableOpacity onPress={() => navigation.navigate('Login')}>
-                      <Text style={[styles.signupLink, { color: colors.primary }]}> Login</Text>
+                       <Text style={[styles.signupLink, { color: colors.primary }]}> {t('login_footer_link')}</Text>
                     </TouchableOpacity>
                   </View>
                 </>

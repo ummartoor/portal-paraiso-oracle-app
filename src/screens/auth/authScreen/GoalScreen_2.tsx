@@ -204,7 +204,7 @@ import { useNavigation } from '@react-navigation/native';
 import GradientBox from '../../../components/GradientBox';
 import { Fonts } from '../../../constants/fonts';
 import { useRegisterStore } from '../../../store/useRegisterStore'; // --- ADDED ---
-
+import { useTranslation } from 'react-i18next'; 
 const { height: SCREEN_HEIGHT, width: SCREEN_WIDTH } = Dimensions.get('screen');
 
 const GoalScreen_2 = () => {
@@ -213,39 +213,42 @@ const GoalScreen_2 = () => {
   const navigation =
     useNavigation<NativeStackNavigationProp<AuthStackParamsList>>();
 
-  // --- IMPORTANT CHANGE: State ko array mein change kiya gaya hai taake multiple goals select ho sakein ---
+const { t } = useTranslation();
   const [selectedGoals, setSelectedGoals] = useState<string[]>([]);
   
   // --- ADDED: Store se function aur loading state lein ---
   const { updateUserDetails, isUpdating } = useRegisterStore();
 
   const goals = [
-    { key: 'find_partner', label: 'Find my perfect partner', icon: require('../../../assets/icons/goalIcon1.png') },
-    { key: 'improve_relationship', label: 'Improve current relationship', icon: require('../../../assets/icons/goalIcon2.png') },
-    { key: 'understand_self', label: 'Understand myself better', icon: require('../../../assets/icons/goalIcon3.png') },
-    { key: 'become_happier', label: 'Become happier', icon: require('../../../assets/icons/goalIcon4.png') },
-    { key: 'personal_growth', label: 'Foster personal growth', icon: require('../../../assets/icons/goalIcon5.png') },
-    { key: 'love_compatibility', label: 'Check love compatibility', icon: require('../../../assets/icons/goalIcon6.png') },
-    { key: 'others', label: 'Others', icon: require('../../../assets/icons/goalIcon7.png') },
+    { key: 'find_partner', label: t('goal_find_partner'), icon: require('../../../assets/icons/goalIcon1.png') },
+    { key: 'improve_relationship', label: t('goal_improve_relationship'), icon: require('../../../assets/icons/goalIcon2.png') },
+    { key: 'understand_self', label: t('goal_understand_self'), icon: require('../../../assets/icons/goalIcon3.png') },
+    { key: 'become_happier', label: t('goal_become_happier'), icon: require('../../../assets/icons/goalIcon4.png') },
+    { key: 'personal_growth', label: t('goal_personal_growth'), icon: require('../../../assets/icons/goalIcon5.png') },
+    { key: 'love_compatibility', label: t('goal_love_compatibility'), icon: require('../../../assets/icons/goalIcon6.png') },
+    { key: 'others', label: t('goal_others'), icon: require('../../../assets/icons/goalIcon7.png') },
   ];
   
-  // --- ADDED: Multiple goals select karne ke liye handler ---
+  // Multiple goals select  ---
   const handleSelectGoal = (goalKey: string) => {
     setSelectedGoals(prev => {
       if (prev.includes(goalKey)) {
-        // Agar pehle se selected hai to hata dein
+        
         return prev.filter(g => g !== goalKey);
       } else {
-        // Agar selected nahi hai to add karein
+      
         return [...prev, goalKey];
       }
     });
   };
 
-  // --- ADDED: API call ke liye 'Next' button ka handler ---
+
   const handleNext = async () => {
     if (selectedGoals.length === 0) {
-      Alert.alert('Selection Required', 'Please select at least one goal to continue.');
+  Alert.alert(
+        t('alert_selection_required_title'),
+        t('alert_at_least_one_goal_message')
+      );
       return;
     }
 
@@ -285,10 +288,10 @@ const GoalScreen_2 = () => {
 
         {/* Heading */}
         <Text style={[styles.heading, { color: colors.white }]}>
-          What are your goals?
+         {t('goals_header')}
         </Text>
         <Text style={[styles.subheading, { color: colors.primary }]}>
-          Goals reveal the balance between your ambition and patience
+               {t('goals_subheader')}
         </Text>
 
         <View style={{ flex: 1, marginTop: 30 }}>
@@ -345,7 +348,7 @@ const GoalScreen_2 = () => {
                 {isUpdating ? (
                   <ActivityIndicator color={colors.primary} />
                 ) : (
-                  <Text style={styles.nextText}>Next</Text>
+                  <Text style={styles.nextText}>{t('next_button')}</Text>
                 )}
               </GradientBox>
             </TouchableOpacity>

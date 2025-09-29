@@ -23,7 +23,7 @@ import { AuthStackParamsList } from '../../../navigation/routeTypes';
 import { useNavigation } from '@react-navigation/native';
 import GradientBox from '../../../components/GradientBox';
 import { useAuthStore } from '../../../store/useAuthStore'; // --- ADDED ---
-
+import { useTranslation } from 'react-i18next';
 const { height: SCREEN_HEIGHT, width: SCREEN_WIDTH } = Dimensions.get('screen');
 
 const ForgotPasswordScreen = () => {
@@ -31,12 +31,12 @@ const ForgotPasswordScreen = () => {
   const colors = theme.colors;
   const navigation =
     useNavigation<NativeStackNavigationProp<AuthStackParamsList>>();
-  
+   const { t } = useTranslation();
   // --- ADDED: Get the forgotPassword function from your store ---
   const forgotPassword = useAuthStore(state => state.forgotPassword);
 
   const validationSchema = Yup.object().shape({
-    email: Yup.string().email('Invalid email').required('Email is required'),
+email: Yup.string().email(t('validation_email_invalid')).required(t('validation_email_required')),
   });
 
   return (
@@ -63,11 +63,10 @@ const ForgotPasswordScreen = () => {
             keyboardShouldPersistTaps="handled"
           >
             <Text style={[styles.heading, { color: colors.white }]}>
-              Forgot Password
+                  {t('forgot_password_header')}
             </Text>
             <Text style={[styles.subheading, { color: colors.primary }]}>
-              Enter the email associated with your account and we’ll send you a
-              code.
+                  {t('forgot_password_subheader')}
             </Text>
 
             <Formik
@@ -98,10 +97,10 @@ const ForgotPasswordScreen = () => {
               }) => (
                 <>
                   <Text style={[styles.label, { color: colors.white }]}>
-                    Email
+                    {t('email_label')}
                   </Text>
                   <TextInput
-                    placeholder="Email"
+                         placeholder={t('email_placeholder')}
                     placeholderTextColor="#ccc"
                     onChangeText={handleChange('email')}
                     onBlur={handleBlur('email')}
@@ -120,7 +119,7 @@ const ForgotPasswordScreen = () => {
                     <Text style={styles.errorText}>{errors.email}</Text>
                   )}
 
-                  {/* --- UPDATED: Gradient Continue Button with loading state --- */}
+                 
                   <TouchableOpacity
                     activeOpacity={0.8}
                     onPress={() => handleSubmit()}
@@ -137,7 +136,7 @@ const ForgotPasswordScreen = () => {
                       {isSubmitting ? (
                         <ActivityIndicator color={colors.primary} />
                       ) : (
-                        <Text style={styles.signinText}>Continue</Text>
+                        <Text style={styles.signinText}>{t('continue_button')}</Text>
                       )}
                     </GradientBox>
                   </TouchableOpacity>
@@ -146,11 +145,11 @@ const ForgotPasswordScreen = () => {
             </Formik>
 
             <View style={styles.footer}>
-              <Text style={styles.footerText}>Back to</Text>
+              <Text style={styles.footerText}>{t('back_to_footer')}</Text>
               <TouchableOpacity onPress={() => navigation.navigate('Login')}>
                 <Text style={[styles.signupLink, { color: colors.primary }]}>
                   {' '}
-                  Sign In
+                    {t('signin_footer_link')}
                 </Text>
               </TouchableOpacity>
             </View>

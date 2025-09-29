@@ -12,24 +12,24 @@ import {
   KeyboardAvoidingView,
   Platform,
   Dimensions,
-  ActivityIndicator, // --- ADDED ---
-  Alert, // --- ADDED ---
-  NativeSyntheticEvent, // --- ADDED ---
-  TextInputKeyPressEventData, // --- ADDED ---
+  ActivityIndicator, 
+  Alert,
+  NativeSyntheticEvent,
+  TextInputKeyPressEventData, 
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation, useRoute, RouteProp } from '@react-navigation/native'; // --- ADDED useRoute ---
+import { useNavigation, useRoute, RouteProp } from '@react-navigation/native'; 
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 import { useThemeStore } from '../../../store/useThemeStore';
 import { Fonts } from '../../../constants/fonts';
 import { AuthStackParamsList } from '../../../navigation/routeTypes';
 import GradientBox from '../../../components/GradientBox';
-import { useAuthStore } from '../../../store/useAuthStore'; // --- ADDED ---
-
+import { useAuthStore } from '../../../store/useAuthStore'; 
+import { useTranslation } from 'react-i18next';
 const { height: SCREEN_HEIGHT, width: SCREEN_WIDTH } = Dimensions.get('screen');
 
-// --- ADDED: Type for route params ---
+//  Type for route params ---
 type OTPScreenRouteProp = RouteProp<AuthStackParamsList, 'OTPScreen'>;
 
 const OTPScreen = () => {
@@ -37,12 +37,12 @@ const OTPScreen = () => {
   const colors = theme.colors;
   const navigation =
     useNavigation<NativeStackNavigationProp<AuthStackParamsList>>();
-  
-  // --- ADDED: Get email from previous screen ---
+   const { t } = useTranslation(); 
+  //  Get email from previous screen ---
   const route = useRoute<OTPScreenRouteProp>();
   const { email } = route.params;
 
-  // --- ADDED: Get store functions ---
+  //  Get store functions ---
   const { verifyOtp, forgotPassword} = useAuthStore();
 
   const [otp, setOtp] = useState<string[]>(Array(6).fill(''));
@@ -88,7 +88,7 @@ const OTPScreen = () => {
   const handleContinue = async () => {
     const otpString = otp.join('');
     if (otpString.length !== 6) {
-      Alert.alert('Error', 'Please enter the complete 6-digit OTP.');
+      Alert.alert(t('alert_error_title'), t('alert_otp_incomplete_message'));
       return;
     }
     
@@ -140,14 +140,14 @@ const handleResend = async () => {
             keyboardShouldPersistTaps="handled"
           >
             <Text style={[styles.heading, { color: colors.white }]}>
-              OTP Verification
+                    {t('otp_header')}
             </Text>
             <Text style={[styles.subheading, { color: colors.primary }]}>
-              Enter the 6-digit code sent to your email.
+               {t('otp_subheader')}
             </Text>
 
             <Text style={[styles.label, { color: colors.white }]}>
-              Enter the OTP
+           {t('otp_label')}
             </Text>
             <View style={styles.otpContainer}>
               {otp.map((digit, index) => (
@@ -185,7 +185,7 @@ const handleResend = async () => {
                         { color: timer > 0 ? '#aaa' : colors.primary },
                       ]}
                     >
-                      Resend
+              {t('resend_button')}
                     </Text>
                   )}
                 </View>
@@ -208,17 +208,17 @@ const handleResend = async () => {
                 {isVerifying ? (
                   <ActivityIndicator color={colors.primary} />
                 ) : (
-                  <Text style={styles.continueText}>Continue</Text>
+                  <Text style={styles.continueText}>{t('continue_button')}</Text>
                 )}
               </GradientBox>
             </TouchableOpacity>
 
             <View style={styles.footer}>
-              <Text style={styles.footerText}>Back to</Text>
+              <Text style={styles.footerText}>{t('back_to_footer')}</Text>
               <TouchableOpacity onPress={() => navigation.navigate('Login')}>
                 <Text style={[styles.signupLink, { color: colors.primary }]}>
                   {' '}
-                  Sign In
+                {t('signin_footer_link')}
                 </Text>
               </TouchableOpacity>
             </View>

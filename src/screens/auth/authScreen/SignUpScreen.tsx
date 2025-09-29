@@ -30,7 +30,7 @@ import { useRegisterStore } from '../../../store/useRegisterStore'; // --- UPDAT
 import GradientBox from '../../../components/GradientBox';
 import { Fonts } from '../../../constants/fonts';
 import tickIcon from '../../../assets/icons/tickIcon.png';
-
+import { useTranslation } from 'react-i18next';
 const { height: SCREEN_HEIGHT, width: SCREEN_WIDTH } = Dimensions.get('screen');
 
 const SignUpScreen = () => {
@@ -44,17 +44,17 @@ const SignUpScreen = () => {
 
   const navigation =
     useNavigation<NativeStackNavigationProp<AuthStackParamsList>>();
-
+  const { t } = useTranslation();
   // --- UPDATED: Added confirmPassword validation ---
-  const validationSchema = Yup.object().shape({
-    name: Yup.string().required('Name is required'),
-    email: Yup.string().email('Invalid email').required('Email is required'),
-    password: Yup.string().required('Password is required').min(6, 'Password must be at least 6 characters'),
-    confirmPassword: Yup.string()
-      .oneOf([Yup.ref('password')], 'Passwords must match')
-      .required('Confirm Password is required'),
-    agree: Yup.boolean().oneOf([true], 'You must agree to Terms & Conditions'),
-  });
+const validationSchema = Yup.object().shape({
+  name: Yup.string().required(t('validation_name_required')),
+  email: Yup.string().email(t('validation_email_invalid')).required(t('validation_email_required')),
+  password: Yup.string().required(t('validation_password_required')).min(6, t('validation_password_min')),
+  confirmPassword: Yup.string()
+    .oneOf([Yup.ref('password')], t('validation_passwords_match'))
+    .required(t('validation_confirm_password_required')),
+  agree: Yup.boolean().oneOf([true], t('validation_agree_required')),
+});
 
   return (
     <ImageBackground
@@ -79,10 +79,10 @@ const SignUpScreen = () => {
             keyboardShouldPersistTaps="handled"
           >
             <Text style={[styles.heading, { color: colors.white }]}>
-              Create an Account
+                 {t('signup_header')}
             </Text>
             <Text style={[styles.subheading, { color: colors.primary }]}>
-              Welcome to Portal Paraíso
+            {t('signup_subheader')}
             </Text>
 
             <Formik
@@ -126,10 +126,10 @@ const SignUpScreen = () => {
                 <>
                   {/* Name Field */}
                   <Text style={[styles.label, { color: colors.white }]}>
-                    Name
+                      {t('name_label')}
                   </Text>
                   <TextInput
-                    placeholder="Name"
+                   placeholder={t('name_placeholder')}
                     placeholderTextColor="#ccc"
                     onChangeText={handleChange('name')}
                     onBlur={handleBlur('name')}
@@ -145,10 +145,10 @@ const SignUpScreen = () => {
 
                   {/* Email Field */}
                   <Text style={[styles.label, { color: colors.white }]}>
-                    Email
+              {t('email_label')}
                   </Text>
                   <TextInput
-                    placeholder="Email"
+                      placeholder={t('email_placeholder')}
                     placeholderTextColor="#ccc"
                     onChangeText={handleChange('email')}
                     onBlur={handleBlur('email')}
@@ -166,7 +166,7 @@ const SignUpScreen = () => {
 
                   {/* Password Field */}
                   <Text style={[styles.label, { color: colors.white }]}>
-                    Password
+                      {t('password_label')}
                   </Text>
                   <View
                     style={[
@@ -176,7 +176,7 @@ const SignUpScreen = () => {
                     ]}
                   >
                     <TextInput
-                      placeholder="Password"
+                    placeholder={t('password_placeholder')}
                       placeholderTextColor="#ccc"
                       secureTextEntry={!showPassword}
                       onChangeText={handleChange('password')}
@@ -199,7 +199,7 @@ const SignUpScreen = () => {
                   
                   {/* --- ADDED: Confirm Password Field --- */}
                   <Text style={[styles.label, { color: colors.white }]}>
-                    Confirm Password
+                   {t('confirm_password_label')}
                   </Text>
                   <View
                     style={[
@@ -209,7 +209,7 @@ const SignUpScreen = () => {
                     ]}
                   >
                     <TextInput
-                      placeholder="Confirm Password"
+                      placeholder={t('confirm_password_placeholder')}
                       placeholderTextColor="#ccc"
                       secureTextEntry={!showConfirmPassword}
                       onChangeText={handleChange('confirmPassword')}
@@ -251,14 +251,14 @@ const SignUpScreen = () => {
                       )}
                     </View>
                     <Text style={styles.checkboxText}>
-                      Agree with{' '}
+                  {t('agree_with')}
                       <Text
                         style={[
                           styles.linkText,
                           { color: colors.primary },
                         ]}
                       >
-                        Terms & Conditions
+                       {t('terms_and_conditions')}
                       </Text>
                     </Text>
                   </TouchableOpacity>
@@ -283,7 +283,7 @@ const SignUpScreen = () => {
                       {isSubmitting ? (
                         <ActivityIndicator color={colors.primary} />
                       ) : (
-                        <Text style={styles.signinText}>Create Account</Text>
+                        <Text style={styles.signinText}>{t('create_account_button')}</Text>
                       )}
                     </GradientBox>
                   </TouchableOpacity>
@@ -293,11 +293,11 @@ const SignUpScreen = () => {
 
             {/* Footer */}
             <View style={styles.footer}>
-              <Text style={styles.footerText}>Already have an account?</Text>
+              <Text style={styles.footerText}>{t('already_have_account')}</Text>
               <TouchableOpacity onPress={() => navigation.navigate('Login')}>
                 <Text style={[styles.signupLink, { color: colors.primary }]}>
                   {' '}
-                  Log in
+                   {t('login_link')}
                 </Text>
               </TouchableOpacity>
             </View>

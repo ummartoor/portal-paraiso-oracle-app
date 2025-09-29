@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from "react";
 import {
   View,
@@ -11,13 +10,13 @@ import {
   FlatList,
   NativeSyntheticEvent,
   NativeScrollEvent,
-  Image, // --- ADDED ---
-   Vibration,
+  Image,
+  Vibration,
 } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import Video from "react-native-video";
-import Animated, { useSharedValue, useAnimatedStyle, withTiming } from 'react-native-reanimated'; // --- ADDED ---
-
+import Animated, { useSharedValue, useAnimatedStyle, withTiming } from 'react-native-reanimated';
+import { useTranslation } from 'react-i18next';
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { AuthStackParamsList } from "../../../navigation/routeTypes";
 import { useNavigation } from "@react-navigation/native";
@@ -28,28 +27,26 @@ import { OnboardingData } from "../../../data/OnBoardingData";
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("screen");
 
-// --- NEW: Language data ---
 const LANGUAGES = [
   { key: 'en', name: 'English' },
-  { key: 'pt', name: 'Português' },
-  { key: 'es', name: 'Español' },
-  { key: 'fr', name: 'Français' },
+  { key: 'pt', name: 'Portuguese' },
 ];
 
 const OnBoardingScreen: React.FC = () => {
   const { colors } = useThemeStore((state) => state.theme);
-  const navigation =
-    useNavigation<NativeStackNavigationProp<AuthStackParamsList>>();
-  const insets = useSafeAreaInsets(); // For safe positioning
+  const navigation = useNavigation<NativeStackNavigationProp<AuthStackParamsList>>();
+  const insets = useSafeAreaInsets();
+  const { t, i18n } = useTranslation();
 
   const [currentIndex, setCurrentIndex] = useState(0);
-  const flatListRef = useRef<FlatList>(null);
+  const flatListRef = useRef<FlatList<any> | null>(null);
 
-  // --- NEW: State for the language dropdown ---
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [selectedLanguage, setSelectedLanguage] = useState(LANGUAGES[0]);
+  const [selectedLanguage, setSelectedLanguage] = useState(
+    LANGUAGES.find(lang => lang.key === i18n.language) || LANGUAGES[0]
+  );
 
-  // --- NEW: Animation for the dropdown ---
+  // Reanimated dropdown animation
   const dropdownAnimation = useSharedValue(0);
   const dropdownAnimatedStyle = useAnimatedStyle(() => {
     return {
@@ -59,8 +56,9 @@ const OnBoardingScreen: React.FC = () => {
   });
 
   useEffect(() => {
-    dropdownAnimation.value = withTiming(isDropdownOpen ? 1 : 0, { duration: 250 });
-  }, [isDropdownOpen]);
+    // animate when open state changes
+    dropdownAnimation.value = withTiming(isDropdownOpen ? 1 : 0, { duration: 200 });
+  }, [isDropdownOpen, dropdownAnimation]);
 
   const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
     const index = Math.round(event.nativeEvent.contentOffset.x / SCREEN_WIDTH);
@@ -70,9 +68,14 @@ const OnBoardingScreen: React.FC = () => {
   const handleSelectLanguage = (language: typeof LANGUAGES[0]) => {
     setSelectedLanguage(language);
     setIsDropdownOpen(false);
+    // Change app language
+    i18n.changeLanguage(language.key).catch((err) => {
+      // optional: handle errors in language change
+      console.warn("changeLanguage error:", err);
+    });
   };
 
-  const currentItem = OnboardingData[currentIndex];
+  const currentItem = OnboardingData[currentIndex] || OnboardingData[0];
 
   return (
     <ImageBackground
@@ -85,31 +88,30 @@ const OnBoardingScreen: React.FC = () => {
         backgroundColor="transparent"
         translucent
       />
-
       <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
-        {/* --- NEW: Language Dropdown --- */}
+        {/* Language Dropdown */}
         <View style={[styles.dropdownContainer, { top: insets.top + 10 }]}>
           <TouchableOpacity
-            style={[styles.dropdownTrigger, { backgroundColor: colors.bgBox }]}
+            style={[styles.dropdownTrigger, { backgroundColor: colors.bgBox, borderColor: 'rgba(255,255,255,0.2)' }]}
             onPress={() => setIsDropdownOpen(prev => !prev)}
             activeOpacity={0.8}
           >
             <Text style={[styles.dropdownText, { color: colors.white }]}>{selectedLanguage.name}</Text>
             <Image
               source={require('../../../assets/icons/arrowDown.png')}
-              style={[
-                styles.dropdownIcon,
-                { tintColor: colors.white, transform: [{ rotate: isDropdownOpen ? '180deg' : '0deg' }] }
-              ]}
+              style={[styles.dropdownIcon, { tintColor: colors.white, transform: [{ rotate: isDropdownOpen ? '180deg' : '0deg' }] }]}
+              resizeMode="contain"
             />
           </TouchableOpacity>
 
-          <Animated.View style={[styles.dropdownMenu, { backgroundColor: colors.bgBox }, dropdownAnimatedStyle]}>
+          {/* Animated menu — scaled from 0 -> 1 */}
+          <Animated.View style={[styles.dropdownMenu, { backgroundColor: colors.bgBox, borderColor: 'rgba(255,255,255,0.2)' }, dropdownAnimatedStyle]}>
             {LANGUAGES.map(lang => (
               <TouchableOpacity
                 key={lang.key}
                 style={styles.dropdownItem}
                 onPress={() => handleSelectLanguage(lang)}
+                activeOpacity={0.7}
               >
                 <Text style={[styles.dropdownItemText, { color: lang.key === selectedLanguage.key ? colors.primary : colors.white }]}>
                   {lang.name}
@@ -123,7 +125,7 @@ const OnBoardingScreen: React.FC = () => {
         <FlatList
           ref={flatListRef}
           data={OnboardingData}
-          keyExtractor={(item) => item.id.toString()}
+          keyExtractor={(item) => item.id?.toString() ?? Math.random().toString()}
           horizontal
           pagingEnabled
           showsHorizontalScrollIndicator={false}
@@ -137,7 +139,7 @@ const OnBoardingScreen: React.FC = () => {
                 style={styles.video}
                 resizeMode="cover"
                 repeat
-                muted={false}
+                muted={true}
                 paused={currentIndex !== index}
                 onError={(e) => console.log("Video error:", e)}
               />
@@ -162,21 +164,22 @@ const OnBoardingScreen: React.FC = () => {
 
           {/* Title & Subtitle */}
           <View style={styles.centerContent}>
+            {/* Using `as any` to satisfy i18next typing when keys are dynamic */}
             <Text style={[styles.title, { color: colors.white }]}>
-              {currentItem.title}
+              {t(currentItem.titleKey as any)}
             </Text>
             <Text style={[styles.subheading, { color: colors.primary }]}>
-              {currentItem.subtitle}
+              {t(currentItem.subtitleKey as any)}
             </Text>
           </View>
 
           {/* Button */}
           <View style={styles.footer}>
             <TouchableOpacity
-              onPress={() =>{  Vibration.vibrate(500)
-              navigation.navigate("WelcomeScreen")
-            }
-            }
+              onPress={() => {
+                Vibration.vibrate(50);
+                navigation.navigate("WelcomeScreen");
+              }}
               activeOpacity={0.8}
               style={{ width: "100%" }}
             >
@@ -188,7 +191,7 @@ const OnBoardingScreen: React.FC = () => {
                 ]}
               >
                 <Text style={[styles.buttonText, { color: colors.white }]}>
-                  Get Started
+                  {t('getStartedButton' as any)}
                 </Text>
               </GradientBox>
             </TouchableOpacity>
@@ -207,7 +210,7 @@ const styles = StyleSheet.create({
   },
   videoWrapper: {
     width: SCREEN_WIDTH,
-    height: SCREEN_HEIGHT, // Video takes full screen
+    height: SCREEN_HEIGHT,
   },
   video: {
     width: "100%",
@@ -262,24 +265,20 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontFamily: Fonts.aeonikRegular,
   },
-  // --- NEW: Dropdown Styles ---
   dropdownContainer: {
     position: 'absolute',
-    top: 50, 
     right: 20,
     zIndex: 10,
   },
-dropdownTrigger: {
-    width: 110,
+  dropdownTrigger: {
+    width: 130,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 10,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.2)',
-},
+  },
   dropdownText: {
     fontFamily: Fonts.aeonikRegular,
     fontSize: 14,
@@ -289,17 +288,14 @@ dropdownTrigger: {
     width: 16,
     height: 16,
   },
-dropdownMenu: {
-    width: 110, 
+  dropdownMenu: {
+    width: 130,
     position: 'absolute',
     top: 42,
     right: 0,
     borderRadius: 12,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.2)',
     overflow: 'hidden',
-    transformOrigin: 'top',
-},
+  },
   dropdownItem: {
     paddingVertical: 10,
     paddingHorizontal: 15,
@@ -309,6 +305,9 @@ dropdownMenu: {
     fontSize: 14,
   },
 });
+
+
+
 
 
 
