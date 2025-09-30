@@ -1,4 +1,3 @@
-
 import React from "react";
 import {
   View,
@@ -8,7 +7,7 @@ import {
   Dimensions,
   TouchableOpacity,
   ImageBackground,
-    Vibration
+  Vibration
 } from "react-native";
 import Carousel from "react-native-reanimated-carousel";
 import { useSharedValue } from "react-native-reanimated";
@@ -17,6 +16,7 @@ import { Fonts } from "../../../constants/fonts";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { AppStackParamList } from "../../../navigation/routeTypes";
 import { useNavigation } from "@react-navigation/native";
+import { useTranslation } from "react-i18next"; // --- ADDED ---
 
 // ==== Layout tuning ====
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
@@ -29,8 +29,8 @@ export type CardItem = {
   id: string | number;
   title: string;
   subtitle?: string;
-  image?: any; // local require
-  route: keyof AppStackParamList; // <-- direct route name
+  image?: any;
+  route: keyof AppStackParamList;
 };
 
 type Props = {
@@ -38,57 +38,50 @@ type Props = {
   onPressCard?: (item: CardItem) => void;
 };
 
-// Default cards (id same as aapke pehle waale, bas route add kiya)
-export const DEFAULT_CARDS: CardItem[] = [
- 
-  {
-    id: "tarot",
-    title: "Tarot Reading",
-    subtitle: "Decode the stars and your cosmic blueprint.",
-    image: require("../../../assets/images/TarotReading.png"),
-    // route: "TarotCardDetail",
-      route: "AskQuestionTarotScreen",
-  },
-  {
-    id: "numero",
-    title: "Buzious",
-    subtitle: "Numbers that shape your destiny.",
-    image: require("../../../assets/images/odu.png"),
-    // route: "CariusCardDetail",
-         route: "AskQuestionCariusScreen",
-  },
-   {
-    id: "astro",
-    title: "Astrology",
-    subtitle: "Unveil your path through ancient cards of intuition.",
-    image: require("../../../assets/images/astrology.png"),
-    // route: "AstrologyCardDetail",
-        route: "AskQuestionAstrologyScreen",
-  },
-];
-
-const CarouselCard: React.FC<Props> = ({ data = DEFAULT_CARDS, onPressCard }) => {
+const CarouselCard: React.FC<Props> = ({ data, onPressCard }) => {
   const { colors } = useThemeStore((s) => s.theme);
   const progress = useSharedValue(0);
   const navigation =
     useNavigation<NativeStackNavigationProp<AppStackParamList>>();
+  const { t } = useTranslation(); // --- ADDED ---
+
+  // --- CHANGED: Default cards array ko component ke andar move kiya gaya hai ---
+  const DEFAULT_CARDS: CardItem[] = [
+    {
+      id: "tarot",
+      title: t('carousel_tarot_title'),
+      subtitle: t('carousel_tarot_subtitle'),
+      image: require("../../../assets/images/TarotReading.png"),
+      route: "AskQuestionTarotScreen",
+    },
+    {
+      id: "numero",
+      title: t('carousel_buzious_title'),
+      subtitle: t('carousel_buzious_subtitle'),
+      image: require("../../../assets/images/odu.png"),
+      route: "AskQuestionCariusScreen",
+    },
+    {
+      id: "astro",
+      title: t('carousel_astrology_title'),
+      subtitle: t('carousel_astrology_subtitle'),
+      image: require("../../../assets/images/astrology.png"),
+      route: "AskQuestionAstrologyScreen",
+    },
+  ];
+
+  // Use props data if available, otherwise use our translated default cards
+  const cardData = data || DEFAULT_CARDS;
 
   const handlePress = (item: CardItem) => {
-  console.log('Carousel Card Pressed!'); // <--- YEH LINE ADD KAREIN
-
-    Vibration.vibrate(200); 
+    Vibration.vibrate(50); // Lighter vibration
 
     if (onPressCard) {
       onPressCard(item);
       return;
     }
-    // direct & type-safe
     if (item.route) {
-      navigation.navigate(item.route);
-    } else {
-     
-      const firstRoute = (data?.[0]?.route ?? "AstrologyCardDetail") as keyof AppStackParamList;
-      navigation.navigate(firstRoute);
+      navigation.navigate(item.route as any);
     }
   };
 
@@ -108,17 +101,14 @@ const CarouselCard: React.FC<Props> = ({ data = DEFAULT_CARDS, onPressCard }) =>
                 { borderRadius: CARD_RADIUS },
               ]}
             />
-
-            {/* Artwork */}
             {item.image ? (
               <Image source={item.image} resizeMode="contain" style={styles.image} />
             ) : (
               <View style={styles.imagePlaceholder}>
-                <Text style={styles.placeholderText}>No image</Text>
+                {/* --- CHANGED --- */}
+                <Text style={styles.placeholderText}>{t('carousel_no_image')}</Text>
               </View>
             )}
-
-            {/* Text */}
             <View style={styles.textArea}>
               <Text style={[styles.title, { color: colors.white }]}>{item.title}</Text>
               {!!item.subtitle && (
@@ -136,7 +126,7 @@ const CarouselCard: React.FC<Props> = ({ data = DEFAULT_CARDS, onPressCard }) =>
   return (
     <View style={{ width: VIEWPORT_WIDTH }}>
       <Carousel
-        data={data}
+        data={cardData} // Use the translated data
         width={ITEM_WIDTH}
         height={ITEM_HEIGHT}
         style={{ width: VIEWPORT_WIDTH }}

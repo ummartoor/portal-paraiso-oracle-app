@@ -18,6 +18,8 @@ export type AppStackParamList = {
     TarotReadingHistoryDetail:{readingItem:any};
     AstrologyHistoryDetail:{horoscopeItem:any}
     BuziosHistoryDetail:{history_uid: string };
+
+    ChatDetail :undefined;
   DeleteAccount: undefined;
     SupportScreen: undefined;
       EditProfile: undefined;

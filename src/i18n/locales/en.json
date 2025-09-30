@@ -150,6 +150,47 @@
   "zodiac_sagittarius": "Sagittarius",
   "zodiac_capricorn": "Capricorn",
   "zodiac_aquarius": "Aquarius",
-  "zodiac_pisces": "Pisces"
+  "zodiac_pisces": "Pisces",
+
+
+
+
+
+
+"tab_home": "Home",
+  "tab_divine": "Divine",
+  "tab_library": "Library",
+  "tab_chat": "Chat",
+
+
+
+
+  "home_title": "PORTAL PARAISO",
+  "home_subtitle": "Choose your path to divine guidance",
+  "home_daily_wisdom_card": "Daily Wisdom Card",
+  "home_ritual_tip": "Ritual Tip",
+
+  "carousel_tarot_title": "Tarot Reading",
+  "carousel_tarot_subtitle": "Unveil your path through ancient cards of intuition.",
+  "carousel_buzious_title": "Buzious",
+  "carousel_buzious_subtitle": "Numbers that shape your destiny.",
+  "carousel_astrology_title": "Astrology",
+  "carousel_astrology_subtitle": "Decode the stars and your cosmic blueprint.",
+  "carousel_no_image": "No image",
+
+
+"ask_question_header": "Ask a Question",
+  "ask_question_heading": "What Guidance Do You Seek?",
+  "ask_question_subheading": "Type your question below.",
+  "ask_question_placeholder": "Type your question, or ask for general guidance...",
+  "alert_input_required_message_question": "Please enter your question or ask for general guidance.",
+
+
+
+
+  "divine_screen": "Divine",
+  "divine_tarot_title": "Tarot Reading",
+  "divine_cauris_title": "Cauris",
+  "divine_astrology_title": "Astrology"
 }
 

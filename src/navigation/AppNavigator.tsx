@@ -30,6 +30,7 @@ import TarotReadingHistoryDetail from '../screens/app/libraryScreen/TarotReading
 import AstrologyHistoryDetail from '../screens/app/libraryScreen/AstrologyHistoryDetail';
 import ProfileScreen from '../screens/app/ProfileScreen/ProfileScreen';
 import BuziosHistoryDetail from '../screens/app/libraryScreen/BuziousHistoryDetail';
+import ChatDetailScreen from '../screens/app/chatScreen/ChatDetailScreen';
 
 
 
@@ -59,6 +60,8 @@ const AppNavigator = () => {
               <Stack.Screen name='TarotReadingHistoryDetail' component={TarotReadingHistoryDetail} />
   <Stack.Screen name='AstrologyHistoryDetail' component={AstrologyHistoryDetail} />
   <Stack.Screen name='BuziosHistoryDetail' component={BuziosHistoryDetail} />
+
+   <Stack.Screen name='ChatDetail' component={ChatDetailScreen} />
        <Stack.Screen name='Profile' component={ProfileScreen} />
       <Stack.Screen name='DeleteAccount' component={DeleteAccountScreen} />
       <Stack.Screen name='SupportScreen' component={SupportScreen} />

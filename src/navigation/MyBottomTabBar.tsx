@@ -17,6 +17,7 @@ import DivineIcon from '../assets/icons/divineIcon.png';
 import LibraryIcon from '../assets/icons/libraryIcon.png';
 import ChatIcon from '../assets/icons/chatIcon.png';
 import { useUIStore } from '../store/useUiStore';
+import { useTranslation } from 'react-i18next';
 
 const getIcon = (routeName: string): ImageSourcePropType => {
   switch (routeName) {
@@ -33,6 +34,22 @@ const getIcon = (routeName: string): ImageSourcePropType => {
   }
 };
 
+// --- ADDED: Helper function to get translation key from route name ---
+const getLabelKey = (routeName: string): string => {
+  switch (routeName) {
+    case 'Home':
+      return 'tab_home';
+    case 'Divine':
+      return 'tab_divine';
+    case 'Library':
+      return 'tab_library';
+    case 'Chat':
+      return 'tab_chat';
+    default:
+      // Fallback in case a new tab is added
+      return `tab_${routeName.toLowerCase()}`;
+  }
+};
 export const MyBottomTabBar = ({
   state,
   descriptors,
@@ -41,22 +58,22 @@ export const MyBottomTabBar = ({
   const theme = useThemeStore(state => state.theme);
   const colors = theme.colors;
   const isKeyboardVisible = useUIStore(state => state.isKeyboardVisible);
+  const { t } = useTranslation();
 
   if (isKeyboardVisible) return null;
   return (
-    <GradientBox
-      colors={[colors.black, colors.bgBox]} 
-      style={styles.wrapper}
-    >
+    <GradientBox colors={[colors.black, colors.bgBox]} style={styles.wrapper}>
       {state.routes.map((route, index) => {
         const { options } = descriptors[route.key];
-        const label =
-          options.tabBarLabel !== undefined
-            ? options.tabBarLabel
-            : options.title !== undefined
-              ? options.title
-              : route.name;
+        // const label =
+        //   options.tabBarLabel !== undefined
+        //     ? options.tabBarLabel
+        //     : options.title !== undefined
+        //       ? options.title
+        //       : route.name;
 
+        const labelKey = getLabelKey(route.name);
+        const label = t(labelKey as any);
         const isFocused = state.index === index;
 
         const onPress = () => {
@@ -112,7 +129,7 @@ export const MyBottomTabBar = ({
 const styles = StyleSheet.create({
   wrapper: {
     position: 'absolute',
-    bottom: 0, 
+    bottom: 0,
     left: 0,
     right: 0,
     height: 71,

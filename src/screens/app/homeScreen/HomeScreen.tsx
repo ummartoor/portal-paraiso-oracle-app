@@ -18,7 +18,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { AppStackParamList } from '../../../navigation/routeTypes';
 import CarouselCard, { CardItem } from './CarouselCards';
 import { useAuthStore } from '../../../store/useAuthStore';
-
+import { useTranslation } from 'react-i18next';
 
 const { height: SCREEN_HEIGHT, width: SCREEN_WIDTH } = Dimensions.get('screen');
 
@@ -68,10 +68,11 @@ const HomeScreen: React.FC = () => {
   );
   const navigation =
     useNavigation<NativeStackNavigationProp<AppStackParamList>>();
+     const { t } = useTranslation();
 
   const onPressCarouselCard = (item: CardItem) => {
     if (item.route) {
-      navigation.navigate(item.route);
+      navigation.navigate(item.route as any);
     } else {
       console.warn('No route defined for card:', item.id);
     }
@@ -127,13 +128,13 @@ const HomeScreen: React.FC = () => {
               style={[styles.title, { color: colors.white }]}
               numberOfLines={1}
             >
-              PORTAL PARAISO
+          {t('home_title')}
             </Text>
             <Text
               style={[styles.subtitle, { color: colors.primary }]}
               numberOfLines={2}
             >
-              Choose your path to divine guidance
+              {t('home_subtitle')}
             </Text>
           </View>
 
@@ -146,14 +147,14 @@ const HomeScreen: React.FC = () => {
           <View style={styles.cardBoxSection}>
             {/* First Box */}
             <CardBox
-              label="Daily Wisdom Card"
+             label={t('home_daily_wisdom_card')}
               icon={require('../../../assets/icons/dailyWisdomIcon.png')}
               onPress={() => navigation.navigate('DailyWisdomCardScreen')}
             />
 
             {/* Second Box */}
             <CardBox
-              label="Ritual Tip"
+                    label={t('home_ritual_tip')}
               icon={require('../../../assets/icons/RitualTipIcon.png')}
               onPress={() => navigation.navigate('RitualTipScreen')}
             />
@@ -244,7 +245,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   cardBoxText: {
-    fontSize: 20,
+    fontSize: 18,
     fontFamily: Fonts.cormorantSCBold,
     letterSpacing: 0.4,
     textTransform: 'capitalize',

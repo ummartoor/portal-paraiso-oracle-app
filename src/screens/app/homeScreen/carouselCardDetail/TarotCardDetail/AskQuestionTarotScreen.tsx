@@ -21,7 +21,7 @@ import { useNavigation } from '@react-navigation/native';
 import { Fonts } from '../../../../../constants/fonts';
 import GradientBox from '../../../../../components/GradientBox';
 import { AppStackParamList } from '../../../../../navigation/routeTypes';
-
+import { useTranslation } from 'react-i18next';
 const { height: SCREEN_HEIGHT, width: SCREEN_WIDTH } = Dimensions.get('screen');
 
 const AskQuestionTarotScreen = () => {
@@ -29,15 +29,15 @@ const AskQuestionTarotScreen = () => {
   const colors = theme.colors;
   const navigation =
     useNavigation<NativeStackNavigationProp<AppStackParamList>>();
-
+  const { t } = useTranslation();
   const [question, setQuestion] = useState('');
 
 const handleNext = () => {
   if (!question.trim()) {
     Alert.alert(
-      'Input Required',
-      'Please enter your question or ask for general guidance.'
-    );
+        t('alert_input_required_title'),
+        t('alert_input_required_message_question')
+      );
     return;
   }
   // This is the important change: send the question to the next screen
@@ -70,7 +70,7 @@ const handleNext = () => {
             />
           </TouchableOpacity>
           <View style={styles.headerTitleWrap}>
-            <Text style={styles.headerTitle}>Ask a Question</Text>
+            <Text style={styles.headerTitle}>{t('ask_question_header')}</Text>
           </View>
         </View>
 
@@ -86,16 +86,16 @@ const handleNext = () => {
             <View style={styles.content}>
               {/* Heading and Subheading in center */}
               <Text style={[styles.heading, { color: colors.white }]}>
-                What Guidance Do You Seek?
+               {t('ask_question_heading')}
               </Text>
               <Text style={[styles.subheading, { color: colors.primary }]}>
-            Type your question below.
+           {t('ask_question_subheading')}
               </Text>
 
               {/* Input Field */}
               <TextInput
                 style={styles.inputField}
-                placeholder="Type your question, or ask for general guidance..."
+              placeholder={t('ask_question_placeholder')}
                 placeholderTextColor="#999"
                 value={question}
                 onChangeText={setQuestion}
@@ -118,7 +118,7 @@ const handleNext = () => {
                   { borderWidth: 1.5, borderColor: colors.primary },
                 ]}
               >
-                <Text style={styles.nextText}>Continue</Text>
+                <Text style={styles.nextText}>{t('continue_button')}</Text>
               </GradientBox>
             </TouchableOpacity>
           </View>
