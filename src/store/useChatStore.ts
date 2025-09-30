@@ -188,8 +188,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
                     const newMessagesFromServer = newSessionData.messages;
 
-                    // ** THE FIX IS HERE **
-                    // Use optional chaining (?.) to safely access .startsWith()
+                  
                     const combinedMessages = [
                         ...state.activeSession.messages.filter(msg => !msg._id?.startsWith('temp_')),
                         ...newMessagesFromServer

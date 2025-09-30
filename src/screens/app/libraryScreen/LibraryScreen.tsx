@@ -15,8 +15,9 @@ import GradientBox from '../../../components/GradientBox';
 import TarotHistoryList from './TarotHistoryList';
 import AstrologyHistoryList from './AstrologyHistoryList';
 import BuziosHistoryList from './BuziosHistoryList';
+import DailyWisdomCardList from './DailyWisdomCardList';
 
-const tabs = ['Tarot', 'Astrology', 'Buzious'];
+const tabs = ['Tarot', 'Astrology', 'Buzious', 'Daily Wisdom Card'];
 
 // Placeholder component for other tabs
 const PlaceholderComponent = ({ title }: { title: string }) => (
@@ -37,6 +38,8 @@ const LibraryScreen: React.FC = () => {
         return <AstrologyHistoryList/>;
       case 'Buzious':
         return <BuziosHistoryList/>;
+           case 'Daily Wisdom Card':
+        return <DailyWisdomCardList/>;
       default:
         return null;
     }

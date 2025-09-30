@@ -1,3 +1,4 @@
+import { WisdomHistoryItem } from "../store/useDailyWisdomStore";
 
 export type AppStackParamList = {
   MainTabs: undefined;
@@ -18,7 +19,9 @@ export type AppStackParamList = {
     TarotReadingHistoryDetail:{readingItem:any};
     AstrologyHistoryDetail:{horoscopeItem:any}
     BuziosHistoryDetail:{history_uid: string };
+    DailyWisdomCardHistoryDetail:{ historyItem: WisdomHistoryItem };
 
+    
     ChatDetail :undefined;
   DeleteAccount: undefined;
     SupportScreen: undefined;
