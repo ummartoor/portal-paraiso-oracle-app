@@ -14,7 +14,7 @@ import { Fonts } from "../../../../../constants/fonts";
 import GradientBox from "../../../../../components/GradientBox";
 
 // Goal Icons
-const goalsList = [
+ export const goalsList = [
   { key: "find_partner", label: "Find my perfect partner", icon: require("../../../../../assets/icons/goalIcon1.png") },
   { key: "improve_relationship", label: "Improve current relationship", icon: require("../../../../../assets/icons/goalIcon2.png") },
   { key: "understand_self", label: "Understand myself better", icon: require("../../../../../assets/icons/goalIcon3.png") },

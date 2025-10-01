@@ -497,6 +497,19 @@
 //   },
 // });
 
+
+
+
+
+
+
+
+
+
+
+
+
+
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
@@ -527,7 +540,7 @@ import UpdatePasswordModal from './UpdatePasswordModal';
 import GenderModal from './GenderModal';
 import DateOfBirthModal from './DateOfBirthModal';
 import { useAuthStore } from '../../../../../store/useAuthStore';
-import GoalsModal from './GoalsModal';
+import GoalsModal, { goalsList } from './GoalsModal'; 
 import TimeOfBirthModal from './TimeOfBirthModal';
 import PlaceOfBirthModal from './PlaceOfBirthModal';
 import RelationshipStatusModal from './RelationshipStatusModal';
@@ -633,6 +646,28 @@ const EditProfileScreen = () => {
 
   const formatDate = (d: Date | null) =>
     d ? d.toLocaleDateString('en-GB') : 'Select your date of birth';
+
+const formatGoalsForDisplay = (goalKeys: string[]) => {
+    if (!goalKeys || goalKeys.length === 0) {
+      return 'Select Goals';
+    }
+
+    // Map each key to its corresponding label
+    const labels = goalKeys.map(key => {
+      const goal = goalsList.find(g => g.key === key);
+      return goal ? goal.label : key;
+    });
+
+    // If more than 2 goals are selected, truncate the text
+    if (labels.length > 2) {
+      const remainingCount = labels.length - 2;
+      const firstTwoLabels = labels.slice(0, 2).join(', ');
+      return `${firstTwoLabels} ... and ${remainingCount} more`;
+    }
+
+    // Otherwise, show all selected goal labels
+    return labels.join(', ');
+  };
 
   return (
     <ImageBackground
@@ -771,7 +806,7 @@ const EditProfileScreen = () => {
                   },
                 ]}
               >
-                {goals.length > 0 ? goals.join(', ') : 'Select Goals'}
+               {formatGoalsForDisplay(goals)}
               </Text>
             </TouchableOpacity>
 
@@ -1016,9 +1051,9 @@ const styles = StyleSheet.create({
   },
   profileImageWrap: { alignSelf: 'center', marginBottom: 20 },
   profileImage: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
+    width: 130,
+    height: 130,
+    borderRadius: 90,
     borderWidth: 3,
     borderColor: '#fff',
   },

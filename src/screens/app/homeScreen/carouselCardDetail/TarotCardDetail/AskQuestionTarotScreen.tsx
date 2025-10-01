@@ -43,7 +43,7 @@ const handleNext = () => {
   // This is the important change: send the question to the next screen
   navigation.navigate('TarotCardDetail', { userQuestion: question });
 };
-
+  const isButtonDisabled = !question.trim();
   return (
     <ImageBackground
       source={require('../../../../../assets/images/bglinearImage.png')}
@@ -105,17 +105,25 @@ const handleNext = () => {
           </ScrollView>
 
           {/* Footer with button */}
-          <View style={styles.footer}>
+     <View style={styles.footer}>
             <TouchableOpacity
               activeOpacity={0.8}
               onPress={handleNext}
               style={{ width: '100%' }}
+              disabled={isButtonDisabled} 
             >
               <GradientBox
-                colors={[colors.black, colors.bgBox]}
+           
+                colors={
+                  isButtonDisabled
+                      ? ['#a19a9aff', '#a19a9aff']
+                    : [colors.black, colors.bgBox] 
+                }
                 style={[
                   styles.nextBtn,
-                  { borderWidth: 1.5, borderColor: colors.primary },
+                  isButtonDisabled
+                    ? { borderWidth: 0 } 
+                    : { borderWidth: 1.5, borderColor: colors.primary }, 
                 ]}
               >
                 <Text style={styles.nextText}>{t('continue_button')}</Text>

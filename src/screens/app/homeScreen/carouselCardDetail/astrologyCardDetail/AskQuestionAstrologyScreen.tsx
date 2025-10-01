@@ -40,10 +40,10 @@ const handleNext = () => {
       );
       return;
     }
-    // Yahan hum question ko as a parameter bhej rahay hain
+
     navigation.navigate('AstrologyCardDetail', { userQuestion: question });
   };
-
+  const isButtonDisabled = !question.trim();
   return (
     <ImageBackground
       source={require('../../../../../assets/images/bglinearImage.png')}
@@ -104,18 +104,26 @@ const handleNext = () => {
             </View>
           </ScrollView>
 
-          {/* Footer with button */}
-          <View style={styles.footer}>
+     <View style={styles.footer}>
             <TouchableOpacity
               activeOpacity={0.8}
               onPress={handleNext}
               style={{ width: '100%' }}
+              disabled={isButtonDisabled} // <-- CHANGE 1: Button ko disable karein
             >
               <GradientBox
-                colors={[colors.black, colors.bgBox]}
+                // <-- CHANGE 2: Background ko gray karein jab disabled ho
+                colors={
+                  isButtonDisabled
+                    ? ['#a19a9aff', '#a19a9aff'] // Disabled state (Solid Gray)
+                    : [colors.black, colors.bgBox] // Enabled state
+                }
                 style={[
                   styles.nextBtn,
-                  { borderWidth: 1.5, borderColor: colors.primary },
+                  // <-- CHANGE 3: Border ko remove karein jab disabled ho
+                  isButtonDisabled
+                    ? { borderWidth: 0 } // Disabled state (No border)
+                    : { borderWidth: 1.5, borderColor: colors.primary }, // Enabled state
                 ]}
               >
                 <Text style={styles.nextText}>{t('continue_button')}</Text>
