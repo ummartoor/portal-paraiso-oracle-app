@@ -26,6 +26,9 @@ interface RegisterPayload {
   email: string;
   password: string;
   confirmPassword: string;
+    timezone: string; 
+  app_language: string; 
+
 }
 
 interface UpdateUserDetailsPayload {

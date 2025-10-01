@@ -50,7 +50,7 @@ const NotificationScreen = () => {
 
           <View style={styles.headerTitleWrap} pointerEvents="none">
             <Text numberOfLines={1} ellipsizeMode="tail" style={[styles.headerTitle, { color: colors.white }]}>
-      Notification
+      Notifications
             </Text>
           </View>
         </View>

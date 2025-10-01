@@ -16,8 +16,10 @@ import TarotHistoryList from './TarotHistoryList';
 import AstrologyHistoryList from './AstrologyHistoryList';
 import BuziosHistoryList from './BuziosHistoryList';
 import DailyWisdomCardList from './DailyWisdomCardList';
+import RitualTipScreen from '../homeScreen/ritualTip/RitualTipScreen';
+import RitualTipHistoryList from './RitualTipHistoryList';
 
-const tabs = ['Tarot', 'Astrology', 'Buzious', 'Daily Wisdom Card'];
+const tabs = ['Tarot', 'Astrology', 'Buzious', 'Daily Wisdom Card', 'Ritual Tip'];
 
 // Placeholder component for other tabs
 const PlaceholderComponent = ({ title }: { title: string }) => (
@@ -40,6 +42,8 @@ const LibraryScreen: React.FC = () => {
         return <BuziosHistoryList/>;
            case 'Daily Wisdom Card':
         return <DailyWisdomCardList/>;
+               case 'Ritual Tip':
+        return <RitualTipHistoryList/>;
       default:
         return null;
     }

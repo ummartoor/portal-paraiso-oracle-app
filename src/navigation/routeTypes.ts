@@ -1,8 +1,10 @@
 import { WisdomHistoryItem } from "../store/useDailyWisdomStore";
+import { RitualHistoryItem } from "../store/useRitualTipStore";
 
 export type AppStackParamList = {
   MainTabs: undefined;
   Profile: undefined;
+  Notification :undefined;
   AskQuestionTarotScreen:undefined;
   TarotCardDetail: { userQuestion: string };
     AskQuestionAstrologyScreen:undefined;
@@ -20,7 +22,7 @@ export type AppStackParamList = {
     AstrologyHistoryDetail:{horoscopeItem:any}
     BuziosHistoryDetail:{history_uid: string };
     DailyWisdomCardHistoryDetail:{ historyItem: WisdomHistoryItem };
-
+RitualTipHistoryDetail: { historyItem: RitualHistoryItem };
     
     ChatDetail :undefined;
   DeleteAccount: undefined;

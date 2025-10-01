@@ -113,7 +113,7 @@ const HomeScreen: React.FC = () => {
     <View style={[styles.onlineDot, { borderColor: colors.white }]} />
 </TouchableOpacity>
        
-            <TouchableOpacity style={styles.headerIconBtn}>
+            <TouchableOpacity style={styles.headerIconBtn}  onPress={()=> navigation.navigate('Notification')}>
               <Image
                 source={require('../../../assets/icons/notificationIcon.png')}
                 style={styles.headerIcon}

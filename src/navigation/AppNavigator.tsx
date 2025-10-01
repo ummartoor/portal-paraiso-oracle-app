@@ -32,6 +32,8 @@ import ProfileScreen from '../screens/app/ProfileScreen/ProfileScreen';
 import BuziosHistoryDetail from '../screens/app/libraryScreen/BuziousHistoryDetail';
 import ChatDetailScreen from '../screens/app/chatScreen/ChatDetailScreen';
 import DailyWisdomCardHistoryDetail from '../screens/app/libraryScreen/DailyWisdomCardHistoryDetail';
+import NotificationScreen from '../screens/app/homeScreen/notification/NotificationScreen';
+import RitualTipHistoryDetail from '../screens/app/libraryScreen/RitualTipHistoryDetail';
 
 
 
@@ -47,6 +49,7 @@ const AppNavigator = () => {
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name='MainTabs' component={MainTabs} />
       {/* <Stack.Screen name='CarouselCardDetail' component={CarouselCardDetailScreen} /> */}
+         <Stack.Screen name='Notification' component={NotificationScreen} />
    <Stack.Screen name='AskQuestionTarotScreen' component={AskQuestionTarotScreen} />
       <Stack.Screen name='TarotCardDetail' component={TarotCardDetailScreen} />
          <Stack.Screen name='AskQuestionAstrologyScreen' component={AskQuestionAstrologyScreen} />
@@ -62,6 +65,9 @@ const AppNavigator = () => {
   <Stack.Screen name='AstrologyHistoryDetail' component={AstrologyHistoryDetail} />
   <Stack.Screen name='BuziosHistoryDetail' component={BuziosHistoryDetail} />
   <Stack.Screen name='DailyWisdomCardHistoryDetail' component={DailyWisdomCardHistoryDetail} />
+  <Stack.Screen name='RitualTipHistoryDetail' component={RitualTipHistoryDetail} />
+
+
    <Stack.Screen name='ChatDetail' component={ChatDetailScreen} />
        <Stack.Screen name='Profile' component={ProfileScreen} />
       <Stack.Screen name='DeleteAccount' component={DeleteAccountScreen} />

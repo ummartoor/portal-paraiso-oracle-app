@@ -31,6 +31,7 @@ import GradientBox from '../../../components/GradientBox';
 import { Fonts } from '../../../constants/fonts';
 import tickIcon from '../../../assets/icons/tickIcon.png';
 import { useTranslation } from 'react-i18next';
+import * as RNLocalize from 'react-native-localize';
 const { height: SCREEN_HEIGHT, width: SCREEN_WIDTH } = Dimensions.get('screen');
 
 const SignUpScreen = () => {
@@ -44,7 +45,7 @@ const SignUpScreen = () => {
 
   const navigation =
     useNavigation<NativeStackNavigationProp<AuthStackParamsList>>();
-  const { t } = useTranslation();
+const { t, i18n } = useTranslation();
   // --- UPDATED: Added confirmPassword validation ---
 const validationSchema = Yup.object().shape({
   name: Yup.string().required(t('validation_name_required')),
@@ -95,13 +96,19 @@ const validationSchema = Yup.object().shape({
                 agree: false,
               }}
               validationSchema={validationSchema}
-              // --- UPDATED: onSubmit now calls the register API ---
+        
               onSubmit={async (values, { setSubmitting }) => {
+                  const timezone = RNLocalize.getTimeZone();
+
+             
+                const app_language = i18n.language;
                 const payload = {
                   name: values.name,
                   email: values.email,
                   password: values.password,
                   confirmPassword: values.confirmPassword,
+                  timezone: timezone,       
+                    app_language: app_language 
                 };
                 
                 const result = await register(payload);
