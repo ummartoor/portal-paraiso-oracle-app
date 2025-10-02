@@ -96,7 +96,7 @@ console.log('Checking User Profile Image URL:', user?.profile_image);
           <View style={styles.header}>
             <View style={{ width: 18, height: 18 }} />
             <Text style={[styles.headerTitle, { color: colors.white }]}>Profile</Text>
-            <TouchableOpacity activeOpacity={0.8} onPress={() => { /* navigate to settings */ }}>
+            <TouchableOpacity activeOpacity={0.8} onPress={() => {  }}>
               <Image
                 source={require('../../../assets/icons/settingIcon.png')}
                 style={{ width: 18, height: 18 }}

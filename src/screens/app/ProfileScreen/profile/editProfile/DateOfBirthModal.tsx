@@ -95,7 +95,7 @@ const DateOfBirthModal: React.FC<DateOfBirthModalProps> = ({
                   {isLoading ? (
                     <ActivityIndicator color={colors.primary} />
                   ) : (
-                    <Text style={styles(colors).updateText}>Save</Text>
+                    <Text style={styles(colors).updateText}>Update</Text>
                   )}
                 </GradientBox>
               </TouchableOpacity>
@@ -179,6 +179,8 @@ const styles = (colors: any) =>
       flexBasis: 0,
       height: 50,
       borderRadius: 200,
+           borderWidth:1.7,
+      borderColor:'#D9B699',
       overflow: 'hidden',
     },
     gradientFill: {

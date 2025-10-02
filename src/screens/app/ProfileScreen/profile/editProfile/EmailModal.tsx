@@ -6,36 +6,43 @@ import {
   TouchableOpacity,
   StyleSheet,
   TextInput,
+  ActivityIndicator,
 } from 'react-native';
 import { useThemeStore } from '../../../../../store/useThemeStore';
 import { Fonts } from '../../../../../constants/fonts';
 import GradientBox from '../../../../../components/GradientBox';
 
-interface PlaceOfBirthModalProps {
+interface EmailModalProps {
   isVisible: boolean;
   onClose: () => void;
-  onConfirm: (place: string) => void;
-   defaultValue?: string;
+  onConfirm: (email: string) => Promise<boolean>;
+  defaultValue?: string;
 }
 
-const PlaceOfBirthModal: React.FC<PlaceOfBirthModalProps> = ({
+const EmailModal: React.FC<EmailModalProps> = ({
   isVisible,
   onClose,
   onConfirm,
-    defaultValue = '',
+  defaultValue = '',
 }) => {
-  const colors = useThemeStore((state) => state.theme.colors);
- const [place, setPlace] = useState(defaultValue);
+  const colors = useThemeStore(state => state.theme.colors);
+  const [email, setEmail] = useState(defaultValue);
+  const [isLoading, setIsLoading] = useState(false);
 
-useEffect(() => {
+  useEffect(() => {
     if (isVisible) {
-      setPlace(defaultValue || '');
+      setEmail(defaultValue || '');
     }
   }, [isVisible, defaultValue]);
 
-  const handleUpdate = () => {
-    if (place.trim().length > 0) {
-      onConfirm(place.trim());
+  const handleUpdate = async () => {
+    if (email.trim().length > 0 && !isLoading) {
+      setIsLoading(true);
+      const success = await onConfirm(email.trim());
+      setIsLoading(false);
+      if (success) {
+        onClose();
+      }
     }
   };
 
@@ -44,17 +51,17 @@ useEffect(() => {
       <View style={[StyleSheet.absoluteFill, styles(colors).overlayBackground]}>
         <View style={styles(colors).overlay}>
           <View style={styles(colors).modal}>
-            {/* Heading */}
-            <Text style={styles(colors).heading}>Place of Birth</Text>
+            <Text style={styles(colors).heading}>Update Your Email</Text>
 
-            {/* Input */}
             <View style={styles(colors).fieldContainer}>
-              <Text style={styles(colors).label}>Enter Place of Birth</Text>
+              <Text style={styles(colors).label}>Enter your email address</Text>
               <TextInput
-                placeholder="Type your place of birth"
+                placeholder="Type your email"
                 placeholderTextColor="rgba(255,255,255,0.6)"
-                value={place}
-                onChangeText={setPlace}
+                value={email}
+                onChangeText={setEmail}
+                keyboardType="email-address"
+                autoCapitalize="none"
                 style={[
                   styles(colors).input,
                   { backgroundColor: colors.bgBox, color: colors.white },
@@ -62,9 +69,7 @@ useEffect(() => {
               />
             </View>
 
-            {/* Buttons */}
             <View style={styles(colors).buttonRow}>
-              {/* Cancel */}
               <TouchableOpacity
                 onPress={onClose}
                 activeOpacity={0.85}
@@ -72,18 +77,21 @@ useEffect(() => {
               >
                 <Text style={styles(colors).cancelText}>Cancel</Text>
               </TouchableOpacity>
-
-              {/* Save */}
               <TouchableOpacity
                 onPress={handleUpdate}
                 activeOpacity={0.9}
                 style={styles(colors).gradientTouchable}
+                disabled={isLoading}
               >
                 <GradientBox
                   colors={[colors.black, colors.bgBox]}
                   style={styles(colors).gradientFill}
                 >
-                  <Text style={styles(colors).updateText}>Update</Text>
+                  {isLoading ? (
+                    <ActivityIndicator color={colors.primary} />
+                  ) : (
+                    <Text style={styles(colors).updateText}>Update</Text>
+                  )}
                 </GradientBox>
               </TouchableOpacity>
             </View>
@@ -94,18 +102,12 @@ useEffect(() => {
   );
 };
 
-export default PlaceOfBirthModal;
+export default EmailModal;
 
 const styles = (colors: any) =>
   StyleSheet.create({
-    overlayBackground: {
-      backgroundColor: 'rgba(0, 0, 0, 0.6)',
-    },
-    overlay: {
-      flex: 1,
-      justifyContent: 'center',
-      paddingHorizontal: 20,
-    },
+    overlayBackground: { backgroundColor: 'rgba(0, 0, 0, 0.6)' },
+    overlay: { flex: 1, justifyContent: 'center', paddingHorizontal: 20 },
     modal: {
       width: '100%',
       backgroundColor: colors.bgBox,
@@ -115,21 +117,18 @@ const styles = (colors: any) =>
       alignItems: 'center',
     },
     heading: {
-      fontFamily: Fonts.aeonikRegular,
-      fontSize: 18,
-      lineHeight: 22,
+      fontFamily: Fonts.cormorantSCBold,
+      fontSize: 22,
       color: colors.primary,
       marginBottom: 20,
     },
-    fieldContainer: {
-      width: '100%',
-      marginBottom: 16,
-    },
+    fieldContainer: { width: '100%', marginBottom: 16 },
     label: {
       fontFamily: Fonts.aeonikRegular,
       fontSize: 14,
       color: colors.white,
       marginBottom: 6,
+      opacity: 0.8,
     },
     input: {
       width: '100%',
@@ -165,9 +164,9 @@ const styles = (colors: any) =>
       flexGrow: 1,
       flexBasis: 0,
       height: 50,
-      borderRadius: 200,
            borderWidth:1.7,
       borderColor:'#D9B699',
+      borderRadius: 200,
       overflow: 'hidden',
     },
     gradientFill: {

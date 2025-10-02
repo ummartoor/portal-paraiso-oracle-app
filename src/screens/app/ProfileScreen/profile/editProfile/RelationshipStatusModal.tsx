@@ -120,7 +120,7 @@ const RelationshipStatusModal: React.FC<RelationshipStatusModalProps> = ({
                   colors={[colors.black, colors.bgBox]}
                   style={styles(colors).gradientFill}
                 >
-                  <Text style={styles(colors).updateText}>Save</Text>
+                  <Text style={styles(colors).updateText}>Update</Text>
                 </GradientBox>
               </TouchableOpacity>
             </View>
@@ -200,6 +200,8 @@ const styles = (colors: any) =>
       flexGrow: 1,
       flexBasis: 0,
       height: 50,
+           borderWidth:1.7,
+      borderColor:'#D9B699',
       borderRadius: 200,
       overflow: "hidden",
     },

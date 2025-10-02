@@ -143,7 +143,7 @@ const GoalsModal: React.FC<GoalsModalProps> = ({ isVisible, onClose, onConfirm, 
                   {isLoading ? (
                     <ActivityIndicator color={colors.primary} />
                   ) : (
-                    <Text style={styles(colors).updateText}>Save</Text>
+                    <Text style={styles(colors).updateText}>Update</Text>
                   )}
                 </GradientBox>
               </TouchableOpacity>
@@ -224,6 +224,8 @@ const styles = (colors: any) =>
       flexGrow: 1,
       flexBasis: 0,
       height: 50,
+           borderWidth:1.7,
+      borderColor:'#D9B699',
       borderRadius: 200,
       overflow: "hidden",
     },
