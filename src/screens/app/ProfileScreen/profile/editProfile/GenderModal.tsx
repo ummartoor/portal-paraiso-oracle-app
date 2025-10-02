@@ -11,7 +11,7 @@ import {
 import { useThemeStore } from '../../../../../store/useThemeStore';
 import { Fonts } from '../../../../../constants/fonts';
 import GradientBox from '../../../../../components/GradientBox';
-
+import { useTranslation } from 'react-i18next'; 
 // Gender Icons
 const maleIcon = require('../../../../../assets/icons/maleIcon.png');
 const femaleIcon = require('../../../../../assets/icons/femaleIcon.png');
@@ -31,9 +31,15 @@ const GenderModal: React.FC<GenderModalProps> = ({
    defaultValue,
 }) => {
   const colors = useThemeStore((state) => state.theme.colors);
-
+    const { t } = useTranslation();
   const [selectedGender, setSelectedGender] = useState<string | null>(defaultValue || null);
   const [isLoading, setIsLoading] = useState(false);
+
+    const genderOptions = [
+    { key: 'male', label: t('gender_male'), icon: maleIcon },
+    { key: 'female', label: t('gender_female'), icon: femaleIcon },
+    { key: 'other', label: t('gender_non_binary'), icon: nonBinaryIcon },
+  ];
   
  useEffect(() => {
     if (isVisible) {
@@ -54,18 +60,15 @@ const GenderModal: React.FC<GenderModalProps> = ({
         <View style={styles(colors).overlay}>
           <View style={styles(colors).modal}>
             {/* Heading */}
-            <Text style={styles(colors).heading}>Select Gender</Text>
+        <Text style={styles(colors).heading}>{t('gender_modal_header')}</Text>
             {/* <Text style={styles(colors).subheading}>
               Gender reveals the balance of your masculine and feminine energy
             </Text> */}
 
             {/* Gender Options */}
-            <View style={styles(colors).genderRow}>
-              {[
-                { key: 'male', label: 'Male', icon: maleIcon },
-                { key: 'female', label: 'Female', icon: femaleIcon },
-                { key: 'other', label: 'Non Binary', icon: nonBinaryIcon },
-              ].map((item) => {
+           <View style={styles(colors).genderRow}>
+              {/* --- CHANGED: Using the translated array --- */}
+              {genderOptions.map((item) => {
                 const isSelected = selectedGender === item.key;
                 return (
                   <View
@@ -127,7 +130,7 @@ const GenderModal: React.FC<GenderModalProps> = ({
                 activeOpacity={0.85}
                 style={styles(colors).cancelButton}
               >
-                <Text style={styles(colors).cancelText}>Cancel</Text>
+                     <Text style={styles(colors).cancelText}>{t('cancel_button')}</Text>
               </TouchableOpacity>
 
               {/* Next (Confirm) */}
@@ -144,7 +147,7 @@ const GenderModal: React.FC<GenderModalProps> = ({
                   {isLoading ? (
                     <ActivityIndicator color={colors.primary} />
                   ) : (
-                    <Text style={styles(colors).updateText}>Update</Text>
+                             <Text style={styles(colors).updateText}>{t('update_button')}</Text>
                   )}
                 </GradientBox>
               </TouchableOpacity>

@@ -11,7 +11,7 @@ import { useThemeStore } from '../../../../../store/useThemeStore';
 import { Fonts } from '../../../../../constants/fonts';
 import GradientBox from '../../../../../components/GradientBox';
 import DatePicker from 'react-native-date-picker';
-
+import { useTranslation } from 'react-i18next';
 interface DateOfBirthModalProps {
   isVisible: boolean;
   onClose: () => void;

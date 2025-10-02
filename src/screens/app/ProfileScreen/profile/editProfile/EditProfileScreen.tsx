@@ -27,7 +27,7 @@ import UpdatePasswordModal from './UpdatePasswordModal';
 import NameModal from './NameModal'; // New
 import EmailModal from './EmailModal'; // New
 import GenderModal from './GenderModal';
-import GoalsModal, { goalsList } from './GoalsModal';
+import GoalsModal, { getTranslatedGoalsList } from './GoalsModal';
 import DateOfBirthModal from './DateOfBirthModal';
 import TimeOfBirthModal from './TimeOfBirthModal';
 import PlaceOfBirthModal from './PlaceOfBirthModal';
@@ -74,7 +74,7 @@ const EditProfileScreen = () => {
     useState(false);
   const [isZodiacModalVisible, setZodiacModalVisible] = useState(false);
   const [imagePickerModalVisible, setImagePickerModalVisible] = useState(false);
-
+ const translatedGoalsList = getTranslatedGoalsList(t);
   // --- Fetch fresh user data every time the screen is focused ---
   useFocusEffect(
     useCallback(() => {
@@ -119,15 +119,13 @@ const EditProfileScreen = () => {
 
   const formatDate = (d: Date | null) => d ? d.toLocaleDateString('en-GB') : t('edit_profile_dob_placeholder');
 
-  const formatGoalsForDisplay = (goalKeys: string[]) => {
-    if (!goalKeys || goalKeys.length === 0) return 'Select Goals';
+   const formatGoalsForDisplay = (goalKeys: string[]) => {
+    if (!goalKeys || goalKeys.length === 0) return t('edit_profile_goals_placeholder');
     const labels = goalKeys.map(
-      key => goalsList.find(g => g.key === key)?.label || key,
+      key => translatedGoalsList.find(g => g.key === key)?.label || key,
     );
     if (labels.length > 2) {
-      return `${labels.slice(0, 2).join(', ')} ... and ${
-        labels.length - 2
-      } more`;
+      return `${labels.slice(0, 2).join(', ')} ${t('edit_profile_goals_more', { count: labels.length - 2 })}`;
     }
     return labels.join(', ');
   };

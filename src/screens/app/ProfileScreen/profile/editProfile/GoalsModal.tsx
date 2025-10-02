@@ -12,34 +12,39 @@ import {
 import { useThemeStore } from "../../../../../store/useThemeStore";
 import { Fonts } from "../../../../../constants/fonts";
 import GradientBox from "../../../../../components/GradientBox";
+import { useTranslation } from "react-i18next";
 
-// Goal Icons
- export const goalsList = [
-  { key: "find_partner", label: "Find my perfect partner", icon: require("../../../../../assets/icons/goalIcon1.png") },
-  { key: "improve_relationship", label: "Improve current relationship", icon: require("../../../../../assets/icons/goalIcon2.png") },
-  { key: "understand_self", label: "Understand myself better", icon: require("../../../../../assets/icons/goalIcon3.png") },
-  { key: "become_happier", label: "Become happier", icon: require("../../../../../assets/icons/goalIcon4.png") },
-  { key: "personal_growth", label: "Foster personal growth", icon: require("../../../../../assets/icons/goalIcon5.png") },
-  { key: "love_compatibility", label: "Check love compatibility", icon: require("../../../../../assets/icons/goalIcon6.png") },
-  { key: "others", label: "Others", icon: require("../../../../../assets/icons/goalIcon7.png") },
+
+export const getTranslatedGoalsList = (t: any) => [
+  { key: "find_partner", label: t('goal_find_partner'), icon: require("../../../../../assets/icons/goalIcon1.png") },
+  { key: "improve_relationship", label: t('goal_improve_relationship'), icon: require("../../../../../assets/icons/goalIcon2.png") },
+  { key: "understand_self", label: t('goal_understand_self'), icon: require("../../../../../assets/icons/goalIcon3.png") },
+  { key: "become_happier", label: t('goal_become_happier'), icon: require("../../../../../assets/icons/goalIcon4.png") },
+  { key: "personal_growth", label: t('goal_personal_growth'), icon: require("../../../../../assets/icons/goalIcon5.png") },
+  { key: "love_compatibility", label: t('goal_love_compatibility'), icon: require("../../../../../assets/icons/goalIcon6.png") },
+  { key: "others", label: t('goal_others'), icon: require("../../../../../assets/icons/goalIcon7.png") },
 ];
 
 interface GoalsModalProps {
   isVisible: boolean;
   onClose: () => void;
-  onConfirm: (goals: string[]) => void;
-    defaultValue?: string[];
+  onConfirm: (goals: string[]) => Promise<any>;
+  defaultValue?: string[];
 }
 
 const GoalsModal: React.FC<GoalsModalProps> = ({ isVisible, onClose, onConfirm, defaultValue = [] }) => {
   const colors = useThemeStore((state) => state.theme.colors);
+  const { t } = useTranslation();
+
+
+  const goalsList = getTranslatedGoalsList(t);
 
   const [selectedGoals, setSelectedGoals] = useState<string[]>(defaultValue);
   const [isLoading, setIsLoading] = useState(false);
 
-   useEffect(() => {
+  useEffect(() => {
     if (isVisible) {
-        setSelectedGoals(defaultValue || []);
+      setSelectedGoals(defaultValue || []);
     }
   }, [isVisible, defaultValue]);
 
@@ -61,13 +66,8 @@ const GoalsModal: React.FC<GoalsModalProps> = ({ isVisible, onClose, onConfirm, 
       <View style={[StyleSheet.absoluteFill, styles(colors).overlayBackground]}>
         <View style={styles(colors).overlay}>
           <View style={styles(colors).modal}>
-            {/* Heading */}
-            <Text style={styles(colors).heading}>Select Your Goals</Text>
-            {/* <Text style={styles(colors).subheading}>
-              Goals reveal the balance between ambition and patience
-            </Text> */}
+            <Text style={styles(colors).heading}>{t('goals_modal_header')}</Text>
 
-            {/* Goals List */}
             <ScrollView
               style={{ maxHeight: 350, width: "100%" }}
               showsVerticalScrollIndicator={false}
@@ -83,7 +83,7 @@ const GoalsModal: React.FC<GoalsModalProps> = ({ isVisible, onClose, onConfirm, 
                       styles(colors).goalBox,
                       {
                         borderColor: isSelected ? colors.primary : colors.white,
-                        borderWidth: isSelected ? 1.5 : 1,
+                        borderWidth:  1.5 ,
                         backgroundColor: colors.bgBox,
                       },
                     ]}
@@ -94,11 +94,7 @@ const GoalsModal: React.FC<GoalsModalProps> = ({ isVisible, onClose, onConfirm, 
                     >
                       <Image
                         source={goal.icon}
-                        style={{
-                          width: 20,
-                          height: 20,
-                        
-                        }}
+                        style={{ width: 20, height: 20 }}
                         resizeMode="contain"
                       />
                     </GradientBox>
@@ -106,8 +102,8 @@ const GoalsModal: React.FC<GoalsModalProps> = ({ isVisible, onClose, onConfirm, 
                       style={[
                         styles(colors).goalLabel,
                         {
-                          color: isSelected ? colors.primary : "#fff",
-                          fontFamily: isSelected ? Fonts.aeonikBold : Fonts.aeonikRegular,
+                          color: "#fff",
+                          fontFamily: Fonts.aeonikRegular,
                         },
                       ]}
                     >
@@ -118,18 +114,15 @@ const GoalsModal: React.FC<GoalsModalProps> = ({ isVisible, onClose, onConfirm, 
               })}
             </ScrollView>
 
-            {/* Buttons */}
             <View style={styles(colors).buttonRow}>
-              {/* Cancel */}
               <TouchableOpacity
                 onPress={onClose}
                 activeOpacity={0.85}
                 style={styles(colors).cancelButton}
               >
-                <Text style={styles(colors).cancelText}>Cancel</Text>
+                <Text style={styles(colors).cancelText}>{t('cancel_button')}</Text>
               </TouchableOpacity>
 
-              {/* Confirm */}
               <TouchableOpacity
                 onPress={handleConfirm}
                 activeOpacity={0.9}
@@ -143,7 +136,7 @@ const GoalsModal: React.FC<GoalsModalProps> = ({ isVisible, onClose, onConfirm, 
                   {isLoading ? (
                     <ActivityIndicator color={colors.primary} />
                   ) : (
-                    <Text style={styles(colors).updateText}>Update</Text>
+                    <Text style={styles(colors).updateText}>{t('update_button')}</Text>
                   )}
                 </GradientBox>
               </TouchableOpacity>
@@ -175,13 +168,6 @@ const styles = (colors: any) =>
       color: colors.primary,
       marginBottom: 25,
       textAlign: "center",
-    },
-    subheading: {
-      fontFamily: Fonts.aeonikRegular,
-      fontSize: 14,
-      color: colors.primary,
-      textAlign: "center",
-      marginBottom: 18,
     },
     goalBox: {
       flexDirection: "row",
@@ -224,8 +210,8 @@ const styles = (colors: any) =>
       flexGrow: 1,
       flexBasis: 0,
       height: 50,
-           borderWidth:1.7,
-      borderColor:'#D9B699',
+      borderWidth: 1.7,
+      borderColor: '#D9B699',
       borderRadius: 200,
       overflow: "hidden",
     },
@@ -242,3 +228,4 @@ const styles = (colors: any) =>
       color: colors.white,
     },
   });
+

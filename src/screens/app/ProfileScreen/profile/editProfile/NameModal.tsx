@@ -11,7 +11,7 @@ import {
 import { useThemeStore } from '../../../../../store/useThemeStore';
 import { Fonts } from '../../../../../constants/fonts';
 import GradientBox from '../../../../../components/GradientBox';
-
+import { useTranslation } from 'react-i18next'; 
 interface NameModalProps {
   isVisible: boolean;
   onClose: () => void;
@@ -27,6 +27,7 @@ const NameModal: React.FC<NameModalProps> = ({
 }) => {
   const colors = useThemeStore(state => state.theme.colors);
   const [name, setName] = useState(defaultValue);
+    const { t } = useTranslation();
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
@@ -51,12 +52,12 @@ const NameModal: React.FC<NameModalProps> = ({
       <View style={[StyleSheet.absoluteFill, styles(colors).overlayBackground]}>
         <View style={styles(colors).overlay}>
           <View style={styles(colors).modal}>
-            <Text style={styles(colors).heading}>Name</Text>
+     <Text style={styles(colors).heading}>{t('name_modal_header')}</Text>
 
             <View style={styles(colors).fieldContainer}>
-              <Text style={styles(colors).label}>Enter your full name</Text>
+               <Text style={styles(colors).label}>{t('name_modal_label')}</Text>
               <TextInput
-                placeholder="Type your name"
+               placeholder={t('name_modal_placeholder')}
                 placeholderTextColor="rgba(255,255,255,0.6)"
                 value={name}
                 onChangeText={setName}
@@ -73,7 +74,7 @@ const NameModal: React.FC<NameModalProps> = ({
                 activeOpacity={0.85}
                 style={styles(colors).cancelButton}
               >
-                <Text style={styles(colors).cancelText}>Cancel</Text>
+               <Text style={styles(colors).cancelText}>{t('cancel_button')}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={handleUpdate}
@@ -88,7 +89,7 @@ const NameModal: React.FC<NameModalProps> = ({
                   {isLoading ? (
                     <ActivityIndicator color={colors.primary} />
                   ) : (
-                    <Text style={styles(colors).updateText}>Update</Text>
+                         <Text style={styles(colors).updateText}>{t('update_button')}</Text>
                   )}
                 </GradientBox>
               </TouchableOpacity>

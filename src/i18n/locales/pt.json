@@ -248,7 +248,25 @@
   "edit_profile_pob_placeholder": "Digite o Local de Nascimento",
   "edit_profile_relationship_placeholder": "Selecione o Estado Civil",
   "edit_profile_zodiac_placeholder": "Selecione o Signo",
-  "edit_profile_goals_more": "... e mais {{count}}"
+  "edit_profile_goals_more": "... e mais {{count}}",
+
+
+  "name_modal_header": "Nome",
+  "name_modal_label": "Digite seu nome completo",
+  "name_modal_placeholder": "Digite seu nome",
+
+
+  "email_modal_header": "Atualizar seu Email",
+  "email_modal_label": "Digite seu endereço de email",
+  "email_modal_placeholder": "Digite seu email",
+
+"gender_modal_header": "Selecione o Gênero",
+
+"dob_modal_header": "Selecione a Data de Nascimento",
+
+  "goals_modal_header": "Selecione Seus Objetivos",
+  "cancel_button": "Cancelar",
+  "update_button": "Atualizar"
 
  
 }

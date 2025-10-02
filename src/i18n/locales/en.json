@@ -243,7 +243,29 @@
   "edit_profile_pob_placeholder": "Enter Place of Birth",
   "edit_profile_relationship_placeholder": "Select Relationship Status",
   "edit_profile_zodiac_placeholder": "Select Zodiac",
-  "edit_profile_goals_more": "... and {{count}} more"
+  "edit_profile_goals_more": "... and {{count}} more",
 
+
+"name_modal_header": "Name",
+  "name_modal_label": "Enter your full name",
+  "name_modal_placeholder": "Type your name",
+
+"email_modal_header": "Update Your Email",
+  "email_modal_label": "Enter your email address",
+  "email_modal_placeholder": "Type your email",
+
+
+"gender_modal_header": "Select Gender",
+
+"dob_modal_header": "Select Date of Birth",
+
+
+
+
+
+
+  "goals_modal_header": "Select Your Goals",
+  "cancel_button": "Cancel",
+  "update_button": "Update"
 }
 
