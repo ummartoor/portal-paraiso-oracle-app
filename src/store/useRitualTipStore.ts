@@ -152,7 +152,8 @@ console.group(response.data)
     } catch (error: any) {
         const errorMessage = error.response?.data?.message || 'No daily ritual tip found for today';
         set({ markAsUsedError: errorMessage, isMarkingAsUsed: false });
-        Alert.alert('Error', errorMessage);
+        // Alert.alert('Error', errorMessage);
+            console.warn('Silent Error: Could not mark ritual as used.', errorMessage);
         return false;
     }
   },

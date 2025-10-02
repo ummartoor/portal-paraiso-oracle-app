@@ -198,7 +198,57 @@
 "divine_screen": "Divino",
   "divine_tarot_title": "Leitura de Tarô",
   "divine_cauris_title": "Búzios",
-  "divine_astrology_title": "Astrologia"
+  "divine_astrology_title": "Astrologia",
+
+
+  "library_screen": "Biblioteca",
+  "library_subtitle": "Todos os seus rituais, leituras\ne sabedorias favoritas.",
+  "library_tab_tarot": "Tarô",
+  "library_tab_astrology": "Astrologia",
+  "library_tab_buzious": "Búzios",
+  "library_tab_daily_wisdom": "Carta de Sabedoria Diária",
+  "library_tab_ritual_tip": "Dica de Ritual",
+
+
+
+  "profile_screen_title": "Perfil",
+  "profile_user_name_fallback": "Nome de Usuário",
+  "profile_zodiac_sign_label": "Signo do Zodíaco",
+  "profile_notification_title": "Notificação",
+  "profile_notification_status_disabled": "Desativado",
+  "profile_subscription_header": "Assinatura",
+  "profile_buy_subscription_button": "Comprar Assinatura",
+  "profile_document_header": "Documento",
+  "profile_terms_of_service_button": "Termos de Serviço",
+  "profile_subscription_terms_button": "Termos da Assinatura",
+  "profile_privacy_policy_button": "Política de Privacidade",
+  "profile_general_header": "Geral",
+  "profile_support_button": "Suporte",
+  "profile_logout_button": "Sair",
+  "profile_delete_account_button": "Excluir Conta",
+
+
+
+
+  "edit_profile_header": "Editar Perfil",
+  "edit_profile_update_password_button": "Atualizar Senha",
+  "edit_profile_gender_label": "Gênero",
+  "edit_profile_goals_label": "Objetivos",
+  "edit_profile_dob_label": "Data de Nascimento",
+  "edit_profile_tob_label": "Hora de Nascimento",
+  "edit_profile_pob_label": "Local de Nascimento",
+  "edit_profile_relationship_label": "Estado Civil",
+  "edit_profile_zodiac_label": "Signo do Zodíaco",
+  "edit_profile_name_placeholder": "Digite seu nome",
+  "edit_profile_email_placeholder": "Digite seu email",
+  "edit_profile_gender_placeholder": "Selecione o Gênero",
+  "edit_profile_goals_placeholder": "Selecione os Objetivos",
+  "edit_profile_dob_placeholder": "Selecione sua data de nascimento",
+  "edit_profile_tob_placeholder": "Selecione a Hora de Nascimento",
+  "edit_profile_pob_placeholder": "Digite o Local de Nascimento",
+  "edit_profile_relationship_placeholder": "Selecione o Estado Civil",
+  "edit_profile_zodiac_placeholder": "Selecione o Signo",
+  "edit_profile_goals_more": "... e mais {{count}}"
 
  
 }

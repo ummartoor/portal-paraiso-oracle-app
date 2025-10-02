@@ -16,34 +16,41 @@ import TarotHistoryList from './TarotHistoryList';
 import AstrologyHistoryList from './AstrologyHistoryList';
 import BuziosHistoryList from './BuziosHistoryList';
 import DailyWisdomCardList from './DailyWisdomCardList';
-import RitualTipScreen from '../homeScreen/ritualTip/RitualTipScreen';
+
 import RitualTipHistoryList from './RitualTipHistoryList';
+import { useTranslation } from 'react-i18next'; 
 
-const tabs = ['Tarot', 'Astrology', 'Buzious', 'Daily Wisdom Card', 'Ritual Tip'];
 
-// Placeholder component for other tabs
-const PlaceholderComponent = ({ title }: { title: string }) => (
-  <View style={styles.emptyWrapper}>
-    <Text style={styles.emptyText}>{title} history will be shown here.</Text>
-  </View>
-);
+
+
+
 
 const LibraryScreen: React.FC = () => {
   const { colors } = useThemeStore(s => s.theme);
-  const [activeTab, setActiveTab] = useState('Tarot');
+    const [activeTabKey, setActiveTabKey] = useState('tarot');
+
+const { t } = useTranslation();
+
+  const tabs = [
+    { key: 'tarot', label: t('library_tab_tarot') },
+    { key: 'astrology', label: t('library_tab_astrology') },
+    { key: 'buzious', label: t('library_tab_buzious') },
+    { key: 'daily_wisdom', label: t('library_tab_daily_wisdom') },
+    { key: 'ritual_tip', label: t('library_tab_ritual_tip') },
+  ];
 
   const renderContent = () => {
-    switch (activeTab) {
-      case 'Tarot':
+    switch (activeTabKey) {
+      case 'tarot':
         return <TarotHistoryList />;
-      case 'Astrology':
-        return <AstrologyHistoryList/>;
-      case 'Buzious':
-        return <BuziosHistoryList/>;
-           case 'Daily Wisdom Card':
-        return <DailyWisdomCardList/>;
-               case 'Ritual Tip':
-        return <RitualTipHistoryList/>;
+      case 'astrology':
+        return <AstrologyHistoryList />;
+      case 'buzious':
+        return <BuziosHistoryList />;
+      case 'daily_wisdom':
+        return <DailyWisdomCardList />;
+      case 'ritual_tip':
+        return <RitualTipHistoryList />;
       default:
         return null;
     }
@@ -59,13 +66,12 @@ const LibraryScreen: React.FC = () => {
         <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
 
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>Library</Text>
+    <Text style={styles.headerTitle}>{t('library_screen')}</Text>
         </View>
 
-        <Text style={styles.subtitle}>
-          All your favorite rituals, readings,{'\n'}and wisdom.
+       <Text style={styles.subtitle}>
+          {t('library_subtitle')}
         </Text>
-
         {/* Tabs */}
         <ScrollView
           horizontal
@@ -73,15 +79,15 @@ const LibraryScreen: React.FC = () => {
           style={styles.tabsWrapper}
           contentContainerStyle={{ paddingHorizontal: 16, }}
         >
-          {tabs.map(tab => (
-            <TouchableOpacity key={tab} onPress={() => setActiveTab(tab)}>
-              {activeTab === tab ? (
+         {tabs.map(tab => (
+            <TouchableOpacity key={tab.key} onPress={() => setActiveTabKey(tab.key)}>
+              {activeTabKey === tab.key ? (
                 <GradientBox colors={[colors.black, colors.bgBox]} style={styles.activeTabBtn}>
-                  <Text style={[styles.tabText, styles.activeTabText]}>{tab}</Text>
+                  <Text style={[styles.tabText, styles.activeTabText]}>{tab.label}</Text>
                 </GradientBox>
               ) : (
                 <View style={styles.tabBtn}>
-                  <Text style={styles.tabText}>{tab}</Text>
+                  <Text style={styles.tabText}>{tab.label}</Text>
                 </View>
               )}
             </TouchableOpacity>

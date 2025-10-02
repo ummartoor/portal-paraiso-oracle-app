@@ -175,7 +175,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
         const apiPayload = { ...payload, session_id: payload.session_id || "" };
 
         const response = await axios.post(`${API_BASEURL}/oracle-chat/send-message`, apiPayload, { headers });
-
+        console.log(response.data)
         if (response.data?.success) {
             const newSessionData = response.data.data as ActiveChatSession;
             const isNewSession = !payload.session_id;

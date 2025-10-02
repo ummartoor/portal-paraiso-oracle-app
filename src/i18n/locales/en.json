@@ -191,6 +191,59 @@
   "divine_screen": "Divine",
   "divine_tarot_title": "Tarot Reading",
   "divine_cauris_title": "Cauris",
-  "divine_astrology_title": "Astrology"
+  "divine_astrology_title": "Astrology",
+
+
+  "library_screen": "Library",
+  "library_subtitle": "All your favorite rituals, readings,\nand wisdom.",
+  "library_tab_tarot": "Tarot",
+  "library_tab_astrology": "Astrology",
+  "library_tab_buzious": "Buzious",
+  "library_tab_daily_wisdom": "Daily Wisdom Card",
+  "library_tab_ritual_tip": "Ritual Tip",
+
+
+
+
+
+
+"profile_screen_title": "Profile",
+  "profile_user_name_fallback": "User Name",
+  "profile_zodiac_sign_label": "Zodiac Sign",
+  "profile_notification_title": "Notification",
+  "profile_notification_status_disabled": "Disabled",
+  "profile_subscription_header": "Subscription",
+  "profile_buy_subscription_button": "Buy Subscription",
+  "profile_document_header": "Document",
+  "profile_terms_of_service_button": "Terms of Service",
+  "profile_subscription_terms_button": "Subscription Terms",
+  "profile_privacy_policy_button": "Privacy Policy",
+  "profile_general_header": "General",
+  "profile_support_button": "Support",
+  "profile_logout_button": "Log Out",
+  "profile_delete_account_button": "Delete Account",
+
+
+
+  "edit_profile_header": "Edit Profile",
+  "edit_profile_update_password_button": "Update Password",
+  "edit_profile_gender_label": "Gender",
+  "edit_profile_goals_label": "Goals",
+  "edit_profile_dob_label": "Date of Birth",
+  "edit_profile_tob_label": "Time of Birth",
+  "edit_profile_pob_label": "Place of Birth",
+  "edit_profile_relationship_label": "Relationship Status",
+  "edit_profile_zodiac_label": "Zodiac Symbol",
+  "edit_profile_name_placeholder": "Enter your name",
+  "edit_profile_email_placeholder": "Enter your email",
+  "edit_profile_gender_placeholder": "Select Gender",
+  "edit_profile_goals_placeholder": "Select Goals",
+  "edit_profile_dob_placeholder": "Select your date of birth",
+  "edit_profile_tob_placeholder": "Select Time of Birth",
+  "edit_profile_pob_placeholder": "Enter Place of Birth",
+  "edit_profile_relationship_placeholder": "Select Relationship Status",
+  "edit_profile_zodiac_placeholder": "Select Zodiac",
+  "edit_profile_goals_more": "... and {{count}} more"
+
 }
 

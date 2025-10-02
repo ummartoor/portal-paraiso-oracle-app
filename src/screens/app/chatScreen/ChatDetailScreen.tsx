@@ -18,6 +18,7 @@ import { useNavigation } from '@react-navigation/native';
 import { useChatStore, ChatMessage } from '../../../store/useChatStore';
 import { Fonts } from '../../../constants/fonts';
 import { useThemeStore } from '../../../store/useThemeStore';
+import { useAuthStore } from '../../../store/useAuthStore';
 
 // Assets
 const sendIcon = require('../../../assets/icons/sendIcon.png');
@@ -37,6 +38,10 @@ const ChatDetailScreen: React.FC<ChatDetailScreenProps> = ({ route }) => {
   const scrollViewRef = useRef<ScrollView>(null);
   const insets = useSafeAreaInsets(); // Hook to get safe area dimensions
 
+
+
+    // --- 2. Get user data from Auth Store ---
+  const { user } = useAuthStore();
   const {
     activeSession,
     isSendingMessage,
@@ -65,7 +70,7 @@ const ChatDetailScreen: React.FC<ChatDetailScreenProps> = ({ route }) => {
       );
     }
   }, [displayMessages]);
-
+console.log(user)
   const handleSend = () => {
     if (inputText.trim() && !isSendingMessage) {
       const trimmedText = inputText.trim();
@@ -84,7 +89,16 @@ const ChatDetailScreen: React.FC<ChatDetailScreenProps> = ({ route }) => {
         session_id: activeSession?.session?.session_id || null,
         preferences: {
           response_style: 'mystical',
-          focus_areas: ['love', 'career'],
+   focus_areas: [
+            'love',
+            'career',
+            'health',
+            'finance',
+            'spirituality',
+            'relationships',
+            'personal_growth',
+            'future_planning'
+          ],
         },
       };
 
@@ -117,7 +131,14 @@ const ChatDetailScreen: React.FC<ChatDetailScreenProps> = ({ route }) => {
           </View>
         </View>
         {isUserMessage && (
-          <Image source={userAvatar} style={styles.messageAvatar} />
+           <Image
+            source={
+              user?.profile_image?.url
+                ? { uri: user.profile_image.url }
+                : userAvatar
+            }
+            style={styles.messageAvatar}
+          />
         )}
       </View>
     );

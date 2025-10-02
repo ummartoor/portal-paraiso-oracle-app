@@ -21,7 +21,7 @@ import { Fonts } from '../../../constants/fonts';
 import LogOutModal from '../../../components/LogOutModal';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { AppStackParamList } from '../../../navigation/routeTypes';
-
+import { useTranslation } from 'react-i18next'; 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 const H_PADDING = 20;
@@ -30,20 +30,6 @@ const CARD_WIDTH = (SCREEN_WIDTH - H_PADDING * 2 - CARD_GAP) / 2;
 type Zodiac = { key: string; name: string; icon: any };
 
 
-const ZODIACS: Zodiac[] = [
-  { key: "aries", name: "Aries", icon: require("../../../assets/icons/AriesIcon.png") },
-  { key: "taurus", name: "Taurus", icon: require("../../../assets/icons/TaurusIcon.png") },
-  { key: "gemini", name: "Gemini", icon: require("../../../assets/icons/GeminiIcon.png") },
-  { key: "cancer", name: "Cancer", icon: require("../../../assets/icons/CancerIcon.png") },
-  { key: "leo", name: "Leo", icon: require("../../../assets/icons/leoIcon.png") },
-  { key: "virgo", name: "Virgo", icon: require("../../../assets/icons/VirgoIcon.png") },
-  { key: "libra", name: "Libra", icon: require("../../../assets/icons/libraIcon.png") },
-  { key: "scorpio", name: "Scorpio", icon: require("../../../assets/icons/ScorpioIcon.png") },
-  { key: "sagittarius", name: "Sagittarius", icon: require("../../../assets/icons/SagittariusIcon.png")},
-  { key: "capricorn", name: "Capricorn", icon: require("../../../assets/icons/CapricornIcon.png") },
-  { key: "aquarius", name: "Aquarius", icon: require("../../../assets/icons/AquariusIcon.png") },
-  { key: "pisces", name: "Pisces", icon: require("../../../assets/icons/PiscesIcon.png") },
-];
 
 // Helper function to format the date string
 const formatDate = (dateString?: string) => {
@@ -58,10 +44,27 @@ const formatDate = (dateString?: string) => {
 
 const ProfileScreen: React.FC = () => {
   const { colors } = useThemeStore(state => state.theme);
+    const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const [logoutModalVisible, setLogoutModalVisible] = useState(false);
   const navigation = useNavigation<NativeStackNavigationProp<AppStackParamList>>();
   const { user, fetchCurrentUser, logout } = useAuthStore();
+
+
+    const ZODIACS: Zodiac[] = [
+    { key: "aries", name: t('zodiac_aries'), icon: require("../../../assets/icons/AriesIcon.png") },
+    { key: "taurus", name: t('zodiac_taurus'), icon: require("../../../assets/icons/TaurusIcon.png") },
+    { key: "gemini", name: t('zodiac_gemini'), icon: require("../../../assets/icons/GeminiIcon.png") },
+    { key: "cancer", name: t('zodiac_cancer'), icon: require("../../../assets/icons/CancerIcon.png") },
+    { key: "leo", name: t('zodiac_leo'), icon: require("../../../assets/icons/leoIcon.png") },
+    { key: "virgo", name: t('zodiac_virgo'), icon: require("../../../assets/icons/VirgoIcon.png") },
+    { key: "libra", name: t('zodiac_libra'), icon: require("../../../assets/icons/libraIcon.png") },
+    { key: "scorpio", name: t('zodiac_scorpio'), icon: require("../../../assets/icons/ScorpioIcon.png") },
+    { key: "sagittarius", name: t('zodiac_sagittarius'), icon: require("../../../assets/icons/SagittariusIcon.png")},
+    { key: "capricorn", name: t('zodiac_capricorn'), icon: require("../../../assets/icons/CapricornIcon.png") },
+    { key: "aquarius", name: t('zodiac_aquarius'), icon: require("../../../assets/icons/AquariusIcon.png") },
+    { key: "pisces", name: t('zodiac_pisces'), icon: require("../../../assets/icons/PiscesIcon.png") },
+  ];
 
   // --- FIX: Fetches fresh user data every time the screen is focused ---
   useFocusEffect(
@@ -74,8 +77,10 @@ const ProfileScreen: React.FC = () => {
   const userZodiac = useMemo(() => {
     if (!user?.sign_in_zodiac) return null;
     return ZODIACS.find(z => z.key === user.sign_in_zodiac);
-  }, [user]);
+  }, [user,ZODIACS]);
 console.log('Checking User Profile Image URL:', user?.profile_image);
+
+
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: 'black' }]} edges={['top', 'left', 'right', 'bottom']}>
       <ImageBackground
@@ -95,13 +100,13 @@ console.log('Checking User Profile Image URL:', user?.profile_image);
           {/* Header */}
           <View style={styles.header}>
             <View style={{ width: 18, height: 18 }} />
-            <Text style={[styles.headerTitle, { color: colors.white }]}>Profile</Text>
+            <Text style={[styles.headerTitle, { color: colors.white }]}>{t('profile_screen_title')}</Text>
             <TouchableOpacity activeOpacity={0.8} onPress={() => {  }}>
-              <Image
+              {/* <Image
                 source={require('../../../assets/icons/settingIcon.png')}
                 style={{ width: 18, height: 18 }}
                 resizeMode="contain"
-              />
+              /> */}
             </TouchableOpacity>
           </View>
 
@@ -126,8 +131,8 @@ console.log('Checking User Profile Image URL:', user?.profile_image);
     </View>
     <View style={{ marginLeft: 10 }}>
       <Text style={[styles.name, { color: colors.white }]}>
-        {user?.name || 'User Name'}
-      </Text>
+                  {user?.name || t('profile_user_name_fallback')}
+                </Text>
     </View>
   </View>
 
@@ -158,7 +163,7 @@ console.log('Checking User Profile Image URL:', user?.profile_image);
               <Text style={[styles.cardTitle, { color: colors.primary }]}>
                 {userZodiac ? userZodiac.name : '---'}
               </Text>
-              <Text style={[styles.cardSub, { color: colors.white }]}>Zodiac Sign</Text>
+       <Text style={[styles.cardSub, { color: colors.white }]}>{t('profile_zodiac_sign_label')}</Text>
             </View>
 
             {/* Box 2 */}
@@ -176,16 +181,17 @@ console.log('Checking User Profile Image URL:', user?.profile_image);
                 style={{ width: 50, height: 50, marginBottom: 12 }}
                 resizeMode="contain"
               />
-              <Text style={[styles.cardTitle, { color: colors.primary }]}>Notification</Text>
-              <Text style={[styles.cardSub, { color: colors.white, opacity: 0.8 }]}>Disabled</Text>
+       <Text style={[styles.cardTitle, { color: colors.primary }]}>{t('profile_notification_title')}</Text>
+
+              <Text style={[styles.cardSub, { color: colors.white, opacity: 0.8 }]}>{t('profile_notification_status_disabled')}</Text>
             </View>
           </View>
 
           {/* Subscription */}
-          <Text style={[styles.sectionTitle, { color: colors.primary, marginTop: 18 }]}>Subscription</Text>
+           <Text style={[styles.sectionTitle, { color: colors.primary, marginTop: 18 }]}>{t('profile_subscription_header')}</Text>
           <TouchableOpacity activeOpacity={0.85} onPress={() => navigation.navigate('BuySubscription')}
             style={[styles.rowBtn, { backgroundColor: colors.bgBox }]}>
-            <Text style={[styles.rowText, { color: colors.white }]}>Buy Subscription</Text>
+            <Text style={[styles.rowText, { color: colors.white }]}>{t('profile_buy_subscription_button')}</Text>
             <Image
               source={require('../../../assets/icons/rightArrowIcon.png')}
               style={{ width: 18, height: 18 }}
@@ -194,10 +200,10 @@ console.log('Checking User Profile Image URL:', user?.profile_image);
           </TouchableOpacity>
 
           {/* Document */}
-          <Text style={[styles.sectionTitle, { color: colors.primary, marginTop: 18 }]}>Document</Text>
+            <Text style={[styles.sectionTitle, { color: colors.primary, marginTop: 18 }]}>{t('profile_document_header')}</Text>
           <TouchableOpacity activeOpacity={0.85} onPress={() => navigation.navigate('TermOfService')}
             style={[styles.rowBtn, { backgroundColor: colors.bgBox }]}>
-            <Text style={[styles.rowText, { color: colors.white }]}>Terms of Service</Text>
+            <Text style={[styles.rowText, { color: colors.white }]}>{t('profile_terms_of_service_button')}</Text>
             <Image
               source={require('../../../assets/icons/rightArrowIcon.png')}
               style={{ width: 18, height: 18 }}
@@ -206,7 +212,7 @@ console.log('Checking User Profile Image URL:', user?.profile_image);
           </TouchableOpacity>
           <TouchableOpacity activeOpacity={0.85} onPress={() => navigation.navigate('SubscriptionTerms')}
             style={[styles.rowBtn, { backgroundColor: colors.bgBox }]}>
-            <Text style={[styles.rowText, { color: colors.white }]}>Subscription Terms</Text>
+               <Text style={[styles.rowText, { color: colors.white }]}>{t('profile_subscription_terms_button')}</Text>
             <Image
               source={require('../../../assets/icons/rightArrowIcon.png')}
               style={{ width: 18, height: 18 }}
@@ -215,7 +221,7 @@ console.log('Checking User Profile Image URL:', user?.profile_image);
           </TouchableOpacity>
           <TouchableOpacity activeOpacity={0.85} onPress={() => navigation.navigate('PrivacyPolicy')}
             style={[styles.rowBtn, { backgroundColor: colors.bgBox }]}>
-            <Text style={[styles.rowText, { color: colors.white }]}>Privacy Policy</Text>
+      <Text style={[styles.rowText, { color: colors.white }]}>{t('profile_privacy_policy_button')}</Text>
             <Image
               source={require('../../../assets/icons/rightArrowIcon.png')}
               style={{ width: 18, height: 18 }}
@@ -224,10 +230,10 @@ console.log('Checking User Profile Image URL:', user?.profile_image);
           </TouchableOpacity>
 
           {/* General */}
-          <Text style={[styles.sectionTitle, { color: colors.primary, marginTop: 18 }]}>General</Text>
+           <Text style={[styles.sectionTitle, { color: colors.primary, marginTop: 18 }]}>{t('profile_general_header')}</Text>
           <TouchableOpacity activeOpacity={0.85} onPress={() => { navigation.navigate('SupportScreen') }}
             style={[styles.rowBtn, { backgroundColor: colors.bgBox }]}>
-            <Text style={[styles.rowText, { color: colors.white }]}>Support</Text>
+           <Text style={[styles.rowText, { color: colors.white }]}>{t('profile_support_button')}</Text>
             <Image
               source={require('../../../assets/icons/rightArrowIcon.png')}
               style={{ width: 18, height: 18 }}
@@ -239,7 +245,7 @@ console.log('Checking User Profile Image URL:', user?.profile_image);
             activeOpacity={0.85}
             style={[styles.rowBtn, { backgroundColor: colors.bgBox }]}
           >
-            <Text style={[styles.rowText, { color: colors.white }]}>Log Out</Text>
+           <Text style={[styles.rowText, { color: colors.white }]}>{t('profile_logout_button')}</Text>
             <Image
               source={require('../../../assets/icons/rightArrowIcon.png')}
               style={{ width: 18, height: 18 }}
@@ -247,7 +253,7 @@ console.log('Checking User Profile Image URL:', user?.profile_image);
             />
           </TouchableOpacity>
           <TouchableOpacity activeOpacity={0.85} style={[styles.rowBtn, { backgroundColor: colors.bgBox }]} onPress={() => { navigation.navigate('DeleteAccount') }}>
-            <Text style={[styles.rowText, { color: colors.white }]}>Delete Account</Text>
+         <Text style={[styles.rowText, { color: colors.white }]}>{t('profile_delete_account_button')}</Text>
             <Image
               source={require('../../../assets/icons/rightArrowIcon.png')}
               style={{ width: 18, height: 18 }}

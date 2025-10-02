@@ -20,7 +20,7 @@ import { Fonts } from '../../../../../constants/fonts';
 import { useThemeStore } from '../../../../../store/useThemeStore';
 import { useAuthStore } from '../../../../../store/useAuthStore';
 import { AppStackParamList } from '../../../../../navigation/routeTypes';
-
+import { useTranslation } from 'react-i18next';
 // --- Import All Modals ---
 import ImagePickerModal from '../../../../../components/ImagePickerModel';
 import UpdatePasswordModal from './UpdatePasswordModal';
@@ -38,7 +38,8 @@ const EditProfileScreen = () => {
   const colors = useThemeStore(s => s.theme.colors);
   const navigation =
     useNavigation<NativeStackNavigationProp<AppStackParamList>>();
-
+  const { t } = useTranslation();
+  
   const {
     user,
     fetchCurrentUser,
@@ -115,8 +116,8 @@ const EditProfileScreen = () => {
     setIsUploading(false);
   };
 
-  const formatDate = (d: Date | null) =>
-    d ? d.toLocaleDateString('en-GB') : 'Select your date of birth';
+
+  const formatDate = (d: Date | null) => d ? d.toLocaleDateString('en-GB') : t('edit_profile_dob_placeholder');
 
   const formatGoalsForDisplay = (goalKeys: string[]) => {
     if (!goalKeys || goalKeys.length === 0) return 'Select Goals';
@@ -164,9 +165,7 @@ const EditProfileScreen = () => {
                 />
               </TouchableOpacity>
               <View style={styles.headerTitleWrap}>
-                <Text style={[styles.headerTitle, { color: colors.white }]}>
-                  Edit Profile
-                </Text>
+               <Text style={[styles.headerTitle, { color: colors.white }]}>{t('edit_profile_header')}</Text>
               </View>
             </View>
 
@@ -199,24 +198,22 @@ const EditProfileScreen = () => {
             </View>
 
             {/* Form Fields as Touchable Buttons */}
-            <Text style={styles.label}>Name</Text>
+                   <Text style={styles.label}>{t('name_label')}</Text>
             <TouchableOpacity
               activeOpacity={0.8}
               onPress={() => setNameModalVisible(true)}
               style={styles.input}
             >
-              <Text style={styles.inputText}>{name || 'Enter your name'}</Text>
+       <Text style={styles.inputText}>{name || t('edit_profile_name_placeholder')}</Text>
             </TouchableOpacity>
 
-            <Text style={styles.label}>Email</Text>
+             <Text style={styles.label}>{t('email_label')}</Text>
             <TouchableOpacity
               activeOpacity={0.8}
               onPress={() => setEmailModalVisible(true)}
               style={styles.input}
             >
-              <Text style={styles.inputText}>
-                {email || 'Enter your email'}
-              </Text>
+           <Text style={styles.inputText}>{email || t('edit_profile_email_placeholder')}</Text>
             </TouchableOpacity>
 
             <View style={{ alignItems: 'flex-end', marginTop: 8 }}>
@@ -224,39 +221,31 @@ const EditProfileScreen = () => {
                 activeOpacity={0.85}
                 onPress={() => setPasswordModalVisible(true)}
               >
-                <Text
-                  style={{
-                    color: colors.primary,
-                    fontFamily: Fonts.aeonikRegular,
-                    fontSize: 14,
-                  }}
-                >
-                  Update Password
+             <Text style={{ color: colors.primary, fontFamily: Fonts.aeonikRegular, fontSize: 14 }}>
+                  {t('edit_profile_update_password_button')}
                 </Text>
               </TouchableOpacity>
             </View>
 
-            <Text style={styles.label}>Gender</Text>
+          <Text style={styles.label}>{t('edit_profile_gender_label')}</Text>
             <TouchableOpacity
               activeOpacity={0.8}
               onPress={() => setGenderModalVisible(true)}
               style={styles.input}
             >
-              <Text style={styles.inputText}>{gender || 'Select Gender'}</Text>
+  <Text style={styles.inputText}>{gender || t('edit_profile_gender_placeholder')}</Text>
             </TouchableOpacity>
 
-            <Text style={styles.label}>Goals</Text>
+        <Text style={styles.label}>{t('edit_profile_goals_label')}</Text>
             <TouchableOpacity
               activeOpacity={0.8}
               onPress={() => setGoalsModalVisible(true)}
               style={styles.input}
             >
-              <Text style={styles.inputText}>
-                {formatGoalsForDisplay(goals)}
-              </Text>
+               <Text style={styles.inputText}>{formatGoalsForDisplay(goals)}</Text>
             </TouchableOpacity>
 
-            <Text style={styles.label}>Date of Birth</Text>
+     <Text style={styles.label}>{t('edit_profile_dob_label')}</Text>
             <TouchableOpacity
               activeOpacity={0.8}
               onPress={() => setDobModalVisible(true)}
@@ -265,50 +254,40 @@ const EditProfileScreen = () => {
               <Text style={styles.inputText}>{formatDate(dob)}</Text>
             </TouchableOpacity>
 
-            <Text style={styles.label}>Time of Birth</Text>
+        <Text style={styles.label}>{t('edit_profile_tob_label')}</Text>
             <TouchableOpacity
               activeOpacity={0.8}
               onPress={() => setTimeModalVisible(true)}
               style={styles.input}
             >
-              <Text style={styles.inputText}>
-                {timeOfBirth || 'Select Time of Birth'}
-              </Text>
+              <Text style={styles.inputText}>{timeOfBirth || t('edit_profile_tob_placeholder')}</Text>
             </TouchableOpacity>
 
-            <Text style={styles.label}>Place of Birth</Text>
+  <Text style={styles.label}>{t('edit_profile_pob_label')}</Text>
             <TouchableOpacity
               activeOpacity={0.8}
               onPress={() => setPlaceModalVisible(true)}
               style={styles.input}
             >
-              <Text style={styles.inputText}>
-                {placeOfBirth || 'Enter Place of Birth'}
-              </Text>
+         <Text style={styles.inputText}>{placeOfBirth || t('edit_profile_pob_placeholder')}</Text>
             </TouchableOpacity>
 
-            <Text style={styles.label}>Relationship Status</Text>
+             <Text style={styles.label}>{t('edit_profile_relationship_label')}</Text>
             <TouchableOpacity
               activeOpacity={0.8}
               onPress={() => setRelationshipModalVisible(true)}
               style={styles.input}
             >
-              <Text style={styles.inputText}>
-                {relationshipStatus || 'Select Relationship Status'}
-              </Text>
+           <Text style={styles.inputText}>{relationshipStatus  || t('edit_profile_relationship_placeholder')}</Text>
             </TouchableOpacity>
 
-            <Text style={styles.label}>Zodiac Symbol</Text>
+                      <Text style={styles.label}>{t('edit_profile_zodiac_label')}</Text>
             <TouchableOpacity
               activeOpacity={0.8}
               onPress={() => setZodiacModalVisible(true)}
               style={styles.input}
             >
-              <Text style={styles.inputText}>
-                {zodiac
-                  ? zodiac.charAt(0).toUpperCase() + zodiac.slice(1)
-                  : 'Select Zodiac'}
-              </Text>
+             <Text style={styles.inputText}>{zodiac || t('edit_profile_zodiac_placeholder')}</Text>
             </TouchableOpacity>
           </ScrollView>
         </KeyboardAvoidingView>

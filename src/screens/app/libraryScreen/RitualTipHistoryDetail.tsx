@@ -72,16 +72,20 @@ const RitualTipHistoryDetail: React.FC = () => {
   };
 
   const renderHeader = () => (
-    <View style={styles.header}>
-      <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-        <Image source={BackIcon} style={[styles.backIcon, { tintColor: colors.white }]} />
-      </TouchableOpacity>
-      <View style={styles.headerTitleWrap}>
-        <Text style={[styles.headerTitle, { color: colors.white }]}>
+   <View style={styles.header}>
+              <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
+                <Image
+                  source={require('../../../assets/icons/backIcon.png')}
+                  style={[styles.backIcon, { tintColor: colors.white }]}
+                  resizeMode="contain"
+                />
+              </TouchableOpacity>
+              <View style={styles.headerTitleWrap} pointerEvents="none">
+                <Text numberOfLines={1} ellipsizeMode="tail" style={[styles.headerTitle, { color: colors.white }]}>
           Ritual Tip
-        </Text>
-      </View>
-    </View>
+                </Text>
+              </View>
+            </View>
   );
 
   if (!historyItem) {
