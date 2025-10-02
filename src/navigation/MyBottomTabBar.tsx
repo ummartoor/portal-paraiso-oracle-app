@@ -68,7 +68,7 @@ export const MyBottomTabBar = ({
       style={[
         styles.wrapper,
         {
-          height: 71 + insets.bottom,     // Adjust height dynamically
+          bottom:insets.bottom
    
         },
       ]}
@@ -149,13 +149,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-around',
     alignItems: 'center',
-    // borderTopLeftRadius: 20,
-    // borderTopRightRadius: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 4,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    // shadowColor: '#000',
+    // shadowOffset: { width: 0, height: -2 },
+    // shadowOpacity: 0.1,
+    // shadowRadius: 4,
+    // elevation: 4,
   },
   tabItem: {
     flex: 1,
