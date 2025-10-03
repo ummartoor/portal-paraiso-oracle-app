@@ -19,13 +19,14 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useThemeStore } from '../../../store/useThemeStore';
 import { Formik } from 'formik';
 import * as Yup from 'yup';
-
+import messaging from '@react-native-firebase/messaging'; 
 import eyeIcon from '../../../assets/icons/eye.png';
 import eyeOffIcon from '../../../assets/icons/eyeOff.png';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { AuthStackParamsList } from '../../../navigation/routeTypes';
 import { useNavigation } from '@react-navigation/native';
 import { useAuthStore } from '../../../store/useAuthStore';
+import { useNotificationStore } from '../../../store/useNotificationStore'; 
 import GradientBox from '../../../components/GradientBox';
 import { Fonts } from '../../../constants/fonts';
 import { useTranslation } from 'react-i18next';
@@ -37,6 +38,7 @@ const LoginScreen = () => {
   const colors = theme.colors;
   const [showPassword, setShowPassword] = useState(false);
   const login = useAuthStore(state => state.login); // Your login function from store
+    const { registerFcmToken } = useNotificationStore();
 const { t } = useTranslation();
   const navigation =
     useNavigation<NativeStackNavigationProp<AuthStackParamsList>>();
@@ -76,7 +78,7 @@ const validationSchema = Yup.object().shape({
                {t('login_subheader')}
             </Text>
 
-            <Formik
+            {/* <Formik
               initialValues={{ email: '', password: '' }}
               validationSchema={validationSchema}
               // --- CHANGE 1: Updated onSubmit ---
@@ -92,6 +94,40 @@ const validationSchema = Yup.object().shape({
 
                 // If success is false, you can re-enable the form
                 if (!success) {
+                  setSubmitting(false);
+                }
+              }}
+            > */}
+
+            <Formik
+              initialValues={{ email: '', password: '' }}
+              validationSchema={validationSchema}
+              // --- THE FIX IS HERE ---
+              onSubmit={async (values, { setSubmitting }) => {
+                let fcmToken = 'no-token-found'; // Default value
+                try {
+                  // Step 1: Get the device token from Firebase first
+                  const token = await messaging().getToken();
+                  if (token) {
+                    fcmToken = token;
+                    console.log('Obtained FCM Token:', fcmToken);
+                  } else {
+                    console.log('Could not get FCM token.');
+                  }
+                } catch (error) {
+                  console.error('Error getting FCM token:', error);
+                }
+
+                // Step 2: Attempt to log in the user with the token
+                const loginSuccess = await login(values.email, values.password, fcmToken);
+
+                // Step 3: If login is successful, also register the FCM token with the notification API
+                if (loginSuccess) {
+                  // This call ensures the token is registered against the user ID in your DB
+                  await registerFcmToken(fcmToken);
+                  // The app will navigate away, so no need to setSubmitting(false)
+                } else {
+                  // If login fails, re-enable the form
                   setSubmitting(false);
                 }
               }}
