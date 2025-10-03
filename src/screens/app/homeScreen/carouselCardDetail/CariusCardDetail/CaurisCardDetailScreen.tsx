@@ -731,17 +731,7 @@ const styles = StyleSheet.create({
   actionLabel: { fontFamily: Fonts.aeonikRegular, fontSize: 14 },
 });
 
-
-
-
-
-
-
-
-
-
-
-  // ------------------------Design-------------------- 
+// ------------------------Design--------------------
 
 // import React, { useMemo, useState, useEffect } from 'react';
 // import {
@@ -1864,18 +1854,6 @@ const styles = StyleSheet.create({
 //     fontSize: 14,
 //   },
 // });
-
-
-
-
-
-
-
-
-
-
-
-
 
 // import React, { useMemo, useState } from 'react';
 // import {

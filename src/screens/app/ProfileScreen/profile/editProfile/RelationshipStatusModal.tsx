@@ -7,45 +7,52 @@ import {
   StyleSheet,
   Image,
   FlatList,
+  ActivityIndicator, // --- ADDED ---
 } from "react-native";
 import { useThemeStore } from "../../../../../store/useThemeStore";
 import { Fonts } from "../../../../../constants/fonts";
 import GradientBox from "../../../../../components/GradientBox";
+import { useTranslation } from "react-i18next"; // --- ADDED ---
 
 interface RelationshipStatusModalProps {
   isVisible: boolean;
   onClose: () => void;
-  onConfirm: (status: string) => void;
-    defaultValue?: string | null;
+  onConfirm: (status: string) => Promise<any>; // --- CHANGED to Promise ---
+  defaultValue?: string | null;
 }
 
 const RelationshipStatusModal: React.FC<RelationshipStatusModalProps> = ({
   isVisible,
   onClose,
   onConfirm,
-   defaultValue,
+  defaultValue,
 }) => {
   const colors = useThemeStore((state) => state.theme.colors);
+  const { t } = useTranslation(); // --- ADDED ---
   const [selected, setSelected] = useState<string | null>(defaultValue || null);
+  const [isLoading, setIsLoading] = useState(false); // --- ADDED ---
 
-    useEffect(() => {
+  // --- CHANGED: Moved inside component and translated labels ---
+  const options = [
+    { key: "single", label: t('status_single'), icon: require("../../../../../assets/icons/goalIcon1.png") },
+    { key: "relationship", label: t('status_relationship'), icon: require("../../../../../assets/icons/goalIcon1.png") },
+    { key: "married", label: t('status_married'), icon: require("../../../../../assets/icons/goalIcon1.png") },
+    { key: "engaged", label: t('status_engaged'), icon: require("../../../../../assets/icons/goalIcon1.png") },
+    { key: "complicated", label: t('status_complicated'), icon: require("../../../../../assets/icons/goalIcon1.png") },
+    { key: "divorced", label: t('status_divorced'), icon: require("../../../../../assets/icons/goalIcon1.png") },
+  ];
+
+  useEffect(() => {
     if (isVisible) {
       setSelected(defaultValue || null);
     }
   }, [isVisible, defaultValue]);
-  const options = [
-    { key: "single", label: "Single", icon: require("../../../../../assets/icons/goalIcon1.png") },
-    { key: "relationship", label: "In a relationship", icon: require("../../../../../assets/icons/goalIcon1.png") },
-    { key: "married", label: "Married", icon: require("../../../../../assets/icons/goalIcon1.png") },
-    { key: "engaged", label: "Engaged", icon: require("../../../../../assets/icons/goalIcon1.png") },
-    { key: "complicated", label: "Complicated", icon: require("../../../../../assets/icons/goalIcon1.png") },
-    { key: "divorced", label: "Divorced", icon: require("../../../../../assets/icons/goalIcon1.png") },
-  ];
 
-  const handleSave = () => {
-    if (selected) {
-      onConfirm(selected);
-      setSelected(null);
+  const handleSave = async () => {
+    if (selected && !isLoading) {
+      setIsLoading(true);
+      await onConfirm(selected);
+      setIsLoading(false);
     }
   };
 
@@ -54,10 +61,9 @@ const RelationshipStatusModal: React.FC<RelationshipStatusModalProps> = ({
       <View style={[StyleSheet.absoluteFill, styles(colors).overlayBackground]}>
         <View style={styles(colors).overlay}>
           <View style={styles(colors).modal}>
-            {/* Heading */}
-            <Text style={styles(colors).heading}>Relationship Status</Text>
+            {/* --- CHANGED --- */}
+            <Text style={styles(colors).heading}>{t('relationship_modal_header')}</Text>
 
-            {/* Options Grid (2 per row) */}
             <FlatList
               data={options}
               numColumns={2}
@@ -101,26 +107,32 @@ const RelationshipStatusModal: React.FC<RelationshipStatusModalProps> = ({
               }}
             />
 
-            {/* Buttons */}
             <View style={styles(colors).buttonRow}>
               <TouchableOpacity
                 onPress={onClose}
                 activeOpacity={0.85}
                 style={styles(colors).cancelButton}
               >
-                <Text style={styles(colors).cancelText}>Cancel</Text>
+                {/* --- CHANGED --- */}
+                <Text style={styles(colors).cancelText}>{t('cancel_button')}</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
                 onPress={handleSave}
                 activeOpacity={0.9}
                 style={styles(colors).gradientTouchable}
+                disabled={isLoading || !selected}
               >
                 <GradientBox
                   colors={[colors.black, colors.bgBox]}
                   style={styles(colors).gradientFill}
                 >
-                  <Text style={styles(colors).updateText}>Update</Text>
+                  {isLoading ? (
+                    <ActivityIndicator color={colors.primary} />
+                  ) : (
+                    // --- CHANGED ---
+                    <Text style={styles(colors).updateText}>{t('update_button')}</Text>
+                  )}
                 </GradientBox>
               </TouchableOpacity>
             </View>
@@ -153,14 +165,13 @@ const styles = (colors: any) =>
       maxHeight: "85%",
     },
     heading: {
-      fontFamily: Fonts.aeonikRegular,
-      fontSize: 18,
-      lineHeight: 22,
+      fontFamily: Fonts.cormorantSCBold,
+      fontSize: 22,
       color: colors.primary,
       marginBottom: 20,
     },
     optionBox: {
-      width: "48%", // ✅ Fix: ensures 2 per row
+      width: "48%",
       height: 100,
       borderRadius: 16,
       backgroundColor: colors.bgBox,
@@ -200,8 +211,8 @@ const styles = (colors: any) =>
       flexGrow: 1,
       flexBasis: 0,
       height: 50,
-           borderWidth:1.7,
-      borderColor:'#D9B699',
+      borderWidth: 1.7,
+      borderColor: '#D9B699',
       borderRadius: 200,
       overflow: "hidden",
     },

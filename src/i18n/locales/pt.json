@@ -262,11 +262,31 @@
 
 "gender_modal_header": "Selecione o Gênero",
 
-"dob_modal_header": "Selecione a Data de Nascimento",
-
   "goals_modal_header": "Selecione Seus Objetivos",
   "cancel_button": "Cancelar",
-  "update_button": "Atualizar"
+  "update_button": "Atualizar",
+
+  "dob_modal_header": "Selecione a Data de Nascimento",
+
+  "tob_modal_header": "Selecione a Hora de Nascimento",
+
+
+  "pob_modal_header": "Local de Nascimento",
+  "pob_modal_label": "Digite o Local de Nascimento",
+  "pob_modal_placeholder": "Digite seu local de nascimento",
+
+  "relationship_modal_header": "Estado Civil",
+
+  "zodiac_modal_header": "Selecione seu Signo do Zodíaco",
+
+
+  "update_password_header": "Atualizar Senha",
+  "old_password_label": "Senha Antiga",
+  "old_password_placeholder": "Digite a senha antiga",
+  "new_password_modal_label": "Nova Senha",
+  "new_password_modal_placeholder": "Digite a nova senha",
+  "confirm_password_modal_label": "Confirmar Senha",
+  "confirm_password_modal_placeholder": "Redigite a nova senha"
 
  
 }

@@ -11,7 +11,7 @@ import { useThemeStore } from '../../../../../store/useThemeStore';
 import { Fonts } from '../../../../../constants/fonts';
 import GradientBox from '../../../../../components/GradientBox';
 import DatePicker from 'react-native-date-picker';
-
+import { useTranslation } from 'react-i18next';
 interface TimeOfBirthModalProps {
   isVisible: boolean;
   onClose: () => void;
@@ -44,7 +44,7 @@ const TimeOfBirthModal: React.FC<TimeOfBirthModalProps> = ({
   defaultValue,
 }) => {
   const colors = useThemeStore(state => state.theme.colors);
-
+ const { t } = useTranslation();
   const [time, setTime] = useState(parseTimeString(defaultValue));
   const [isLoading, setIsLoading] = useState(false);
 
@@ -71,7 +71,7 @@ const TimeOfBirthModal: React.FC<TimeOfBirthModalProps> = ({
         <View style={styles(colors).overlay}>
           <View style={styles(colors).modal}>
             {/* Heading */}
-            <Text style={styles(colors).heading}>Select Time of Birth</Text>
+             <Text style={styles(colors).heading}>{t('tob_modal_header')}</Text>
 
             {/* Time Picker */}
             <View
@@ -97,7 +97,7 @@ const TimeOfBirthModal: React.FC<TimeOfBirthModalProps> = ({
                 activeOpacity={0.85}
                 style={styles(colors).cancelButton}
               >
-                <Text style={styles(colors).cancelText}>Cancel</Text>
+          <Text style={styles(colors).cancelText}>{t('cancel_button')}</Text>
               </TouchableOpacity>
 
               {/* Update */}
@@ -114,7 +114,7 @@ const TimeOfBirthModal: React.FC<TimeOfBirthModalProps> = ({
                   {isLoading ? (
                     <ActivityIndicator color={colors.primary} />
                   ) : (
-                    <Text style={styles(colors).updateText}>Update</Text>
+                <Text style={styles(colors).updateText}>{t('update_button')}</Text>
                   )}
                 </GradientBox>
               </TouchableOpacity>

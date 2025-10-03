@@ -257,15 +257,29 @@
 
 "gender_modal_header": "Select Gender",
 
-"dob_modal_header": "Select Date of Birth",
-
-
-
-
-
-
-  "goals_modal_header": "Select Your Goals",
+"goals_modal_header": "Select Your Goals",
   "cancel_button": "Cancel",
-  "update_button": "Update"
+  "update_button": "Update",
+
+  "dob_modal_header": "Select Date of Birth",
+
+  "tob_modal_header": "Select Time of Birth",
+
+"pob_modal_header": "Place of Birth",
+  "pob_modal_label": "Enter Place of Birth",
+  "pob_modal_placeholder": "Type your place of birth",
+
+  "relationship_modal_header": "Relationship Status",
+
+  "zodiac_modal_header": "Select Your Zodiac Symbol",
+
+
+  "update_password_header": "Update Password",
+  "old_password_label": "Old Password",
+  "old_password_placeholder": "Enter old password",
+  "new_password_modal_label": "New Password",
+  "new_password_modal_placeholder": "Enter new password",
+  "confirm_password_modal_label": "Confirm Password",
+  "confirm_password_modal_placeholder": "Re-enter new password"
 }
 

@@ -68,7 +68,7 @@ const HomeScreen: React.FC = () => {
   );
   const navigation =
     useNavigation<NativeStackNavigationProp<AppStackParamList>>();
-     const { t } = useTranslation();
+  const { t } = useTranslation();
 
   const onPressCarouselCard = (item: CardItem) => {
     if (item.route) {
@@ -96,24 +96,26 @@ const HomeScreen: React.FC = () => {
         >
           {/* Header */}
           <View style={styles.headerRow}>
-        
-<TouchableOpacity
-    style={styles.profileWrap}
-    activeOpacity={0.8}
-    onPress={() => navigation.navigate('Profile')} 
->
-    <Image
-        style={[styles.profileImg, { borderColor: colors.white }]}
-        source={
-            user?.profile_image?.url
-                ? { uri: user.profile_image.url }
-                : require('../../../assets/icons/userprofile.png')
-        }
-    />
-    <View style={[styles.onlineDot, { borderColor: colors.white }]} />
-</TouchableOpacity>
-       
-            <TouchableOpacity style={styles.headerIconBtn}  onPress={()=> navigation.navigate('Notification')}>
+            <TouchableOpacity
+              style={styles.profileWrap}
+              activeOpacity={0.8}
+              onPress={() => navigation.navigate('Profile')}
+            >
+              <Image
+                style={[styles.profileImg, { borderColor: colors.white }]}
+                source={
+                  user?.profile_image?.url
+                    ? { uri: user.profile_image.url }
+                    : require('../../../assets/icons/userprofile.png')
+                }
+              />
+              <View style={[styles.onlineDot, { borderColor: colors.white }]} />
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.headerIconBtn}
+              onPress={() => navigation.navigate('Notification')}
+            >
               <Image
                 source={require('../../../assets/icons/notificationIcon.png')}
                 style={styles.headerIcon}
@@ -128,7 +130,7 @@ const HomeScreen: React.FC = () => {
               style={[styles.title, { color: colors.white }]}
               numberOfLines={1}
             >
-          {t('home_title')}
+              {t('home_title')}
             </Text>
             <Text
               style={[styles.subtitle, { color: colors.primary }]}
@@ -147,22 +149,19 @@ const HomeScreen: React.FC = () => {
           <View style={styles.cardBoxSection}>
             {/* First Box */}
             <CardBox
-             label={t('home_daily_wisdom_card')}
+              label={t('home_daily_wisdom_card')}
               icon={require('../../../assets/icons/dailyWisdomIcon.png')}
               onPress={() => navigation.navigate('DailyWisdomCardScreen')}
             />
 
             {/* Second Box */}
             <CardBox
-                    label={t('home_ritual_tip')}
+              label={t('home_ritual_tip')}
               icon={require('../../../assets/icons/RitualTipIcon.png')}
               onPress={() => navigation.navigate('RitualTipScreen')}
             />
           </View>
         </ScrollView>
-      
-
-       
       </SafeAreaView>
     </ImageBackground>
   );
@@ -203,7 +202,7 @@ const styles = StyleSheet.create({
   },
   onlineDot: {
     position: 'absolute',
-    bottom:4,
+    bottom: 4,
     right: 7,
     height: 12,
     width: 12,

@@ -6,15 +6,16 @@ import {
   TouchableOpacity,
   StyleSheet,
   TextInput,
+  ActivityIndicator,
 } from 'react-native';
 import { useThemeStore } from '../../../../../store/useThemeStore';
 import { Fonts } from '../../../../../constants/fonts';
 import GradientBox from '../../../../../components/GradientBox';
-
+import { useTranslation } from 'react-i18next';
 interface PlaceOfBirthModalProps {
   isVisible: boolean;
   onClose: () => void;
-  onConfirm: (place: string) => void;
+  onConfirm: (place: string) => Promise<boolean>;
    defaultValue?: string;
 }
 
@@ -25,17 +26,20 @@ const PlaceOfBirthModal: React.FC<PlaceOfBirthModalProps> = ({
     defaultValue = '',
 }) => {
   const colors = useThemeStore((state) => state.theme.colors);
+    const { t } = useTranslation();
  const [place, setPlace] = useState(defaultValue);
-
+  const [isLoading, setIsLoading] = useState(false);
 useEffect(() => {
     if (isVisible) {
       setPlace(defaultValue || '');
     }
   }, [isVisible, defaultValue]);
 
-  const handleUpdate = () => {
-    if (place.trim().length > 0) {
-      onConfirm(place.trim());
+  const handleUpdate = async () => {
+    if (place.trim().length > 0 && !isLoading) {
+      setIsLoading(true);
+      await onConfirm(place.trim());
+      setIsLoading(false);
     }
   };
 
@@ -45,13 +49,13 @@ useEffect(() => {
         <View style={styles(colors).overlay}>
           <View style={styles(colors).modal}>
             {/* Heading */}
-            <Text style={styles(colors).heading}>Place of Birth</Text>
+          <Text style={styles(colors).heading}>{t('pob_modal_header')}</Text>
 
             {/* Input */}
             <View style={styles(colors).fieldContainer}>
-              <Text style={styles(colors).label}>Enter Place of Birth</Text>
+              <Text style={styles(colors).label}>{t('pob_modal_label')}</Text>
               <TextInput
-                placeholder="Type your place of birth"
+      placeholder={t('pob_modal_placeholder')}
                 placeholderTextColor="rgba(255,255,255,0.6)"
                 value={place}
                 onChangeText={setPlace}
@@ -70,7 +74,7 @@ useEffect(() => {
                 activeOpacity={0.85}
                 style={styles(colors).cancelButton}
               >
-                <Text style={styles(colors).cancelText}>Cancel</Text>
+               <Text style={styles(colors).cancelText}>{t('cancel_button')}</Text>
               </TouchableOpacity>
 
               {/* Save */}
@@ -83,7 +87,7 @@ useEffect(() => {
                   colors={[colors.black, colors.bgBox]}
                   style={styles(colors).gradientFill}
                 >
-                  <Text style={styles(colors).updateText}>Update</Text>
+                    <Text style={styles(colors).updateText}>{t('update_button')}</Text>
                 </GradientBox>
               </TouchableOpacity>
             </View>

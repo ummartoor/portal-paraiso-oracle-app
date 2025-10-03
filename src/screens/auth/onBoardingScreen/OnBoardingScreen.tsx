@@ -19,11 +19,12 @@ import Animated, { useSharedValue, useAnimatedStyle, withTiming } from 'react-na
 import { useTranslation } from 'react-i18next';
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { AuthStackParamsList } from "../../../navigation/routeTypes";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useIsFocused } from "@react-navigation/native";
 import { useThemeStore } from "../../../store/useThemeStore";
 import { Fonts } from "../../../constants/fonts";
 import GradientBox from "../../../components/GradientBox";
 import { OnboardingData } from "../../../data/OnBoardingData";
+import LinearGradient from "react-native-linear-gradient";
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("screen");
 
@@ -37,7 +38,7 @@ const OnBoardingScreen: React.FC = () => {
   const navigation = useNavigation<NativeStackNavigationProp<AuthStackParamsList>>();
   const insets = useSafeAreaInsets();
   const { t, i18n } = useTranslation();
-
+  const isFocused = useIsFocused()
   const [currentIndex, setCurrentIndex] = useState(0);
   const flatListRef = useRef<FlatList<any> | null>(null);
 
@@ -139,8 +140,8 @@ const OnBoardingScreen: React.FC = () => {
                 style={styles.video}
                 resizeMode="cover"
                 repeat
-                muted={true}
-                paused={currentIndex !== index}
+                muted={false}
+                 paused={currentIndex !== index || !isFocused}
                 onError={(e) => console.log("Video error:", e)}
               />
             </View>
@@ -148,7 +149,13 @@ const OnBoardingScreen: React.FC = () => {
         />
 
         {/* Bottom Content Area */}
-        <View style={styles.bottomContent}>
+       <View style={styles.bottomContent}>
+            {/* Gradient Overlay */}
+            <LinearGradient
+                colors={['rgba(0,0,0,0.0)', 'rgba(0,0,0,0.6)', 'rgba(0,0,0,0.9)']}
+                style={styles.gradientOverlay}
+            />
+          
           {/* Dots */}
           <View style={styles.dotsContainer}>
             {OnboardingData.map((_, index) => (
@@ -164,7 +171,6 @@ const OnBoardingScreen: React.FC = () => {
 
           {/* Title & Subtitle */}
           <View style={styles.centerContent}>
-            {/* Using `as any` to satisfy i18next typing when keys are dynamic */}
             <Text style={[styles.title, { color: colors.white }]}>
               {t(currentItem.titleKey as any)}
             </Text>
@@ -215,6 +221,14 @@ const styles = StyleSheet.create({
   video: {
     width: "100%",
     height: "100%",
+  },
+    // --- 3. NEW STYLE FOR GRADIENT ---
+  gradientOverlay: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    height: '100%', // Covers the entire bottom area
   },
   bottomContent: {
     position: 'absolute',

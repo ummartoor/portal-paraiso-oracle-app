@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -8,12 +8,14 @@ import {
   Image,
   ScrollView,
   ActivityIndicator,
+  ImageSourcePropType,
 } from "react-native";
 import { useThemeStore } from "../../../../../store/useThemeStore";
 import { Fonts } from "../../../../../constants/fonts";
 import GradientBox from "../../../../../components/GradientBox";
+import { useTranslation } from "react-i18next"; // --- ADDED ---
 
-type Zodiac = { key: string; name: string; icon: any };
+type Zodiac = { key: string; name: string; icon: ImageSourcePropType };
 
 interface ZodiacSymbolModalProps {
   isVisible: boolean;
@@ -23,21 +25,6 @@ interface ZodiacSymbolModalProps {
   isLoading?: boolean;
 }
 
-const ZODIACS: Zodiac[] = [
-  { key: "aries", name: "Aries", icon: require("../../../../../assets/icons/AriesIcon.png") },
-  { key: "taurus", name: "Taurus", icon: require("../../../../../assets/icons/TaurusIcon.png") },
-  { key: "gemini", name: "Gemini", icon: require("../../../../../assets/icons/GeminiIcon.png") },
-  { key: "cancer", name: "Cancer", icon: require("../../../../../assets/icons/CancerIcon.png") },
-  { key: "leo", name: "Leo", icon: require("../../../../../assets/icons/leoIcon.png") },
-  { key: "virgo", name: "Virgo", icon: require("../../../../../assets/icons/VirgoIcon.png") },
-  { key: "libra", name: "Libra", icon: require("../../../../../assets/icons/libraIcon.png") },
-  { key: "scorpio", name: "Scorpio", icon: require("../../../../../assets/icons/ScorpioIcon.png") },
-  { key: "sagittarius", name: "Sagittarius", icon: require("../../../../../assets/icons/SagittariusIcon.png")},
-  { key: "capricorn", name: "Capricorn", icon: require("../../../../../assets/icons/CapricornIcon.png") },
-  { key: "aquarius", name: "Aquarius", icon: require("../../../../../assets/icons/AquariusIcon.png") },
-  { key: "pisces", name: "Pisces", icon: require("../../../../../assets/icons/PiscesIcon.png") },
-];
-
 const ZodiacSymbolModal: React.FC<ZodiacSymbolModalProps> = ({
   isVisible,
   onClose,
@@ -46,21 +33,37 @@ const ZodiacSymbolModal: React.FC<ZodiacSymbolModalProps> = ({
   isLoading,
 }) => {
   const colors = useThemeStore((state) => state.theme.colors);
+  const { t } = useTranslation(); // --- ADDED ---
   const [selected, setSelected] = useState<string | null>(defaultValue || null);
+
+  // --- CHANGED: Moved inside component and translated names ---
+  const ZODIACS: Zodiac[] = [
+    { key: "aries", name: t('zodiac_aries'), icon: require("../../../../../assets/icons/AriesIcon.png") },
+    { key: "taurus", name: t('zodiac_taurus'), icon: require("../../../../../assets/icons/TaurusIcon.png") },
+    { key: "gemini", name: t('zodiac_gemini'), icon: require("../../../../../assets/icons/GeminiIcon.png") },
+    { key: "cancer", name: t('zodiac_cancer'), icon: require("../../../../../assets/icons/CancerIcon.png") },
+    { key: "leo", name: t('zodiac_leo'), icon: require("../../../../../assets/icons/leoIcon.png") },
+    { key: "virgo", name: t('zodiac_virgo'), icon: require("../../../../../assets/icons/VirgoIcon.png") },
+    { key: "libra", name: t('zodiac_libra'), icon: require("../../../../../assets/icons/libraIcon.png") },
+    { key: "scorpio", name: t('zodiac_scorpio'), icon: require("../../../../../assets/icons/ScorpioIcon.png") },
+    { key: "sagittarius", name: t('zodiac_sagittarius'), icon: require("../../../../../assets/icons/SagittariusIcon.png")},
+    { key: "capricorn", name: t('zodiac_capricorn'), icon: require("../../../../../assets/icons/CapricornIcon.png") },
+    { key: "aquarius", name: t('zodiac_aquarius'), icon: require("../../../../../assets/icons/AquariusIcon.png") },
+    { key: "pisces", name: t('zodiac_pisces'), icon: require("../../../../../assets/icons/PiscesIcon.png") },
+  ];
 
   useEffect(() => {
     if (defaultValue) setSelected(defaultValue);
-  }, [defaultValue]);
+  }, [defaultValue, isVisible]); // Added isVisible to reset on modal open
 
   return (
     <Modal visible={isVisible} animationType="slide" transparent>
       <View style={[StyleSheet.absoluteFill, styles(colors).overlayBackground]}>
         <View style={styles(colors).overlay}>
           <View style={styles(colors).modal}>
-            {/* Heading */}
-            <Text style={styles(colors).heading}>Select Your Zodiac Symbol</Text>
+            {/* --- CHANGED --- */}
+            <Text style={styles(colors).heading}>{t('zodiac_modal_header')}</Text>
 
-            {/* Zodiac Grid */}
             <ScrollView contentContainerStyle={styles(colors).gridWrapper}>
               {ZODIACS.reduce((rows: Zodiac[][], option, index) => {
                 if (index % 3 === 0) rows.push([option]);
@@ -124,14 +127,14 @@ const ZodiacSymbolModal: React.FC<ZodiacSymbolModalProps> = ({
               ))}
             </ScrollView>
 
-            {/* Buttons */}
             <View style={styles(colors).buttonRow}>
               <TouchableOpacity
                 onPress={onClose}
                 activeOpacity={0.85}
                 style={styles(colors).cancelButton}
               >
-                <Text style={styles(colors).cancelText}>Cancel</Text>
+                {/* --- CHANGED --- */}
+                <Text style={styles(colors).cancelText}>{t('cancel_button')}</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
@@ -147,7 +150,8 @@ const ZodiacSymbolModal: React.FC<ZodiacSymbolModalProps> = ({
                   {isLoading ? (
                     <ActivityIndicator color={colors.primary} />
                   ) : (
-                    <Text style={styles(colors).updateText}>Update</Text>
+                    // --- CHANGED ---
+                    <Text style={styles(colors).updateText}>{t('update_button')}</Text>
                   )}
                 </GradientBox>
               </TouchableOpacity>
@@ -175,9 +179,8 @@ const styles = (colors: any) =>
       maxHeight: "85%",
     },
     heading: {
-      fontFamily: Fonts.aeonikRegular,
-      fontSize: 18,
-      lineHeight: 22,
+      fontFamily: Fonts.cormorantSCBold,
+      fontSize: 22,
       color: colors.primary,
       marginBottom: 20,
     },
@@ -186,7 +189,7 @@ const styles = (colors: any) =>
       flexDirection: "row",
       justifyContent: "space-between",
       marginBottom: 16,
-      columnGap: 12, // <-- spacing between items
+      columnGap: 12,
     },
     statusBox: {
       width: 80,
@@ -222,8 +225,8 @@ const styles = (colors: any) =>
       flexGrow: 1,
       flexBasis: 0,
       height: 50,
-      borderWidth:1.7,
-      borderColor:'#D9B699',
+      borderWidth: 1.7,
+      borderColor: '#D9B699',
       borderRadius: 200,
       overflow: "hidden",
     },

@@ -23,17 +23,17 @@ const DateOfBirthModal: React.FC<DateOfBirthModalProps> = ({
   isVisible,
   onClose,
   onConfirm,
-    defaultValue,
+  defaultValue,
 }) => {
-  const colors = useThemeStore((state) => state.theme.colors);
-
+  const colors = useThemeStore(state => state.theme.colors);
+  const { t } = useTranslation();
   const [date, setDate] = useState(defaultValue || new Date(2000, 0, 1));
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-      if (isVisible) {
-          setDate(defaultValue || new Date(2000, 0, 1));
-      }
+    if (isVisible) {
+      setDate(defaultValue || new Date(2000, 0, 1));
+    }
   }, [isVisible, defaultValue]);
 
   const handleConfirm = async () => {
@@ -49,7 +49,7 @@ const DateOfBirthModal: React.FC<DateOfBirthModalProps> = ({
         <View style={styles(colors).overlay}>
           <View style={styles(colors).modal}>
             {/* Heading */}
-            <Text style={styles(colors).heading}>Select Date of Birth</Text>
+            <Text style={styles(colors).heading}>{t('dob_modal_header')}</Text>
             {/* <Text style={styles(colors).subheading}>
               Please enter your date of birth
             </Text> */}
@@ -78,7 +78,9 @@ const DateOfBirthModal: React.FC<DateOfBirthModalProps> = ({
                 activeOpacity={0.85}
                 style={styles(colors).cancelButton}
               >
-                <Text style={styles(colors).cancelText}>Cancel</Text>
+                <Text style={styles(colors).cancelText}>
+                  {t('cancel_button')}
+                </Text>
               </TouchableOpacity>
 
               {/* Update */}
@@ -95,7 +97,9 @@ const DateOfBirthModal: React.FC<DateOfBirthModalProps> = ({
                   {isLoading ? (
                     <ActivityIndicator color={colors.primary} />
                   ) : (
-                    <Text style={styles(colors).updateText}>Update</Text>
+                    <Text style={styles(colors).updateText}>
+                      {t('update_button')}
+                    </Text>
                   )}
                 </GradientBox>
               </TouchableOpacity>
@@ -179,8 +183,8 @@ const styles = (colors: any) =>
       flexBasis: 0,
       height: 50,
       borderRadius: 200,
-           borderWidth:1.7,
-      borderColor:'#D9B699',
+      borderWidth: 1.7,
+      borderColor: '#D9B699',
       overflow: 'hidden',
     },
     gradientFill: {

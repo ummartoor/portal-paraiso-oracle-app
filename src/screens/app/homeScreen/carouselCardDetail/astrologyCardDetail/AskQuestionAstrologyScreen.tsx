@@ -21,7 +21,7 @@ import { useNavigation } from '@react-navigation/native';
 import { Fonts } from '../../../../../constants/fonts';
 import GradientBox from '../../../../../components/GradientBox';
 import { AppStackParamList } from '../../../../../navigation/routeTypes';
-import { useTranslation } from 'react-i18next'; 
+import { useTranslation } from 'react-i18next';
 const { height: SCREEN_HEIGHT, width: SCREEN_WIDTH } = Dimensions.get('screen');
 
 const AskQuestionAstrologyScreen = () => {
@@ -29,14 +29,14 @@ const AskQuestionAstrologyScreen = () => {
   const colors = theme.colors;
   const navigation =
     useNavigation<NativeStackNavigationProp<AppStackParamList>>();
- const { t } = useTranslation();
+  const { t } = useTranslation();
   const [question, setQuestion] = useState('');
 
-const handleNext = () => {
+  const handleNext = () => {
     if (!question.trim()) {
       Alert.alert(
         t('alert_input_required_title'),
-        t('alert_input_required_message_question')
+        t('alert_input_required_message_question'),
       );
       return;
     }
@@ -86,10 +86,10 @@ const handleNext = () => {
             <View style={styles.content}>
               {/* Heading and Subheading in center */}
               <Text style={[styles.heading, { color: colors.white }]}>
-             {t('ask_question_heading')}
+                {t('ask_question_heading')}
               </Text>
               <Text style={[styles.subheading, { color: colors.primary }]}>
-              {t('ask_question_subheading')}
+                {t('ask_question_subheading')}
               </Text>
 
               {/* Input Field */}
@@ -104,26 +104,25 @@ const handleNext = () => {
             </View>
           </ScrollView>
 
-     <View style={styles.footer}>
+          <View style={styles.footer}>
             <TouchableOpacity
               activeOpacity={0.8}
               onPress={handleNext}
               style={{ width: '100%' }}
-              disabled={isButtonDisabled} // <-- CHANGE 1: Button ko disable karein
+              disabled={isButtonDisabled}
             >
               <GradientBox
-                // <-- CHANGE 2: Background ko gray karein jab disabled ho
                 colors={
                   isButtonDisabled
-                    ? ['#a19a9aff', '#a19a9aff'] // Disabled state (Solid Gray)
-                    : [colors.black, colors.bgBox] // Enabled state
+                    ? ['#a19a9aff', '#a19a9aff']
+                    : [colors.black, colors.bgBox]
                 }
                 style={[
                   styles.nextBtn,
-                  // <-- CHANGE 3: Border ko remove karein jab disabled ho
+
                   isButtonDisabled
-                    ? { borderWidth: 0 } // Disabled state (No border)
-                    : { borderWidth: 1.5, borderColor: colors.primary }, // Enabled state
+                    ? { borderWidth: 0 }
+                    : { borderWidth: 1.5, borderColor: colors.primary },
                 ]}
               >
                 <Text style={styles.nextText}>{t('continue_button')}</Text>
@@ -173,7 +172,6 @@ const styles = StyleSheet.create({
     fontSize: 22,
   },
   content: {
- 
     justifyContent: 'center', // Center vertically
     alignItems: 'center',
     paddingBottom: 100, // space for button
