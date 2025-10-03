@@ -369,15 +369,7 @@ const EditProfileScreen = () => {
         }}
       />
 
-      <PlaceOfBirthModal
-        isVisible={isPlaceModalVisible}
-        defaultValue={placeOfBirth}
-        onClose={() => setPlaceModalVisible(false)}
-     onConfirm={async (selected) => {
-          const success = await handleUpdate({ place_of_birth: selected });
-          if (success) setPlaceModalVisible(false);
-        }}
-      />
+     <PlaceOfBirthModal isVisible={isPlaceModalVisible} defaultValue={placeOfBirth} onClose={() => setPlaceModalVisible(false)} onConfirm={async (v) => { const s = await handleUpdate({ place_of_birth: v }); if (s) setPlaceModalVisible(false); return s; }} />
 
       <RelationshipStatusModal
         isVisible={isRelationshipModalVisible}

@@ -50,7 +50,7 @@ const SupportScreen = () => {
   const onSend = async () => {
     // Basic validation
     if (!subject.trim() || !email.trim() || !message.trim()) {
-      Alert.alert('Missing Information', 'Please fill out all fields before sending.');
+      Alert.alert(t('alert_missing_info_title'), t('alert_missing_info_message'));
       return;
     }
 
@@ -87,7 +87,8 @@ const SupportScreen = () => {
 
           <View style={styles.headerTitleWrap} pointerEvents="none">
             <Text numberOfLines={1} ellipsizeMode="tail" style={[styles.headerTitle, { color: colors.white }]}>
-              Support
+              {/* --- CHANGED --- */}
+              {t('support_screen_header')}
             </Text>
           </View>
         </View>
@@ -105,11 +106,11 @@ const SupportScreen = () => {
           >
             <View>
               {/* Subject */}
-              <Text style={[styles.label, { color: colors.white }]}>Question for Support</Text>
+                  <Text style={[styles.label, { color: colors.white }]}>{t('support_question_label')}</Text>
               <TextInput
                 value={subject}
                 onChangeText={setSubject}
-                placeholder={t('support_placeholder')}
+             placeholder={t('support_question_placeholder')}
                 placeholderTextColor="rgba(255,255,255,0.6)"
                 style={[
                   styles.input,
@@ -122,7 +123,7 @@ const SupportScreen = () => {
               />
 
               {/* Email */}
-              <Text style={[styles.label, { color: colors.white }]}>Email</Text>
+                 <Text style={[styles.label, { color: colors.white }]}>{t('support_email_label')}</Text>
               <TextInput
                 value={email}
                 onChangeText={setEmail}
@@ -143,11 +144,11 @@ const SupportScreen = () => {
               />
 
               {/* Message */}
-              <Text style={[styles.label, { color: colors.white }]}>Message</Text>
+                <Text style={[styles.label, { color: colors.white }]}>{t('support_message_label')}</Text>
               <TextInput
                 value={message}
                 onChangeText={setMessage}
-                placeholder="Write your message…"
+             placeholder={t('support_message_placeholder')}
                 placeholderTextColor="rgba(255,255,255,0.6)"
                 multiline
                 textAlignVertical="top"
@@ -177,7 +178,7 @@ const SupportScreen = () => {
                   {isSending ? (
                     <ActivityIndicator color={colors.white} />
                   ) : (
-                    <Text style={styles.actionText}>Send</Text>
+                 <Text style={styles.actionText}>{t('support_send_button')}</Text>
                   )}
                 </GradientBox>
               </TouchableOpacity>

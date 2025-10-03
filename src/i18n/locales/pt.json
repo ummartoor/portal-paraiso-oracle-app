@@ -309,7 +309,19 @@
   "delete_account_reason_required_title": "Motivo Necessário",
   "delete_account_reason_required_message": "Por favor, selecione ou especifique um motivo antes de excluir sua conta.",
 
-  "subscription_plan_title": "Plano de Assinatura",
+
+  "support_screen_header": "Suporte",
+  "support_question_label": "Pergunta para o Suporte",
+  "support_question_placeholder": "Digite sua pergunta",
+  "support_email_label": "Email",
+  "support_email_placeholder": "voce@exemplo.com",
+  "support_message_label": "Mensagem",
+  "support_message_placeholder": "Escreva sua mensagem…",
+  "support_send_button": "Enviar",
+  "alert_missing_info_title": "Informação Faltando",
+  "alert_missing_info_message": "Por favor, preencha todos os campos antes de enviar.",
+
+ "subscription_plan_title": "Plano de Assinatura",
   "subscription_unlock_title": "Desbloqueie Seu Potencial Cósmico",
   "subscription_yearly": "Anual",
   "subscription_monthly": "Mensal",
@@ -319,7 +331,7 @@
   "subscription_4_week": "4 semanas",
   "subscription_save_55": "Economize 55%",
   "subscription_per_week": "por semana",
-  "subscription_start_now": "Começar Agora",
+  "subscription_start_now": "Comece Agora",
 
   "logout_modal_title": "Sair",
   "logout_modal_message": "Tem certeza de que deseja sair?",
@@ -356,7 +368,7 @@
   "library_share": "Compartilhar",
   "library_get_premium": "Obter Premium Para Leitura Completa",
   "library_your_ritual": "Seu Ritual",
-  "library_buzious": "Búzios",
+  "library_buzious": "Búzios"
 
-  "support_placeholder": "Digite sua pergunta"
+
 }

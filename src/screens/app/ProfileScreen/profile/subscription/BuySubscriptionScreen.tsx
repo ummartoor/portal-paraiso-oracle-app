@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
+import { useTranslation } from 'react-i18next'; // --- ADDED ---
 
 import { Fonts } from '../../../../../constants/fonts';
 import { useThemeStore } from '../../../../../store/useThemeStore';
@@ -24,9 +25,11 @@ type PlanKey = 'yearly' | 'monthly' | 'weekly';
 const BuySubscriptionScreen = () => {
   const colors = useThemeStore(s => s.theme.colors);
   const navigation = useNavigation<any>();
+  const { t } = useTranslation(); // --- ADDED ---
 
   const [selected, setSelected] = useState<PlanKey>('yearly');
 
+  // --- CHANGED: Moved inside component and translated ---
   const plans: Record<PlanKey, {
     title: string;
     sub: string;
@@ -34,9 +37,9 @@ const BuySubscriptionScreen = () => {
     perWeek: string;
     badge?: string;
   }> = {
-    yearly:   { title: 'Yearly',  sub: '12 mo', strike: '$39.99', perWeek: '$3.34', badge: 'Save 55%' },
-    monthly:  { title: 'Monthly', sub: '1 mo',  strike: '$3.99',  perWeek: '$1.34' },
-    weekly:   { title: 'Weekly',  sub: '4 week', strike: '$1.99', perWeek: '$1.34' },
+    yearly:  { title: t('subscription_yearly'),  sub: t('subscription_12_mo'), strike: '$39.99', perWeek: '$3.34', badge: t('subscription_save_55') },
+    monthly: { title: t('subscription_monthly'), sub: t('subscription_1_mo'),  strike: '$3.99',  perWeek: '$1.34' },
+    weekly:  { title: t('subscription_weekly'),  sub: t('subscription_4_week'), strike: '$1.99', perWeek: '$1.34' },
   };
 
   const onStart = () => {
@@ -60,7 +63,6 @@ const BuySubscriptionScreen = () => {
           },
         ]}
       >
-        {/* Left title area */}
         <View style={{ flex: 1 }}>
           <View style={styles.cardTitleRow}>
             <Text
@@ -71,7 +73,6 @@ const BuySubscriptionScreen = () => {
             >
               {p.title}
             </Text>
-
             {p.badge ? (
               <View style={[styles.badge, { backgroundColor: colors.primary + '22', borderColor: colors.primary }]}>
                 <Text style={[styles.badgeText, { color: colors.primary }]}>
@@ -80,7 +81,6 @@ const BuySubscriptionScreen = () => {
               </View>
             ) : null}
           </View>
-
           <View style={styles.subRow}>
             <Text
               style={[
@@ -90,12 +90,11 @@ const BuySubscriptionScreen = () => {
             >
               {p.sub}
             </Text>
-
             {p.strike ? (
               <Text
                 style={[
                   styles.strike,
-                { color: isActive ? colors.black : colors.white, opacity: 0.6 },
+                  { color: isActive ? colors.black : colors.white, opacity: 0.6 },
                 ]}
               >
                 {p.strike}
@@ -104,7 +103,6 @@ const BuySubscriptionScreen = () => {
           </View>
         </View>
 
-        {/* Right price area */}
         <View style={styles.priceCol}>
           <Text
             style={[
@@ -120,7 +118,8 @@ const BuySubscriptionScreen = () => {
               { color: isActive ? colors.black : colors.white, opacity: 0.7 },
             ]}
           >
-            per week
+            {/* --- CHANGED --- */}
+            {t('subscription_per_week')}
           </Text>
         </View>
       </TouchableOpacity>
@@ -145,45 +144,42 @@ const BuySubscriptionScreen = () => {
               resizeMode="contain"
             />
           </TouchableOpacity>
-
           <View style={styles.headerTitleWrap} pointerEvents="none">
+            {/* --- CHANGED --- */}
             <Text numberOfLines={1} ellipsizeMode="tail" style={[styles.headerTitle, { color: colors.white }]}>
-              Subscription
+              {t('subscription_plan_title')}
             </Text>
           </View>
         </View>
 
-        {/* Full-bleed hero image (300 height) */}
         <View style={[styles.heroWrap, { width: SCREEN_WIDTH, marginHorizontal: -20 }]}>
           <Image
-            source={require('../../../../../assets/images/heroImage.png')} // your asset
+            source={require('../../../../../assets/images/heroImage.png')}
             style={styles.hero}
             resizeMode="cover"
           />
-
-          {/* centered text near the top */}
           <View style={styles.heroTopOverlay}>
+            {/* --- CHANGED --- */}
             <Text style={[styles.heroTitle, { color: colors.white }]}>
-              Unlock Your Cosmic Potential
+              {t('subscription_unlock_title')}
             </Text>
           </View>
         </View>
 
-        {/* Plan cards (first overlaps hero) */}
         <View style={styles.cardsWrap}>
           <Card k="yearly" withShadow />
           <Card k="monthly" />
           <Card k="weekly" />
         </View>
 
-        {/* Bottom button */}
         <View style={styles.footer}>
           <TouchableOpacity activeOpacity={0.85} style={{ width: '100%' }} onPress={onStart}>
             <GradientBox
               colors={[colors.black, colors.bgBox]}
               style={[styles.actionBtn, { borderWidth: 1.5, borderColor: colors.primary }]}
             >
-              <Text style={styles.actionText}>Start Now</Text>
+              {/* --- CHANGED --- */}
+              <Text style={styles.actionText}>{t('subscription_start_now')}</Text>
             </GradientBox>
           </TouchableOpacity>
         </View>
@@ -199,10 +195,9 @@ const styles = StyleSheet.create({
   bgImage: { flex: 1 },
   container: {
     flex: 1,
-    paddingHorizontal: 20,   // page padding
+    paddingHorizontal: 20,
     paddingTop: Platform.select({ ios: 0, android: 10 }),
   },
-
   header: {
     height: 56,
     justifyContent: 'center',
@@ -225,19 +220,14 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
     textTransform: 'capitalize',
   },
-
-  // HERO
   heroWrap: {
     height: 300,
     borderRadius: 16,
     overflow: 'hidden',
     marginTop: 16,
-    // marginHorizontal handled inline to make it full-bleed
     position: 'relative',
   },
   hero: { width: '100%', height: '100%' },
-
-  // Text centered near the top of hero
   heroTopOverlay: {
     position: 'absolute',
     top: 220,
@@ -251,14 +241,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
     textAlign: 'center',
   },
-
-  // CARDS
   cardsWrap: {
     gap: 12,
-    marginTop: -32, // overlap first card half onto the hero
+    marginTop: -32,
     zIndex: 2,
   },
-
   card: {
     minHeight: 74,
     borderRadius: 16,
@@ -269,7 +256,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   shadowCard: {
-    // subtle floating effect for the overlapping first card
     shadowColor: '#000',
     shadowOpacity: 0.25,
     shadowRadius: 8,
@@ -300,7 +286,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     textDecorationLine: 'line-through',
   },
-
   badge: {
     borderRadius: 12,
     paddingVertical: 2,
@@ -311,14 +296,13 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.aeonikRegular,
     fontSize: 10,
   },
-
   priceCol: { alignItems: 'flex-end' },
   price: { fontFamily: Fonts.aeonikBold, fontSize: 16 },
   perWeek: { fontFamily: Fonts.aeonikRegular, fontSize: 12, marginTop: 2 },
-
   footer: {
     paddingTop: 16,
     paddingBottom: Platform.select({ ios: 8, android: 28 }),
+    marginTop: 'auto', // Pushes footer to the bottom
   },
   actionBtn: {
     height: 56,

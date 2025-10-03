@@ -50,14 +50,14 @@ const handleUpdate = () => {
         <View style={styles(colors).overlay}>
           <View style={styles(colors).modal}>
             {/* Heading */}
-            <Text style={styles(colors).heading}>Update Password</Text>
+         <Text style={styles(colors).heading}>{t('update_password_header')}</Text>
 
             {/* Old Password */}
             <View style={styles(colors).fieldContainer}>
-              <Text style={styles(colors).label}>Old Password</Text>
+                    <Text style={styles(colors).label}>{t('old_password_label')}</Text>
               <View style={styles(colors).inputWrapper}>
                 <TextInput
-                  placeholder={t('old_password_placeholder')}
+                 placeholder={t('old_password_placeholder')}
                   placeholderTextColor="rgba(255,255,255,0.6)"
                   secureTextEntry={!showOld}
                   value={oldPassword}
@@ -81,10 +81,10 @@ const handleUpdate = () => {
 
             {/* New Password */}
             <View style={styles(colors).fieldContainer}>
-              <Text style={styles(colors).label}>New Password</Text>
+               <Text style={styles(colors).label}>{t('new_password_modal_label')}</Text>
               <View style={styles(colors).inputWrapper}>
                 <TextInput
-                  placeholder={t('new_password_modal_placeholder')}
+                   placeholder={t('new_password_modal_placeholder')}
                   placeholderTextColor="rgba(255,255,255,0.6)"
                   secureTextEntry={!showNew}
                   value={newPassword}
@@ -108,10 +108,10 @@ const handleUpdate = () => {
 
             {/* Confirm Password */}
             <View style={styles(colors).fieldContainer}>
-              <Text style={styles(colors).label}>Confirm Password</Text>
+              <Text style={styles(colors).label}>{t('confirm_password_modal_label')}</Text>
               <View style={styles(colors).inputWrapper}>
                 <TextInput
-                  placeholder="Re-enter new password"
+                  placeholder={t('confirm_password_modal_placeholder')}
                   placeholderTextColor="rgba(255,255,255,0.6)"
                   secureTextEntry={!showConfirm}
                   value={confirmPassword}
@@ -141,7 +141,7 @@ const handleUpdate = () => {
                 activeOpacity={0.85}
                 style={styles(colors).cancelButton}
               >
-                <Text style={styles(colors).cancelText}>Cancel</Text>
+            <Text style={styles(colors).cancelText}>{t('cancel_button')}</Text>
               </TouchableOpacity>
 
               {/* Update (Gradient) */}
@@ -154,7 +154,7 @@ const handleUpdate = () => {
                   colors={[colors.black, colors.bgBox]}
                   style={styles(colors).gradientFill}
                 >
-                  <Text style={styles(colors).updateText}>Update</Text>
+              <Text style={styles(colors).updateText}>{t('update_button')}</Text>
                 </GradientBox>
               </TouchableOpacity>
             </View>

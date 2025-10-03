@@ -12,29 +12,56 @@ import { Fonts } from '../../../../../constants/fonts';
 import GradientBox from '../../../../../components/GradientBox';
 import DatePicker from 'react-native-date-picker';
 import { useTranslation } from 'react-i18next';
+
 interface TimeOfBirthModalProps {
   isVisible: boolean;
   onClose: () => void;
-  onConfirm: (time: string) => void;
-    defaultValue?: string;
+  onConfirm: (time: string) => Promise<any>;
+  defaultValue?: string;
 }
 
-
+// --- THIS FUNCTION IS NOW FIXED AND MORE ROBUST ---
 const parseTimeString = (timeString?: string): Date => {
-    if (!timeString) return new Date(2000, 0, 1, 8, 0); // Default 8 AM
-    
+  const defaultDate = new Date(2000, 0, 1, 8, 0); // Default to 8:00 AM
+
+  if (!timeString || typeof timeString !== 'string' || !timeString.includes(':')) {
+    return defaultDate;
+  }
+
+  try {
     const [time, modifier] = timeString.split(' ');
-    let [hours, minutes] = time.split(':').map(Number);
+    const timeParts = time.split(':');
+    
+    if (timeParts.length < 2) {
+      return defaultDate;
+    }
+
+    let hours = parseInt(timeParts[0], 10);
+    let minutes = parseInt(timeParts[1], 10);
+
+    if (isNaN(hours) || isNaN(minutes)) {
+      return defaultDate;
+    }
 
     if (modifier && modifier.toUpperCase() === 'PM' && hours < 12) {
-        hours += 12;
+      hours += 12;
     }
-    if (modifier && modifier.toUpperCase() === 'AM' && hours === 12) { 
-        hours = 0;
+    if (modifier && modifier.toUpperCase() === 'AM' && hours === 12) {
+      hours = 0; // Midnight case
     }
+    
     const date = new Date();
-    date.setHours(hours, minutes, 0);
+    date.setHours(hours, minutes, 0, 0);
+    
+    if (isNaN(date.getTime())) {
+      return defaultDate;
+    }
+    
     return date;
+  } catch (error) {
+    console.error("Error parsing time string:", timeString, error);
+    return defaultDate;
+  }
 };
 
 const TimeOfBirthModal: React.FC<TimeOfBirthModalProps> = ({
@@ -44,7 +71,7 @@ const TimeOfBirthModal: React.FC<TimeOfBirthModalProps> = ({
   defaultValue,
 }) => {
   const colors = useThemeStore(state => state.theme.colors);
- const { t } = useTranslation();
+  const { t } = useTranslation();
   const [time, setTime] = useState(parseTimeString(defaultValue));
   const [isLoading, setIsLoading] = useState(false);
 
@@ -70,10 +97,8 @@ const TimeOfBirthModal: React.FC<TimeOfBirthModalProps> = ({
       <View style={[StyleSheet.absoluteFill, styles(colors).overlayBackground]}>
         <View style={styles(colors).overlay}>
           <View style={styles(colors).modal}>
-            {/* Heading */}
-             <Text style={styles(colors).heading}>{t('tob_modal_header')}</Text>
+            <Text style={styles(colors).heading}>{t('tob_modal_header')}</Text>
 
-            {/* Time Picker */}
             <View
               style={[
                 styles(colors).dobBox,
@@ -89,18 +114,14 @@ const TimeOfBirthModal: React.FC<TimeOfBirthModalProps> = ({
               />
             </View>
 
-            {/* Buttons */}
             <View style={styles(colors).buttonRow}>
-              {/* Cancel */}
               <TouchableOpacity
                 onPress={onClose}
                 activeOpacity={0.85}
                 style={styles(colors).cancelButton}
               >
-          <Text style={styles(colors).cancelText}>{t('cancel_button')}</Text>
+                <Text style={styles(colors).cancelText}>{t('cancel_button')}</Text>
               </TouchableOpacity>
-
-              {/* Update */}
               <TouchableOpacity
                 onPress={handleConfirm}
                 activeOpacity={0.9}
@@ -114,7 +135,7 @@ const TimeOfBirthModal: React.FC<TimeOfBirthModalProps> = ({
                   {isLoading ? (
                     <ActivityIndicator color={colors.primary} />
                   ) : (
-                <Text style={styles(colors).updateText}>{t('update_button')}</Text>
+                    <Text style={styles(colors).updateText}>{t('update_button')}</Text>
                   )}
                 </GradientBox>
               </TouchableOpacity>
@@ -190,8 +211,8 @@ const styles = (colors: any) =>
       flexGrow: 1,
       flexBasis: 0,
       height: 50,
-           borderWidth:1.7,
-      borderColor:'#D9B699',
+      borderWidth: 1.7,
+      borderColor: '#D9B699',
       borderRadius: 200,
       overflow: 'hidden',
     },
@@ -208,3 +229,4 @@ const styles = (colors: any) =>
       color: colors.white,
     },
   });
+

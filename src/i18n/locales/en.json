@@ -303,7 +303,20 @@
   "delete_account_reason_required_title": "Reason Required",
   "delete_account_reason_required_message": "Please select or specify a reason before deleting your account.",
 
-  "subscription_plan_title": "Subscription Plan",
+
+
+  "support_screen_header": "Support",
+  "support_question_label": "Question for Support",
+  "support_question_placeholder": "Type your question",
+  "support_email_label": "Email",
+  "support_email_placeholder": "you@example.com",
+  "support_message_label": "Message",
+  "support_message_placeholder": "Write your message…",
+  "support_send_button": "Send",
+  "alert_missing_info_title": "Missing Information",
+  "alert_missing_info_message": "Please fill out all fields before sending.",
+
+"subscription_plan_title": "Subscription Plan",
   "subscription_unlock_title": "Unlock Your Cosmic Potential",
   "subscription_yearly": "Yearly",
   "subscription_monthly": "Monthly",
@@ -314,7 +327,7 @@
   "subscription_save_55": "Save 55%",
   "subscription_per_week": "per week",
   "subscription_start_now": "Start Now",
-
+  
   "logout_modal_title": "Log out",
   "logout_modal_message": "Are you sure you want to logout?",
   "logout_button": "Log Out",
@@ -350,8 +363,8 @@
   "library_share": "Share",
   "library_get_premium": "Get Premium For Full Reading",
   "library_your_ritual": "Your Ritual",
-  "library_buzious": "Buzious",
+  "library_buzious": "Buzious"
 
-  "support_placeholder": "Type your question"
+
 }
 
