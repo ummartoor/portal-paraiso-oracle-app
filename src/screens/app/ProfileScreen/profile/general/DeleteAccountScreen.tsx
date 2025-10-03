@@ -23,6 +23,7 @@ import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { AuthStackParamsList } from '../../../../../navigation/routeTypes';
 import { useAuthStore } from '../../../../../store/useAuthStore';
+import { useTranslation } from 'react-i18next';
 
 // --- Assets ---
 const radioOff = require('../../../../../assets/icons/unfillIcon.png');
@@ -30,29 +31,33 @@ const radioOn = require('../../../../../assets/icons/checkIcon.png');
 const successIcon = require('../../../../../assets/icons/successfullIcon.png'); // Re-added for modal
 
 // --- Constants ---
-// Step 2: Reasons for deletion
-const DELETION_REASONS = [
-  'I have privacy concerns.',
-  'I no longer find the features useful.',
-  'I found a better alternative.',
-  'The app has too many notifications or emails.',
-  'I am experiencing technical issues or bugs.',
-  'Other', // This will trigger the text input
-];
-
-// Step 1: Information points
-const WARNING_POINTS = [
-  'Your saved records, history, and personal data will be permanently removed.',
-  "Once deleted, you won't be able to log in or restore your account.",
-  'Any active subscription will end immediately without a refund.',
-  'Account deletion cannot be undone. This action is final and irreversible.',
-];
+// Step 2: Reasons for deletion - will be populated with translations
+let DELETION_REASONS: string[] = [];
+let WARNING_POINTS: string[] = [];
 
 const DeleteAccountScreen = () => {
   const colors = useThemeStore(s => s.theme.colors);
   const navigation =
     useNavigation<NativeStackNavigationProp<AuthStackParamsList>>();
   const deleteAccount = useAuthStore(state => state.deleteAccount);
+  const { t } = useTranslation();
+
+  // Initialize translation arrays
+  DELETION_REASONS = [
+    t('delete_account_reason_1'),
+    t('delete_account_reason_2'),
+    t('delete_account_reason_3'),
+    t('delete_account_reason_4'),
+    t('delete_account_reason_5'),
+    t('delete_account_reason_6'),
+  ];
+
+  WARNING_POINTS = [
+    t('delete_account_warning_1'),
+    t('delete_account_warning_2'),
+    t('delete_account_warning_3'),
+    t('delete_account_warning_4'),
+  ];
 
   // --- State Management ---
   const [step, setStep] = useState(1); // 1 for warning, 2 for reasons
@@ -79,7 +84,7 @@ const DeleteAccountScreen = () => {
 
   const onPressDelete = async () => {
     if (!canDelete) {
-       Alert.alert('Reason Required', 'Please select or specify a reason before deleting your account.');
+       Alert.alert(t('delete_account_reason_required_title'), t('delete_account_reason_required_message'));
        return;
     }
 
@@ -104,10 +109,10 @@ const DeleteAccountScreen = () => {
     <>
         <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
             <Text style={[styles.heading, { color: colors.white }]}>
-                We’re sorry to see you go
+                {t('delete_account_sorry_title')}
             </Text>
             <Text style={[styles.subtitle, { color: colors.white, opacity: 0.8 }]}>
-                Please note the following before permanently deleting your account:
+                {t('delete_account_warning_subtitle')}
             </Text>
             <View style={styles.listWrap}>
                 {WARNING_POINTS.map((txt, i) => {
@@ -142,7 +147,7 @@ const DeleteAccountScreen = () => {
                 <GradientBox
                     colors={[colors.black, colors.bgBox]}
                     style={[styles.actionBtn, { borderColor: colors.primary, borderWidth: 1.5 }]}>
-                    <Text style={[styles.actionText, { color: colors.white }]}>Continue</Text>
+                    <Text style={[styles.actionText, { color: colors.white }]}>{t('continue_button')}</Text>
                 </GradientBox>
             </TouchableOpacity>
         </View>
@@ -153,7 +158,7 @@ const DeleteAccountScreen = () => {
     <>
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         <Text style={[styles.heading, { color: colors.white }]}>
-          Please tell us why you are leaving
+          {t('delete_account_reason_title')}
         </Text>
 
         {/* Deletion Reasons */}
@@ -186,11 +191,11 @@ const DeleteAccountScreen = () => {
         </View>
 
         {/* Other Reason Text Input */}
-        {selectedReason === 'Other' && (
+        {selectedReason === t('delete_account_reason_6') && (
           <View style={[styles.textInputContainer, { backgroundColor: colors.bgBox }]}>
             <TextInput
               style={[styles.textInput, { color: colors.white }]}
-              placeholder="Please specify your reason..."
+              placeholder={t('delete_account_other_placeholder')}
               placeholderTextColor={`${colors.white}80`}
               value={otherReason}
               onChangeText={setOtherReason}
@@ -220,7 +225,7 @@ const DeleteAccountScreen = () => {
               <ActivityIndicator color={colors.white} />
             ) : (
               <Text style={[styles.actionText, { color: colors.white }]}>
-                Delete Account
+                {t('delete_account_button')}
               </Text>
             )}
           </GradientBox>
@@ -259,7 +264,7 @@ const DeleteAccountScreen = () => {
               numberOfLines={1}
               ellipsizeMode="tail"
               style={[styles.headerTitle, { color: colors.white }]}>
-              Delete Account
+              {t('delete_account_header')}
             </Text>
           </View>
         </View>
@@ -281,9 +286,9 @@ const DeleteAccountScreen = () => {
                   style={m.iconImage}
                   resizeMode="contain"
                 />
-                <Text style={m.heading}>Successfully deleted</Text>
+                <Text style={m.heading}>{t('delete_account_success_title')}</Text>
                 <Text style={m.description}>
-                  Your account has been deleted successfully.
+                  {t('delete_account_success_message')}
                 </Text>
                 <TouchableOpacity
                   onPress={onDismissSuccessModal}
@@ -292,7 +297,7 @@ const DeleteAccountScreen = () => {
                   <GradientBox
                     colors={[colors.black, colors.bgBox]}
                     style={m.singleBtnFill}>
-                    <Text style={m.singleBtnText}>Continue</Text>
+                    <Text style={m.singleBtnText}>{t('continue_button')}</Text>
                   </GradientBox>
                 </TouchableOpacity>
               </View>

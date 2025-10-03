@@ -22,6 +22,7 @@ import GradientBox from '../../../../components/GradientBox';
 import { Fonts } from '../../../../constants/fonts';
 import { useThemeStore } from '../../../../store/useThemeStore';
 import { AppStackParamList } from '../../../../navigation/routeTypes';
+import { useTranslation } from 'react-i18next';
 
 const { height: SCREEN_HEIGHT, width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -32,6 +33,7 @@ const DailyWisdomCardScreen: React.FC = () => {
   const { colors } = useThemeStore(s => s.theme);
   const navigation =
     useNavigation<NativeStackNavigationProp<AppStackParamList>>();
+  const { t } = useTranslation();
 
   // --- API State from Zustand Store ---
   const { wisdomCard, isLoading, getDailyWisdomCard, markCardAsUsed } =
@@ -101,7 +103,7 @@ const DailyWisdomCardScreen: React.FC = () => {
           ellipsizeMode="tail"
           style={[styles.headerTitle, { color: colors.white }]}
         >
-          Daily Wisdom Card
+          {t('daily_wisdom_header')}
         </Text>
       </View>
     </View>
@@ -180,7 +182,7 @@ const DailyWisdomCardScreen: React.FC = () => {
                     source={require('../../../../assets/icons/shareIcon.png')}
                     style={styles.smallIcon}
                   />
-                  <Text style={styles.smallBtnText}>Share</Text>
+                  <Text style={styles.smallBtnText}>{t('daily_wisdom_share')}</Text>
                 </GradientBox>
                 <GradientBox
                   colors={[colors.black, colors.bgBox]}
@@ -190,7 +192,7 @@ const DailyWisdomCardScreen: React.FC = () => {
                     source={require('../../../../assets/icons/saveIcon.png')}
                     style={styles.smallIcon}
                   />
-                  <Text style={styles.smallBtnText}>Save</Text>
+                  <Text style={styles.smallBtnText}>{t('daily_wisdom_save')}</Text>
                 </GradientBox>
               </View>
 
@@ -204,7 +206,7 @@ const DailyWisdomCardScreen: React.FC = () => {
                     style={styles.mainButton}
                   >
                     <Text style={styles.buttonText}>
-                      Get Premium For Full Reading
+                      {t('daily_wisdom_premium_button')}
                     </Text>
                   </GradientBox>
                 </View>
@@ -214,11 +216,10 @@ const DailyWisdomCardScreen: React.FC = () => {
             // --- PHASE 1: INITIAL STATE (Static Image) ---
             <View style={styles.contentWrapper}>
               <Text style={[styles.title, { color: colors.primary }]}>
-                Your Guidance for Today
+                {t('daily_wisdom_guidance_title')}
               </Text>
               <Text style={[styles.subtitle, { color: colors.white }]}>
-                A single card drawn to bring clarity, balance, and inspiration
-                to your day.
+                {t('daily_wisdom_guidance_subtitle')}
               </Text>
               <Image source={cardBackImage} style={styles.cardImage} />
             </View>
@@ -234,7 +235,7 @@ const DailyWisdomCardScreen: React.FC = () => {
                   colors={[colors.black, colors.bgBox]}
                   style={styles.mainButton}
                 >
-                  <Text style={styles.buttonText}>Reveal Today's Card</Text>
+                  <Text style={styles.buttonText}>{t('daily_wisdom_reveal_button')}</Text>
                 </GradientBox>
               </View>
             </TouchableOpacity>

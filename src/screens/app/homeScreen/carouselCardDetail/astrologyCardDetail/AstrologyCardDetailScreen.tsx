@@ -23,6 +23,7 @@ import { Fonts } from '../../../../../constants/fonts';
 import { useThemeStore } from '../../../../../store/useThemeStore';
 import { AppStackParamList } from '../../../../../navigation/routeTypes';
 import InsightTabs from './InsightTabs';
+import { useTranslation } from 'react-i18next';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -113,6 +114,7 @@ const ZODIAC_ICON_INNER = 128;
 
 const AstrologyCardDetailScreen: React.FC = () => {
   const colors = useThemeStore(s => s.theme.colors);
+  const { t } = useTranslation();
   const navigation =
     useNavigation<NativeStackNavigationProp<AppStackParamList>>();
 
@@ -377,7 +379,7 @@ const AstrologyCardDetailScreen: React.FC = () => {
             {/* <TouchableOpacity activeOpacity={0.7} style={styles.actionTouchable} onPress={() => {}}>
               <GradientBox colors={[colors.black, colors.bgBox]} style={styles.actionButton}>
                 <Image source={require('../../../../../assets/icons/saveIcon.png')} style={[styles.actionIcon, { tintColor: colors.white }]} resizeMode="contain" />
-                <Text style={[styles.actionLabel, { color: colors.white }]}>Save</Text>
+                <Text style={[styles.actionLabel, { color: colors.white }]}>{t('astrology_save')}</Text>
               </GradientBox>
               
             </TouchableOpacity> */}
@@ -814,7 +816,7 @@ export default AstrologyCardDetailScreen;
 //                   style={[styles.actionIcon, { tintColor: colors.white }]}
 //                   resizeMode="contain"
 //                 />
-//                 <Text style={[styles.actionLabel, { color: colors.white }]}>Save</Text>
+//                 <Text style={[styles.actionLabel, { color: colors.white }]}>{t('astrology_save')}</Text>
 //               </GradientBox>
 //             </TouchableOpacity>
 //           </View>

@@ -22,12 +22,14 @@ import { Fonts } from '../../../../../constants/fonts';
 import { useThemeStore } from '../../../../../store/useThemeStore';
 import GradientBox from '../../../../../components/GradientBox';
 import { useAuthStore } from '../../../../../store/useAuthStore';
+import { useTranslation } from 'react-i18next';
 
 const { height: SCREEN_HEIGHT, width: SCREEN_WIDTH } = Dimensions.get('screen');
 
 const SupportScreen = () => {
   const colors = useThemeStore(s => s.theme.colors);
   const navigation = useNavigation<any>();
+  const { t } = useTranslation();
 
 
   const submitSupportTicket = useAuthStore(state => state.submitSupportTicket);
@@ -107,7 +109,7 @@ const SupportScreen = () => {
               <TextInput
                 value={subject}
                 onChangeText={setSubject}
-                placeholder="Type your question"
+                placeholder={t('support_placeholder')}
                 placeholderTextColor="rgba(255,255,255,0.6)"
                 style={[
                   styles.input,

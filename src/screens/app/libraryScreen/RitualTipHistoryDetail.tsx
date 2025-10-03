@@ -19,6 +19,7 @@ import { RitualHistoryItem } from '../../../store/useRitualTipStore';
 import { Fonts } from '../../../constants/fonts';
 import { useThemeStore } from '../../../store/useThemeStore';
 import { AppStackParamList } from '../../../navigation/routeTypes';
+import { useTranslation } from 'react-i18next';
 
 // --- Import Icons ---
 const BackIcon = require('../../../assets/icons/backIcon.png');
@@ -30,6 +31,7 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const RitualTipHistoryDetail: React.FC = () => {
   const { colors } = useThemeStore(s => s.theme);
   const navigation = useNavigation();
+  const { t } = useTranslation();
   const route = useRoute<RouteProp<AppStackParamList, 'RitualTipHistoryDetail'>>();
   const { historyItem } = route.params || {};
 
@@ -111,7 +113,7 @@ const RitualTipHistoryDetail: React.FC = () => {
 
         <ScrollView contentContainerStyle={styles.scrollContent}>
             <View style={styles.contentWrapper}>
-                <Text style={[styles.title, { color: colors.primary }]}>Your Ritual</Text>
+                <Text style={[styles.title, { color: colors.primary }]}>{t('library_your_ritual')}</Text>
                 
                 {/* --- CARD LAYOUT UPDATED --- */}
                 <View style={styles.ritualCard}>

@@ -20,6 +20,7 @@ import Tts from 'react-native-tts';
 import { Fonts } from '../../../constants/fonts';
 import { AppStackParamList } from '../../../navigation/routeTypes';
 import SubscriptionPlanModal from '../../../components/SubscriptionPlanModal';
+import { useTranslation } from 'react-i18next';
 
 // --- Import Icons ---
 import Back from '../../../assets/icons/backIcon.png';
@@ -43,7 +44,7 @@ export type ReadingHistoryItem = {
 
 const TarotReadingHistoryDetail: React.FC = () => {
   const navigation = useNavigation<NativeStackNavigationProp<AppStackParamList>>();
-
+  const { t } = useTranslation();
 
   const theme = useThemeStore(s => s.theme);
   const colors = theme?.colors || { black: '#000000', bgBox: '#333333' };
@@ -127,7 +128,7 @@ console.log("readingItem", readingItem)
         {renderHeader()}
 
         <ScrollView contentContainerStyle={styles.scrollContent}>
-          <Text style={styles.focusTitle}>Your Reading</Text>
+          <Text style={styles.focusTitle}>{t('library_your_reading')}</Text>
 
 
 <View style={styles.readingCardsContainer}>
@@ -174,7 +175,7 @@ console.log("readingItem", readingItem)
                 </Text>
                 <View style={styles.readMoreContainer}>
                   <TouchableOpacity onPress={() => setShowSubscriptionModal(true)}>
-                    <Text style={styles.readMoreText}>Read More</Text>
+                    <Text style={styles.readMoreText}>{t('library_read_more')}</Text>
                   </TouchableOpacity>
                 </View>
               </>
@@ -189,7 +190,7 @@ console.log("readingItem", readingItem)
                 style={styles.smallIcon}
                 resizeMode="contain"
               />
-              <Text style={styles.smallBtnText}>Share</Text>
+              <Text style={styles.smallBtnText}>{t('library_share')}</Text>
             </GradientBox>
           </View>
 
@@ -203,7 +204,7 @@ console.log("readingItem", readingItem)
                 colors={[colors.black, colors.bgBox]}
                 style={[styles.revealBtnGrad, { borderRadius: 60 }]}
               >
-                <Text style={styles.revealBtnText}>Get Premium For Full Reading</Text>
+                <Text style={styles.revealBtnText}>{t('library_get_premium')}</Text>
               </GradientBox>
             </View>
           </TouchableOpacity>

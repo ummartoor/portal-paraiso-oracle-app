@@ -21,10 +21,12 @@ import {
 } from '../../../store/useBuziousStore';
 import { AppStackParamList } from '../../../navigation/routeTypes';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useTranslation } from 'react-i18next';
 
 const BuziosHistoryList: React.FC = () => {
   const navigation = useNavigation<NativeStackNavigationProp<AppStackParamList>>();
   const { colors } = useThemeStore(s => s.theme);
+  const { t } = useTranslation();
 
   // Store 
   const { history, isLoadingHistory, getBuziosHistory } = useBuziosStore(
@@ -66,7 +68,7 @@ const BuziosHistoryList: React.FC = () => {
       />
       <View style={styles.cardTextContainer}>
         {/* Static title */}
-        <Text style={styles.cardTitle}>Buzious</Text>
+        <Text style={styles.cardTitle}>{t('library_buzious')}</Text>
   
         <Text style={styles.cardSubtitle} numberOfLines={2}>
           {item.user_question}

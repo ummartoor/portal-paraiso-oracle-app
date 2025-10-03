@@ -12,6 +12,7 @@ import { Fonts } from '../constants/fonts';
 import { useAuthStore } from '../store/useAuthStore';
 import logoutIcon from '../assets/icons/logOutIcon.png';
 import GradientBox from './GradientBox';
+import { useTranslation } from 'react-i18next';
 
 interface LogOutModalProps {
   isVisible: boolean;
@@ -26,6 +27,7 @@ const LogOutModal: React.FC<LogOutModalProps> = ({
 }) => {
   const colors = useThemeStore((state) => state.theme.colors);
   const logout = useAuthStore((state) => state.logout);
+  const { t } = useTranslation();
 
   const handleLogout = async () => {
     await logout();
@@ -46,11 +48,11 @@ const LogOutModal: React.FC<LogOutModalProps> = ({
             />
 
             {/* Heading */}
-            <Text style={styles(colors).heading}>Log out</Text>
+            <Text style={styles(colors).heading}>{t('logout_modal_title')}</Text>
 
             {/* Description */}
             <Text style={styles(colors).description}>
-              Are you sure you want to logout?
+              {t('logout_modal_message')}
             </Text>
 
             {/* Buttons */}
@@ -61,7 +63,7 @@ const LogOutModal: React.FC<LogOutModalProps> = ({
                 activeOpacity={0.85}
                 style={styles(colors).cancelButton}
               >
-                <Text style={styles(colors).cancelText}>Cancel</Text>
+                <Text style={styles(colors).cancelText}>{t('cancel_button')}</Text>
               </TouchableOpacity>
 
               {/* Confirm (Gradient) */}
@@ -74,7 +76,7 @@ const LogOutModal: React.FC<LogOutModalProps> = ({
                   colors={[colors.black, colors.bgBox]}
                   style={styles(colors).gradientFill}
                 >
-                  <Text style={styles(colors).logoutText}>Log Out</Text>
+                  <Text style={styles(colors).logoutText}>{t('logout_button')}</Text>
                 </GradientBox>
               </TouchableOpacity>
             </View>

@@ -11,6 +11,7 @@ import {
 import { useThemeStore } from '../../../../../store/useThemeStore';
 import { Fonts } from '../../../../../constants/fonts';
 import GradientBox from '../../../../../components/GradientBox';
+import { useTranslation } from 'react-i18next';
 
 
 const eyeIcon = require('../../../../../assets/icons/eye.png');
@@ -28,6 +29,7 @@ const UpdatePasswordModal: React.FC<UpdatePasswordModalProps> = ({
   onConfirm,
 }) => {
   const colors = useThemeStore((state) => state.theme.colors);
+  const { t } = useTranslation();
 
   const [oldPassword, setOldPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -55,7 +57,7 @@ const handleUpdate = () => {
               <Text style={styles(colors).label}>Old Password</Text>
               <View style={styles(colors).inputWrapper}>
                 <TextInput
-                  placeholder="Enter old password"
+                  placeholder={t('old_password_placeholder')}
                   placeholderTextColor="rgba(255,255,255,0.6)"
                   secureTextEntry={!showOld}
                   value={oldPassword}
@@ -82,7 +84,7 @@ const handleUpdate = () => {
               <Text style={styles(colors).label}>New Password</Text>
               <View style={styles(colors).inputWrapper}>
                 <TextInput
-                  placeholder="Enter new password"
+                  placeholder={t('new_password_modal_placeholder')}
                   placeholderTextColor="rgba(255,255,255,0.6)"
                   secureTextEntry={!showNew}
                   value={newPassword}
