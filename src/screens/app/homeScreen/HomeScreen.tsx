@@ -19,7 +19,7 @@ import { AppStackParamList } from '../../../navigation/routeTypes';
 import CarouselCard, { CardItem } from './CarouselCards';
 import { useAuthStore } from '../../../store/useAuthStore';
 import { useTranslation } from 'react-i18next';
-
+import { useGetNotificationsStore } from '../../../store/useGetNotificationsStore'; 
 const { height: SCREEN_HEIGHT, width: SCREEN_WIDTH } = Dimensions.get('screen');
 
 type CardBoxProps = {
@@ -69,7 +69,14 @@ const HomeScreen: React.FC = () => {
   const navigation =
     useNavigation<NativeStackNavigationProp<AppStackParamList>>();
   const { t } = useTranslation();
+  const { unreadCount, getUnreadCount } = useGetNotificationsStore();
 
+  useFocusEffect(
+    useCallback(() => {
+      fetchCurrentUser();
+      getUnreadCount(); // Fetch the count every time the screen is focused
+    }, []),
+  );
   const onPressCarouselCard = (item: CardItem) => {
     if (item.route) {
       navigation.navigate(item.route as any);
@@ -111,7 +118,7 @@ const HomeScreen: React.FC = () => {
               />
               <View style={[styles.onlineDot, { borderColor: colors.white }]} />
             </TouchableOpacity>
-
+{/* 
             <TouchableOpacity
               style={styles.headerIconBtn}
               onPress={() => navigation.navigate('Notification')}
@@ -121,6 +128,22 @@ const HomeScreen: React.FC = () => {
                 style={styles.headerIcon}
                 resizeMode="contain"
               />
+            </TouchableOpacity> */}
+
+               <TouchableOpacity
+              style={styles.headerIconBtn}
+              onPress={() => navigation.navigate('Notification')}
+            >
+              <Image
+                source={require('../../../assets/icons/notificationIcon.png')}
+                style={styles.headerIcon}
+                resizeMode="contain"
+              />
+              {unreadCount > 0 && (
+                <View style={styles.notificationBadge}>
+                  <Text style={styles.notificationBadgeText}>{unreadCount}</Text>
+                </View>
+              )}
             </TouchableOpacity>
           </View>
 
@@ -187,7 +210,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  headerIcon: { height: 24, width: 24 },
+  headerIcon: { height: 27, width: 27 },
   profileWrap: {
     height: 60,
     width: 60,
@@ -262,5 +285,24 @@ const styles = StyleSheet.create({
   bottomAvatarImage: {
     height: 75,
     width: 75,
+  },
+   notificationBadge: {
+    position: 'absolute',
+    top: 5,
+    right: 5,
+    backgroundColor: 'red',
+    borderRadius: 10,
+    width: 20,
+    height: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#fff',
+  },
+  notificationBadgeText: {
+    color: 'white',
+    fontSize: 10,
+    fontWeight: 'bold',
+    fontFamily: Fonts.aeonikBold,
   },
 });

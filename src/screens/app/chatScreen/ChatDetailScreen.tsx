@@ -19,7 +19,8 @@ import { useChatStore, ChatMessage } from '../../../store/useChatStore';
 import { Fonts } from '../../../constants/fonts';
 import { useThemeStore } from '../../../store/useThemeStore';
 import { useAuthStore } from '../../../store/useAuthStore';
-
+import TypingIndicator from '../../../components/TypingIndicator'; 
+import { useTranslation } from 'react-i18next';
 // Assets
 const sendIcon = require('../../../assets/icons/sendIcon.png');
 const aiAvatar = require('../../../assets/images/chatAvatar.png');
@@ -34,6 +35,7 @@ const ChatDetailScreen: React.FC<ChatDetailScreenProps> = ({ route }) => {
   const { sessionId } = route.params || {};
   const { colors } = useThemeStore(s => s.theme);
   const navigation = useNavigation<any>();
+    const { t } = useTranslation(); 
   const [inputText, setInputText] = useState('');
   const scrollViewRef = useRef<ScrollView>(null);
   const insets = useSafeAreaInsets(); // Hook to get safe area dimensions
@@ -176,7 +178,7 @@ console.log(user)
               ellipsizeMode="tail"
               style={[styles.headerTitle, { color: colors.white }]}
             >
-              {activeSession?.session?.title || 'Oracle Chat'}
+             {activeSession?.session?.title || t('chat_screen_title')}
             </Text>
           </View>
         </View>
@@ -200,19 +202,19 @@ console.log(user)
             ) : displayMessages.length > 0 ? (
               <>
                 {displayMessages.map(renderMessage)}
-                {isSendingMessage && (
-                  <View style={styles.aiMessageRow}>
-                    <Image source={aiAvatar} style={styles.messageAvatar} />
-                    <View style={styles.typingIndicator}>
-                      <ActivityIndicator size="small" color="#FFF" />
-                    </View>
-                  </View>
-                )}
+             {isSendingMessage && (
+  <View style={styles.aiMessageRow}>
+    <Image source={aiAvatar} style={styles.messageAvatar} />
+    <View style={styles.typingIndicator}>
+      <TypingIndicator />
+    </View>
+  </View>
+)}
               </>
             ) : (
               <View style={styles.centeredContent}>
                 <Image source={aiAvatar} style={styles.mainAvatar} />
-                <Text style={styles.emptyTitle}>How can I help you?</Text>
+                 <Text style={styles.emptyTitle}>{t('chat_detail_how_can_i_help')}</Text>
               </View>
             )}
           </ScrollView>
@@ -221,7 +223,7 @@ console.log(user)
           <View style={styles.inputContainer}>
             <TextInput
               style={styles.textInput}
-              placeholder="Ask the Oracle..."
+      placeholder={t('chat_detail_placeholder')}
               placeholderTextColor="#8A8A8D"
               value={inputText}
               onChangeText={setInputText}
@@ -331,11 +333,13 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.aeonikRegular,
   },
   sendIcon: { width: 32, height: 32 },
-  typingIndicator: {
-    backgroundColor: '#2F2B3B',
-    borderRadius: 20,
-    padding: 15,
-    alignSelf: 'flex-start',
-  },
+typingIndicator: {
+  backgroundColor: '#2F2B3B',
+  borderRadius: 20,
+  paddingVertical: 10,
+  paddingHorizontal: 12,
+  alignSelf: 'flex-start',
+  borderBottomLeftRadius: 4, // bubble jaisa look dene ke liye
+},
 });
 

@@ -15,7 +15,7 @@ import { useChatStore, ChatSession } from '../../../store/useChatStore';
 import { Fonts } from '../../../constants/fonts';
 import { useThemeStore } from '../../../store/useThemeStore';
 import GradientBox from '../../../components/GradientBox'; // Make sure this path is correct
-
+import { useTranslation } from 'react-i18next';
 // Assets
 const addIcon = require('../../../assets/icons/newChatIcon.png');
 const menuIcon = require('../../../assets/icons/dotIcon.png'); // Add this icon if you haven't already
@@ -23,6 +23,7 @@ const menuIcon = require('../../../assets/icons/dotIcon.png'); // Add this icon 
 const ChatScreen: React.FC = () => {
   const navigation = useNavigation<any>();
   const { colors } = useThemeStore(s => s.theme);
+    const { t } = useTranslation(); 
   const {
     sessions,
     isLoadingSessions,
@@ -86,7 +87,7 @@ const ChatScreen: React.FC = () => {
             style={styles.dropdownItem}
             onPress={() => handleDelete(session.session_id)}
           >
-            <Text style={styles.dropdownText}>Delete</Text>
+         <Text style={styles.dropdownText}>{t('chat_delete_button')}</Text>
           </TouchableOpacity>
         </View>
       )}
@@ -102,7 +103,7 @@ const ChatScreen: React.FC = () => {
       >
         {/* --- FIXED (NON-SCROLLABLE) CONTENT --- */}
         <View style={styles.headerContainer}>
-          <Text style={styles.headerTitle}>Oracle Chat</Text>
+           <Text style={styles.headerTitle}>{t('chat_screen_title')}</Text>
          
 
           <TouchableOpacity onPress={handleNewChat}>
@@ -111,11 +112,11 @@ const ChatScreen: React.FC = () => {
               style={styles.newChatButton}
             >
               <Image source={addIcon} style={styles.addIcon} />
-              <Text style={styles.newChatText}>Start New Chat</Text>
+             <Text style={styles.newChatText}>{t('chat_start_new_chat')}</Text>
             </GradientBox>
           </TouchableOpacity>
 
-          <Text style={styles.sessionListHeader}>Recent Chats</Text>
+                <Text style={styles.sessionListHeader}>{t('chat_recent_chats')}</Text>
         </View>
 
         {/* --- SCROLLABLE CONTENT --- */}
@@ -126,9 +127,9 @@ const ChatScreen: React.FC = () => {
             sessions.map(renderSessionItem)
           ) : (
             <View style={styles.noSessionsContainer}>
-              <Text style={styles.noSessionsText}>No recent chats</Text>
-              <Text style={styles.noSessionsSubtext}>
-                Tap 'Start New Chat' to begin your journey.
+              <Text style={styles.noSessionsText}>{t('chat_no_recent_chats')}</Text>
+                  <Text style={styles.noSessionsSubtext}>
+                {t('chat_no_recent_chats_subtitle')}
               </Text>
             </View>
           )}

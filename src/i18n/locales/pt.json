@@ -368,7 +368,20 @@
   "library_share": "Compartilhar",
   "library_get_premium": "Obter Premium Para Leitura Completa",
   "library_your_ritual": "Seu Ritual",
-  "library_buzious": "Búzios"
+  "library_buzious": "Búzios",
+
+
+
+
+
+  "chat_screen_title": "Chat do Oráculo",
+  "chat_start_new_chat": "Iniciar Novo Chat",
+  "chat_recent_chats": "Chats Recentes",
+  "chat_delete_button": "Excluir",
+  "chat_no_recent_chats": "Nenhum chat recente",
+  "chat_no_recent_chats_subtitle": "Toque em 'Iniciar Novo Chat' para começar sua jornada.",
+  "chat_detail_how_can_i_help": "Como posso ajudar?",
+  "chat_detail_placeholder": "Pergunte ao Oráculo..."
 
 
 }

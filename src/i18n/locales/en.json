@@ -363,7 +363,20 @@
   "library_share": "Share",
   "library_get_premium": "Get Premium For Full Reading",
   "library_your_ritual": "Your Ritual",
-  "library_buzious": "Buzious"
+  "library_buzious": "Buzious",
+
+
+
+
+
+  "chat_screen_title": "Oracle Chat",
+  "chat_start_new_chat": "Start New Chat",
+  "chat_recent_chats": "Recent Chats",
+  "chat_delete_button": "Delete",
+  "chat_no_recent_chats": "No recent chats",
+  "chat_no_recent_chats_subtitle": "Tap 'Start New Chat' to begin your journey.",
+  "chat_detail_how_can_i_help": "How can I help you?",
+  "chat_detail_placeholder": "Ask the Oracle..."
 
 
 }
