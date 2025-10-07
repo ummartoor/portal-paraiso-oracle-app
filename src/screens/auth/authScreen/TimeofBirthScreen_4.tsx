@@ -8,7 +8,8 @@ import {
   StatusBar,
   Dimensions,
   ImageBackground,
-  ActivityIndicator, // --- ADDED ---
+  ActivityIndicator,
+  Vibration, // --- ADDED ---
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useThemeStore } from '../../../store/useThemeStore';
@@ -28,15 +29,24 @@ const TimeofBirthScreen_4 = () => {
   const navigation =
     useNavigation<NativeStackNavigationProp<AuthStackParamsList>>();
   const { t } = useTranslation();
-  // Default time (08:00 AM)
+
   const [time, setTime] = useState(new Date(2000, 0, 1, 8, 0));
 
-  // --- ADDED: Get store function and loading state ---
+
   const { updateUserDetails, isUpdating } = useRegisterStore();
 
-  // --- ADDED: Handle 'Next' button press and API call ---
+  const handleTimeChange = (newTime: Date) => {
+
+    Vibration.vibrate([0, 35, 40, 35]);
+
+    setTime(newTime);
+  };
+
+
   const handleNext = async () => {
-    // Format the time to a string like "08:00 AM" for the API
+
+    Vibration.vibrate([0, 35, 40, 35]);
+    
     const formattedTime = time.toLocaleTimeString([], {
       hour: '2-digit',
       minute: '2-digit',
@@ -96,7 +106,7 @@ const TimeofBirthScreen_4 = () => {
             <DatePicker
               date={time}
               mode="time"
-              onDateChange={setTime}
+              onDateChange={handleTimeChange}
     
               theme="dark"
               style={styles.datePicker}

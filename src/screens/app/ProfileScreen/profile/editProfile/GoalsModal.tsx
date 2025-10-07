@@ -8,6 +8,7 @@ import {
   Image,
   ScrollView,
   ActivityIndicator,
+  Vibration,
 } from "react-native";
 import { useThemeStore } from "../../../../../store/useThemeStore";
 import { Fonts } from "../../../../../constants/fonts";
@@ -55,6 +56,7 @@ const GoalsModal: React.FC<GoalsModalProps> = ({ isVisible, onClose, onConfirm, 
   };
 
   const handleConfirm = async () => {
+     Vibration.vibrate([0, 35, 40, 35]); 
     if (selectedGoals.length === 0) return;
     setIsLoading(true);
     await onConfirm(selectedGoals);
@@ -78,7 +80,9 @@ const GoalsModal: React.FC<GoalsModalProps> = ({ isVisible, onClose, onConfirm, 
                   <TouchableOpacity
                     key={goal.key}
                     activeOpacity={0.8}
-                    onPress={() => toggleGoal(goal.key)}
+                    onPress={() => {
+                       Vibration.vibrate([0, 35, 40, 35]); 
+                      toggleGoal(goal.key)}}
                     style={[
                       styles(colors).goalBox,
                       {
@@ -116,7 +120,10 @@ const GoalsModal: React.FC<GoalsModalProps> = ({ isVisible, onClose, onConfirm, 
 
             <View style={styles(colors).buttonRow}>
               <TouchableOpacity
-                onPress={onClose}
+                  onPress={() => {
+                  Vibration.vibrate([0, 35, 40, 35]); 
+                  onClose();                          
+                }}
                 activeOpacity={0.85}
                 style={styles(colors).cancelButton}
               >

@@ -9,6 +9,7 @@ import {
   ScrollView,
   ActivityIndicator,
   ImageSourcePropType,
+  Vibration,
 } from "react-native";
 import { useThemeStore } from "../../../../../store/useThemeStore";
 import { Fonts } from "../../../../../constants/fonts";
@@ -83,7 +84,9 @@ const ZodiacSymbolModal: React.FC<ZodiacSymbolModalProps> = ({
                             borderWidth: isActive ? 1.5 : 1,
                           },
                         ]}
-                        onPress={() => setSelected(item.key)}
+                        onPress={() => {
+                          Vibration.vibrate([0, 35, 40, 35])
+                          setSelected(item.key)}}
                         activeOpacity={0.8}
                       >
                         <Image
@@ -129,7 +132,10 @@ const ZodiacSymbolModal: React.FC<ZodiacSymbolModalProps> = ({
 
             <View style={styles(colors).buttonRow}>
               <TouchableOpacity
-                onPress={onClose}
+               onPress={() => {
+                              Vibration.vibrate([0, 35, 40, 35]); 
+                              onClose();                          
+                            }}
                 activeOpacity={0.85}
                 style={styles(colors).cancelButton}
               >
@@ -138,7 +144,10 @@ const ZodiacSymbolModal: React.FC<ZodiacSymbolModalProps> = ({
               </TouchableOpacity>
 
               <TouchableOpacity
-                onPress={() => selected && onConfirm(selected)}
+                onPress={() => {
+                  Vibration.vibrate([0, 35, 40, 35])
+                 
+                  selected && onConfirm(selected)}}
                 activeOpacity={0.9}
                 disabled={isLoading}
                 style={styles(colors).gradientTouchable}

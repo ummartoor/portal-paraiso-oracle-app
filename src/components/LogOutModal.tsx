@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   StyleSheet,
   Image,
+  Vibration,
 } from 'react-native';
 import { useThemeStore } from '../store/useThemeStore';
 import { Fonts } from '../constants/fonts';
@@ -30,6 +31,7 @@ const LogOutModal: React.FC<LogOutModalProps> = ({
   const { t } = useTranslation();
 
   const handleLogout = async () => {
+      Vibration.vibrate([0, 35, 40, 35]); 
     await logout();
     onClose();
     onConfirm();
@@ -59,7 +61,10 @@ const LogOutModal: React.FC<LogOutModalProps> = ({
             <View style={styles(colors).buttonRow}>
               {/* Cancel */}
               <TouchableOpacity
-                onPress={onClose}
+                onPress={() => {
+                  Vibration.vibrate([0, 35, 40, 35]);
+                  onClose();
+                }}
                 activeOpacity={0.85}
                 style={styles(colors).cancelButton}
               >

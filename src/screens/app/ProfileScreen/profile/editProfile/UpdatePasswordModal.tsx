@@ -7,6 +7,7 @@ import {
   StyleSheet,
   TextInput,
   Image,
+  Vibration,
 } from 'react-native';
 import { useThemeStore } from '../../../../../store/useThemeStore';
 import { Fonts } from '../../../../../constants/fonts';
@@ -40,6 +41,7 @@ const UpdatePasswordModal: React.FC<UpdatePasswordModalProps> = ({
   const [showConfirm, setShowConfirm] = useState(false);
 
 const handleUpdate = () => {
+    Vibration.vibrate([0, 35, 40, 35]); 
   onConfirm(oldPassword, newPassword, confirmPassword);
 };
 
@@ -137,7 +139,10 @@ const handleUpdate = () => {
             <View style={styles(colors).buttonRow}>
               {/* Cancel */}
               <TouchableOpacity
-                onPress={onClose}
+            onPress={() => {
+                           Vibration.vibrate([0, 35, 40, 35]); 
+                           onClose();                          
+                         }}
                 activeOpacity={0.85}
                 style={styles(colors).cancelButton}
               >

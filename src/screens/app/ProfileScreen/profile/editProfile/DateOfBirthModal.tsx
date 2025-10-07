@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   StyleSheet,
   ActivityIndicator,
+  Vibration,
 } from 'react-native';
 import { useThemeStore } from '../../../../../store/useThemeStore';
 import { Fonts } from '../../../../../constants/fonts';
@@ -30,6 +31,11 @@ const DateOfBirthModal: React.FC<DateOfBirthModalProps> = ({
   const [date, setDate] = useState(defaultValue || new Date(2000, 0, 1));
   const [isLoading, setIsLoading] = useState(false);
 
+  const handleDateChange = (newDate: Date) => {
+    Vibration.vibrate([0, 35, 40, 35]); 
+    setDate(newDate);                   
+  };
+
   useEffect(() => {
     if (isVisible) {
       setDate(defaultValue || new Date(2000, 0, 1));
@@ -37,6 +43,7 @@ const DateOfBirthModal: React.FC<DateOfBirthModalProps> = ({
   }, [isVisible, defaultValue]);
 
   const handleConfirm = async () => {
+         Vibration.vibrate([0, 35, 40, 35]); 
     setIsLoading(true);
     const formattedDate = date.toISOString().split('T')[0];
     await onConfirm(formattedDate);
@@ -64,7 +71,7 @@ const DateOfBirthModal: React.FC<DateOfBirthModalProps> = ({
               <DatePicker
                 date={date}
                 mode="date"
-                onDateChange={setDate}
+              onDateChange={handleDateChange}
                 theme="dark"
                 style={styles(colors).datePicker}
               />
@@ -74,7 +81,10 @@ const DateOfBirthModal: React.FC<DateOfBirthModalProps> = ({
             <View style={styles(colors).buttonRow}>
               {/* Cancel */}
               <TouchableOpacity
-                onPress={onClose}
+             onPress={() => {
+                  Vibration.vibrate([0, 35, 40, 35]);
+                  onClose();
+                }}
                 activeOpacity={0.85}
                 style={styles(colors).cancelButton}
               >

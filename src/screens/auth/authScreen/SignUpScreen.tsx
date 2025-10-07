@@ -14,7 +14,8 @@ import {
   KeyboardAvoidingView,
   Platform,
   Dimensions,
-  ActivityIndicator, // --- ADDED ---
+  ActivityIndicator,
+  Vibration, // --- ADDED ---
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useThemeStore } from '../../../store/useThemeStore';
@@ -276,7 +277,9 @@ const validationSchema = Yup.object().shape({
                   {/* --- UPDATED: Create Account Button with loading state --- */}
                   <TouchableOpacity
                     activeOpacity={0.8}
-                    onPress={() => handleSubmit()}
+                    onPress={() => {
+                               Vibration.vibrate([0, 35, 40, 35]);
+                      handleSubmit()}}
                     style={{ width: '100%' }}
                     disabled={isSubmitting}
                   >
@@ -301,7 +304,10 @@ const validationSchema = Yup.object().shape({
             {/* Footer */}
             <View style={styles.footer}>
               <Text style={styles.footerText}>{t('already_have_account')}</Text>
-              <TouchableOpacity onPress={() => navigation.navigate('Login')}>
+              <TouchableOpacity onPress={() => {
+                         Vibration.vibrate([0, 35, 40, 35]);
+                navigation.navigate('Login')}
+                }>
                 <Text style={[styles.signupLink, { color: colors.primary }]}>
                   {' '}
                    {t('login_link')}

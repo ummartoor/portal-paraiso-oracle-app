@@ -13,7 +13,8 @@ import {
   Dimensions,
   ImageBackground,
   Alert,
-    ActivityIndicator
+    ActivityIndicator,
+    Vibration
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
@@ -169,7 +170,10 @@ const ConfirmPasswordScreen = () => {
                   )}
 
                   {/* Gradient Continue Button */}
-                  <TouchableOpacity activeOpacity={0.8} onPress={() => handleSubmit()} style={{ width: '100%' }}>
+                  <TouchableOpacity activeOpacity={0.8} onPress={() => {
+                             Vibration.vibrate([0, 35, 40, 35]);
+                    handleSubmit()}
+                    } style={{ width: '100%' }}>
                     <GradientBox
                       colors={[colors.black, colors.bgBox]}
                       style={[
@@ -184,7 +188,9 @@ const ConfirmPasswordScreen = () => {
                   {/* Footer */}
                   <View style={styles.footer}>
                    <Text style={styles.footerText}>{t('back_to_footer')}</Text>
-                    <TouchableOpacity onPress={() => navigation.navigate('Login')}>
+                    <TouchableOpacity onPress={() => {
+                               Vibration.vibrate([0, 35, 40, 35]);
+                      navigation.navigate('Login')}}>
                        <Text style={[styles.signupLink, { color: colors.primary }]}> {t('login_footer_link')}</Text>
                     </TouchableOpacity>
                   </View>

@@ -7,6 +7,7 @@ import {
   StyleSheet,
   Image,
   ActivityIndicator,
+  Vibration,
 } from 'react-native';
 import { useThemeStore } from '../../../../../store/useThemeStore';
 import { Fonts } from '../../../../../constants/fonts';
@@ -48,6 +49,7 @@ const GenderModal: React.FC<GenderModalProps> = ({
   }, [isVisible, defaultValue]);
 
   const handleConfirm = async () => {
+         Vibration.vibrate([0, 35, 40, 35]); 
     if (!selectedGender) return;
     setIsLoading(true);
     await onConfirm(selectedGender);
@@ -77,7 +79,9 @@ const GenderModal: React.FC<GenderModalProps> = ({
                   >
                     <TouchableOpacity
                       activeOpacity={0.8}
-                      onPress={() => setSelectedGender(item.key)}
+                      onPress={() => {
+                             Vibration.vibrate([0, 35, 40, 35]); 
+                        setSelectedGender(item.key)}}
                     >
                       <GradientBox
                         colors={[colors.black, colors.bgBox]}
@@ -126,7 +130,10 @@ const GenderModal: React.FC<GenderModalProps> = ({
             <View style={styles(colors).buttonRow}>
               {/* Cancel */}
               <TouchableOpacity
-                onPress={onClose}
+                        onPress={() => {
+              Vibration.vibrate([0, 35, 40, 35]); 
+              onClose();                          
+            }}
                 activeOpacity={0.85}
                 style={styles(colors).cancelButton}
               >

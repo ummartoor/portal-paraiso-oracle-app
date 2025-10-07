@@ -9,7 +9,8 @@ import {
   Dimensions,
   ImageBackground,
   Alert, // --- ADDED ---
-  ActivityIndicator, // --- ADDED ---
+  ActivityIndicator,
+  Vibration, // --- ADDED ---
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useThemeStore } from '../../../store/useThemeStore';
@@ -51,6 +52,7 @@ const RelationshipScreen_6: React.FC = () => {
 
   // --- ADDED: Handle 'Next' button press and API call ---
   const handleNext = async () => {
+     Vibration.vibrate([0, 35, 40, 35]);
     if (!selectedStatus) {
    Alert.alert(
         t('alert_selection_required_title'),
@@ -127,7 +129,9 @@ const RelationshipScreen_6: React.FC = () => {
                         },
                       ]}
                       activeOpacity={0.8}
-                      onPress={() => setSelectedStatus(item.key)}
+                      onPress={() => {
+                              Vibration.vibrate([0, 35, 40, 35]); 
+                        setSelectedStatus(item.key)}}
                     >
                       <View style={styles.iconWrapper}>
                         <Image

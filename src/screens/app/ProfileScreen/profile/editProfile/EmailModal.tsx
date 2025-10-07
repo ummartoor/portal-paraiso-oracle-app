@@ -7,6 +7,7 @@ import {
   StyleSheet,
   TextInput,
   ActivityIndicator,
+  Vibration,
 } from 'react-native';
 import { useThemeStore } from '../../../../../store/useThemeStore';
 import { Fonts } from '../../../../../constants/fonts';
@@ -37,6 +38,7 @@ const EmailModal: React.FC<EmailModalProps> = ({
   }, [isVisible, defaultValue]);
 
   const handleUpdate = async () => {
+        Vibration.vibrate([0, 35, 40, 35]); 
     if (email.trim().length > 0 && !isLoading) {
       setIsLoading(true);
       const success = await onConfirm(email.trim());
@@ -72,7 +74,10 @@ const EmailModal: React.FC<EmailModalProps> = ({
 
             <View style={styles(colors).buttonRow}>
               <TouchableOpacity
-                onPress={onClose}
+              onPress={() => {
+    Vibration.vibrate([0, 35, 40, 35]); 
+    onClose();                          
+  }}
                 activeOpacity={0.85}
                 style={styles(colors).cancelButton}
               >

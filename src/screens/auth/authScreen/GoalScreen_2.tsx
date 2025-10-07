@@ -194,7 +194,8 @@ import {
   ImageBackground,
   ScrollView,
   Alert, // --- ADDED ---
-  ActivityIndicator, // --- ADDED ---
+  ActivityIndicator,
+  Vibration, // --- ADDED ---
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useThemeStore } from '../../../store/useThemeStore';
@@ -244,6 +245,7 @@ const { t } = useTranslation();
 
 
   const handleNext = async () => {
+             Vibration.vibrate([0, 35, 40, 35]);
     if (selectedGoals.length === 0) {
   Alert.alert(
         t('alert_selection_required_title'),
@@ -307,7 +309,9 @@ const { t } = useTranslation();
                   key={goal.key}
                   activeOpacity={0.8}
                   // --- UPDATED: onPress handler for multiple selections ---
-                  onPress={() => handleSelectGoal(goal.key)}
+                  onPress={() => {
+                             Vibration.vibrate([0, 35, 40, 35]);
+                    handleSelectGoal(goal.key)}}
                   style={[
                     styles.goalBox,
                     {

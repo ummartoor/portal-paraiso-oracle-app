@@ -11,7 +11,8 @@ import {
   KeyboardAvoidingView,
   Platform,
   Dimensions,
-  ActivityIndicator, // --- ADDED ---
+  ActivityIndicator,
+  Vibration, // --- ADDED ---
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useThemeStore } from '../../../store/useThemeStore';
@@ -122,7 +123,9 @@ email: Yup.string().email(t('validation_email_invalid')).required(t('validation_
                  
                   <TouchableOpacity
                     activeOpacity={0.8}
-                    onPress={() => handleSubmit()}
+                    onPress={() => {
+                               Vibration.vibrate([0, 35, 40, 35]);
+                      handleSubmit()}}
                     style={{ width: '100%' }}
                     disabled={isSubmitting} // Disable button while loading
                   >
@@ -146,7 +149,9 @@ email: Yup.string().email(t('validation_email_invalid')).required(t('validation_
 
             <View style={styles.footer}>
               <Text style={styles.footerText}>{t('back_to_footer')}</Text>
-              <TouchableOpacity onPress={() => navigation.navigate('Login')}>
+              <TouchableOpacity onPress={() =>  {
+                         Vibration.vibrate([0, 35, 40, 35]);
+                navigation.navigate('Login')}}>
                 <Text style={[styles.signupLink, { color: colors.primary }]}>
                   {' '}
                     {t('signin_footer_link')}

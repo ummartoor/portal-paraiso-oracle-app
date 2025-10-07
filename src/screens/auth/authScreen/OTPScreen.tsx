@@ -15,7 +15,8 @@ import {
   ActivityIndicator, 
   Alert,
   NativeSyntheticEvent,
-  TextInputKeyPressEventData, 
+  TextInputKeyPressEventData,
+  Vibration, 
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native'; 
@@ -86,6 +87,7 @@ const OTPScreen = () => {
 
   // --- UPDATED: Handle OTP verification ---
   const handleContinue = async () => {
+             Vibration.vibrate([0, 35, 40, 35]);
     const otpString = otp.join('');
     if (otpString.length !== 6) {
       Alert.alert(t('alert_error_title'), t('alert_otp_incomplete_message'));
@@ -96,6 +98,7 @@ const OTPScreen = () => {
     const success = await verifyOtp(email, otpString);
     if (success) {
       // Pass email to the next screen
+               Vibration.vibrate([0, 35, 40, 35]);
       navigation.navigate('ConfirmPassword', { email });
     }
     setIsVerifying(false);
@@ -215,7 +218,9 @@ const handleResend = async () => {
 
             <View style={styles.footer}>
               <Text style={styles.footerText}>{t('back_to_footer')}</Text>
-              <TouchableOpacity onPress={() => navigation.navigate('Login')}>
+              <TouchableOpacity onPress={() =>  {
+                         Vibration.vibrate([0, 35, 40, 35]);
+                navigation.navigate('Login')}}>
                 <Text style={[styles.signupLink, { color: colors.primary }]}>
                   {' '}
                 {t('signin_footer_link')}

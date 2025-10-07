@@ -13,7 +13,8 @@ import {
   KeyboardAvoidingView,
   Platform,
   Dimensions,
-  ActivityIndicator, 
+  ActivityIndicator,
+  Vibration, 
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useThemeStore } from '../../../store/useThemeStore';
@@ -200,7 +201,11 @@ const validationSchema = Yup.object().shape({
                   )}
                   <TouchableOpacity
                     style={styles.forgotContainer}
-                    onPress={() => navigation.navigate('ForgotPasswordScreen')}
+                    onPress={() =>
+                      
+                    {  
+                               Vibration.vibrate([0, 35, 40, 35]);
+                      navigation.navigate('ForgotPasswordScreen')}}
                   >
                     <Text style={styles.forgotText}>{t('forgot_password_link')}</Text>
                   </TouchableOpacity>
@@ -208,7 +213,9 @@ const validationSchema = Yup.object().shape({
                   {/* --- CHANGE 2: Updated Button --- */}
                   <TouchableOpacity
                     activeOpacity={0.8}
-                    onPress={() => handleSubmit()}
+                    onPress={() => {
+                               Vibration.vibrate([0, 35, 40, 35]);
+                      handleSubmit()}}
                     disabled={isSubmitting} // Disable button when submitting
                     style={{ width: '100%' }}
                   >
@@ -233,7 +240,9 @@ const validationSchema = Yup.object().shape({
             <View style={styles.footer}>
               <Text style={styles.footerText}>{t('dont_have_account')}</Text>
               <TouchableOpacity
-                onPress={() => navigation.navigate('SignUp')}
+                onPress={() => {
+                           Vibration.vibrate([0, 35, 40, 35]);
+                  navigation.navigate('SignUp')}}
               >
                 <Text style={[styles.signupLink, { color: colors.primary }]}>
                   {' '}

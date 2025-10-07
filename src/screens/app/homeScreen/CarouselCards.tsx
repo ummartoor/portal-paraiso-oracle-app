@@ -74,7 +74,7 @@ const CarouselCard: React.FC<Props> = ({ data, onPressCard }) => {
   const cardData = data || DEFAULT_CARDS;
 
   const handlePress = (item: CardItem) => {
-    Vibration.vibrate(50); // Lighter vibration
+      Vibration.vibrate([0, 35, 40, 35]); 
 
     if (onPressCard) {
       onPressCard(item);

@@ -10,6 +10,7 @@ import {
   ImageBackground,
   Alert,
   ActivityIndicator,
+  Vibration,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useThemeStore } from '../../../store/useThemeStore';
@@ -38,6 +39,7 @@ const GenderScreen_1 = () => {
   const { updateUserDetails } = useRegisterStore();
 
   const handleNext = async () => {
+             Vibration.vibrate([0, 35, 40, 35]);
     if (!selectedGender) {
       Alert.alert('Selection Required', 'Please select your gender to continue.');
       return;
@@ -114,7 +116,10 @@ const GenderScreen_1 = () => {
                 <View key={item.key} style={{ flex: 1, alignItems: 'center' }}>
                   <TouchableOpacity
                     activeOpacity={0.8}
-                    onPress={() => setSelectedGender(item.key)}
+                    onPress={() => {
+                               Vibration.vibrate([0, 35, 40, 35]);
+                      setSelectedGender(item.key)}
+                    }
                   >
                     <GradientBox
                       colors={[colors.black, colors.bgBox]}

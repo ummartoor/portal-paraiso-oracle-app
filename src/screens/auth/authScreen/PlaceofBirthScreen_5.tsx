@@ -11,7 +11,8 @@ import {
   ImageBackground,
   TextInput,
   Alert, // --- ADDED ---
-  ActivityIndicator, // --- ADDED ---
+  ActivityIndicator,
+  Vibration, // --- ADDED ---
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useThemeStore } from '../../../store/useThemeStore';
@@ -37,6 +38,7 @@ const PlaceofBirthScreen_5 = () => {
 
   // --- ADDED: Handle 'Next' button press and API call ---
   const handleNext = async () => {
+     Vibration.vibrate([0, 35, 40, 35]);
     if (!place.trim()) {
     Alert.alert(
         t('alert_input_required_title'),

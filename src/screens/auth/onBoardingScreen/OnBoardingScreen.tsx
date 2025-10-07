@@ -12,6 +12,7 @@ import {
   NativeScrollEvent,
   Image,
   Vibration,
+  Platform,
 } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import Video from "react-native-video";
@@ -33,6 +34,14 @@ const LANGUAGES = [
   { key: 'pt', name: 'Portuguese' },
 ];
 
+
+function triggerHaptic() {
+  if (Platform.OS === 'android') {
+    Vibration.vibrate([0, 35, 40, 35]);
+  } else {
+    Vibration.vibrate();
+  }
+}
 const OnBoardingScreen: React.FC = () => {
   const { colors } = useThemeStore((state) => state.theme);
   const navigation = useNavigation<NativeStackNavigationProp<AuthStackParamsList>>();
@@ -68,6 +77,7 @@ const OnBoardingScreen: React.FC = () => {
 
   const handleSelectLanguage = (language: typeof LANGUAGES[0]) => {
     setSelectedLanguage(language);
+         Vibration.vibrate([0, 35, 40, 35]);
     setIsDropdownOpen(false);
     // Change app language
     i18n.changeLanguage(language.key).catch((err) => {
@@ -183,7 +193,8 @@ const OnBoardingScreen: React.FC = () => {
           <View style={styles.footer}>
             <TouchableOpacity
               onPress={() => {
-                Vibration.vibrate(50);
+            //  triggerHaptic();
+              Vibration.vibrate([0, 35, 40, 35]);
                 navigation.navigate("WelcomeScreen");
               }}
               activeOpacity={0.8}

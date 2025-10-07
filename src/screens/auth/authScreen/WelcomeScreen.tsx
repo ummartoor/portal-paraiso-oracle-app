@@ -6,6 +6,7 @@ import {
   StyleSheet,
   StatusBar,
   ImageBackground,
+  Vibration,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -21,7 +22,7 @@ const WelcomeScreen: React.FC = () => {
   const { colors } = theme;
   const navigation =
     useNavigation<NativeStackNavigationProp<AuthStackParamsList>>();
- const { t } = useTranslation();
+  const { t } = useTranslation();
   return (
     <ImageBackground
       source={require('../../../assets/images/welcomeImage.png')}
@@ -41,32 +42,38 @@ const WelcomeScreen: React.FC = () => {
             {t('welcome_title')}
           </Text>
           <Text style={[styles.subtitle, { color: colors.primary }]}>
-         {t('welcome_subtitle')}
+            {t('welcome_subtitle')}
           </Text>
         </View>
 
         {/* Bottom Buttons */}
         <View style={styles.buttonWrapper}>
           {/* 🔹 Sign up with Gradient */}
-    
-<TouchableOpacity
-  onPress={() => navigation.navigate('SignUp')}
-  activeOpacity={0.8}
->
-  <GradientBox
-    colors={[colors.black, colors.bgBox]}
-    style={[styles.button, { borderColor: colors.primary }]} 
-  >
-    <Text style={[styles.buttonText, { color: colors.white }]}>
-  {t('signup_button')}
-    </Text>
-  </GradientBox>
-</TouchableOpacity>
 
+          <TouchableOpacity
+            onPress={() => 
+            {  
+             Vibration.vibrate([0, 35, 40, 35]);
+              navigation.navigate('SignUp')}
+            }
+            activeOpacity={0.8}
+          >
+            <GradientBox
+              colors={[colors.black, colors.bgBox]}
+              style={[styles.button, { borderColor: colors.primary }]}
+            >
+              <Text style={[styles.buttonText, { color: colors.white }]}>
+                {t('signup_button')}
+              </Text>
+            </GradientBox>
+          </TouchableOpacity>
 
           {/* 🔹 Login */}
           <TouchableOpacity
-            onPress={() => navigation.navigate('Login')}
+            onPress={() => {
+              Vibration.vibrate([0, 35, 40, 35]);
+              navigation.navigate('Login');
+            }}
             activeOpacity={0.8}
             style={[
               styles.button,
@@ -74,7 +81,7 @@ const WelcomeScreen: React.FC = () => {
             ]}
           >
             <Text style={[styles.buttonText, { color: colors.white }]}>
-        {t('login_button')}
+              {t('login_button')}
             </Text>
           </TouchableOpacity>
         </View>
@@ -129,6 +136,6 @@ const styles = StyleSheet.create({
   buttonText: {
     fontSize: 16,
     fontWeight: '600',
-  fontFamily:Fonts.aeonikRegular
-  }
+    fontFamily: Fonts.aeonikRegular,
+  },
 });

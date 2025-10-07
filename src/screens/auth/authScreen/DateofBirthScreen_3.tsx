@@ -9,6 +9,7 @@ import {
   Dimensions,
   ImageBackground,
   ActivityIndicator,
+  Vibration,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useThemeStore } from '../../../store/useThemeStore';
@@ -57,10 +58,10 @@ const DateofBirthScreen_3 = () => {
   const { updateUserDetails, isUpdating } = useRegisterStore();
 
   const handleNext = async () => {
-  
+      
     const formattedDate = date.toISOString().split('T')[0];
     
-  
+          Vibration.vibrate([0, 35, 40, 35]);
     const zodiacSignKey = getZodiacSign(date);
 
 
@@ -73,10 +74,16 @@ const DateofBirthScreen_3 = () => {
     
    
     if (success) {
+             
       navigation.navigate('TimeofBirth'); 
     }
   };
+const handleDateChange = (newDate: Date) => {
 
+    Vibration.vibrate([0, 35, 40, 35]);
+
+    setDate(newDate);
+  };
   return (
     <ImageBackground
       source={require('../../../assets/images/bglinearImage.png')}
@@ -117,7 +124,7 @@ const DateofBirthScreen_3 = () => {
             <DatePicker
               date={date}
               mode="date"
-              onDateChange={setDate}
+            onDateChange={handleDateChange}
               theme="dark"
               style={styles.datePicker}
             />

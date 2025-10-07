@@ -7,6 +7,7 @@ import {
   StyleSheet,
   TextInput,
   ActivityIndicator,
+  Vibration,
 } from 'react-native';
 import { useThemeStore } from '../../../../../store/useThemeStore';
 import { Fonts } from '../../../../../constants/fonts';
@@ -37,6 +38,7 @@ const NameModal: React.FC<NameModalProps> = ({
   }, [isVisible, defaultValue]);
 
   const handleUpdate = async () => {
+        Vibration.vibrate([0, 35, 40, 35]);
     if (name.trim().length > 0 && !isLoading) {
       setIsLoading(true);
       const success = await onConfirm(name.trim());
@@ -70,7 +72,10 @@ const NameModal: React.FC<NameModalProps> = ({
 
             <View style={styles(colors).buttonRow}>
               <TouchableOpacity
-                onPress={onClose}
+              onPress={() => {
+    Vibration.vibrate([0, 35, 40, 35]);
+    onClose();                       
+  }}
                 activeOpacity={0.85}
                 style={styles(colors).cancelButton}
               >

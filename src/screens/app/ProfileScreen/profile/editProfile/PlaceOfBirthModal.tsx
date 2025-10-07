@@ -7,6 +7,7 @@ import {
   StyleSheet,
   TextInput,
   ActivityIndicator,
+  Vibration,
 } from 'react-native';
 import { useThemeStore } from '../../../../../store/useThemeStore';
 import { Fonts } from '../../../../../constants/fonts';
@@ -36,6 +37,7 @@ useEffect(() => {
   }, [isVisible, defaultValue]);
 
   const handleUpdate = async () => {
+      Vibration.vibrate([0, 35, 40, 35]); 
     if (place.trim().length > 0 && !isLoading) {
       setIsLoading(true);
       await onConfirm(place.trim());
@@ -70,7 +72,10 @@ useEffect(() => {
             <View style={styles(colors).buttonRow}>
               {/* Cancel */}
               <TouchableOpacity
-                onPress={onClose}
+               onPress={() => {
+                              Vibration.vibrate([0, 35, 40, 35]); 
+                              onClose();                          
+                            }}
                 activeOpacity={0.85}
                 style={styles(colors).cancelButton}
               >

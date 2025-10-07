@@ -9,6 +9,7 @@ import {
   Dimensions,
   ImageBackground,
   ScrollView,
+  Vibration,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Fonts } from '../../../constants/fonts';
@@ -174,14 +175,19 @@ const HomeScreen: React.FC = () => {
             <CardBox
               label={t('home_daily_wisdom_card')}
               icon={require('../../../assets/icons/dailyWisdomIcon.png')}
-              onPress={() => navigation.navigate('DailyWisdomCardScreen')}
+              onPress={() => {
+                      Vibration.vibrate([0, 35, 40, 35]); 
+                navigation.navigate('DailyWisdomCardScreen')}
+              }
             />
 
             {/* Second Box */}
             <CardBox
               label={t('home_ritual_tip')}
               icon={require('../../../assets/icons/RitualTipIcon.png')}
-              onPress={() => navigation.navigate('RitualTipScreen')}
+              onPress={() => {
+                      Vibration.vibrate([0, 35, 40, 35]); 
+                navigation.navigate('RitualTipScreen')}}
             />
           </View>
         </ScrollView>

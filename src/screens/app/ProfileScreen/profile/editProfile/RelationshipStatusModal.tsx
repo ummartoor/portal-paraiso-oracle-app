@@ -7,7 +7,8 @@ import {
   StyleSheet,
   Image,
   FlatList,
-  ActivityIndicator, // --- ADDED ---
+  ActivityIndicator,
+  Vibration, // --- ADDED ---
 } from "react-native";
 import { useThemeStore } from "../../../../../store/useThemeStore";
 import { Fonts } from "../../../../../constants/fonts";
@@ -49,6 +50,7 @@ const RelationshipStatusModal: React.FC<RelationshipStatusModalProps> = ({
   }, [isVisible, defaultValue]);
 
   const handleSave = async () => {
+       Vibration.vibrate([0, 35, 40, 35]); 
     if (selected && !isLoading) {
       setIsLoading(true);
       await onConfirm(selected);
@@ -80,7 +82,9 @@ const RelationshipStatusModal: React.FC<RelationshipStatusModalProps> = ({
                         borderWidth: 1.5,
                       },
                     ]}
-                    onPress={() => setSelected(item.key)}
+                    onPress={() =>{ 
+                         Vibration.vibrate([0, 35, 40, 35]); 
+                      setSelected(item.key)}}
                     activeOpacity={0.8}
                   >
                     <View style={styles(colors).iconWrapper}>
@@ -109,7 +113,10 @@ const RelationshipStatusModal: React.FC<RelationshipStatusModalProps> = ({
 
             <View style={styles(colors).buttonRow}>
               <TouchableOpacity
-                onPress={onClose}
+               onPress={() => {
+                              Vibration.vibrate([0, 35, 40, 35]); 
+                              onClose();                          
+                            }}
                 activeOpacity={0.85}
                 style={styles(colors).cancelButton}
               >
