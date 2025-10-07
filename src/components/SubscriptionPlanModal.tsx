@@ -7,10 +7,12 @@ import {
   StyleSheet,
   Dimensions,
   ImageBackground,
+  Image, // --- ADDED ---
 } from 'react-native';
 import { useThemeStore } from '../store/useThemeStore';
 import { Fonts } from '../constants/fonts';
 import GradientBox from './GradientBox';
+import { useTranslation } from 'react-i18next';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('screen');
 
@@ -22,129 +24,17 @@ interface SubscriptionPlanModalProps {
   onConfirm: (plan: PlanKey) => void;
 }
 
-const SubscriptionPlanModal: React.FC<SubscriptionPlanModalProps> = ({
-  isVisible,
-  onClose,
-  onConfirm,
-}) => {
-  const colors = useThemeStore((s) => s.theme.colors);
-  const [selected, setSelected] = useState<PlanKey>('yearly');
-
-  const plans: Record<
-    PlanKey,
-    { title: string; sub: string; strike?: string; perWeek: string; badge?: string }
-  > = {
-    yearly: {
-      title: 'Yearly',
-      sub: '12 mo',
-      strike: '$39.99',
-      perWeek: '$3.34',
-      badge: 'Save 55%',
-    },
-    monthly: { title: 'Monthly', sub: '1 mo', strike: '$3.99', perWeek: '$1.34' },
-    weekly: { title: 'Weekly', sub: '4 week', strike: '$1.99', perWeek: '$1.34' },
-  };
-
-  const Card = ({ k, withShadow }: { k: PlanKey; withShadow?: boolean }) => {
-    const p = plans[k];
-    const isActive = selected === k;
-
-    return (
-      <TouchableOpacity
-        activeOpacity={0.9}
-        onPress={() => setSelected(k)}
-        style={[
-          styles.card,
-          withShadow && styles.shadowCard,
-          isActive && { backgroundColor: colors.white, borderColor: colors.primary, borderWidth: 2 },
-        ]}
-      >
-        {isActive ? (
-          // ✅ Selected: White bg, border primary 2
-          <View style={[styles.gradientCard]}>
-            <CardContent p={p} isActive={isActive} colors={colors} />
-          </View>
-        ) : (
-          // ✅ Default: Gradient bg, no border
-          <GradientBox colors={[colors.bgBox, colors.black]} style={styles.gradientCard}>
-            <CardContent p={p} isActive={isActive} colors={colors} />
-          </GradientBox>
-        )}
-      </TouchableOpacity>
-    );
-  };
-
-  return (
-    <Modal visible={isVisible} animationType="slide" transparent>
-      <View style={[StyleSheet.absoluteFill, styles.overlayBackground]}>
-        <View style={styles.overlay}>
-          <View style={[styles.modal, { backgroundColor: colors.bgBox }]}>
-            {/* Heading */}
-            <Text style={[styles.heading, { color: colors.primary }]}>
-              Subscription Plan
-            </Text>
-
-            {/* Hero Section */}
-            <ImageBackground
-              source={require('../assets/images/heroImage.png')}
-              style={[styles.hero, { width: SCREEN_WIDTH - 40 }]}
-              resizeMode="cover"
-            >
-              <View style={styles.heroOverlay}>
-                <Text style={[styles.heroTitle, { color: colors.white }]}>
-                  Unlock Your Cosmic Potential
-                </Text>
-              </View>
-            </ImageBackground>
-
-            {/* Subscription cards */}
-            <View style={styles.cardsWrap}>
-              <Card k="yearly" withShadow />
-              <Card k="monthly" />
-              <Card k="weekly" />
-            </View>
-
-            {/* Buttons */}
-            <View style={styles.buttonRow}>
-              <TouchableOpacity
-                onPress={onClose}
-                activeOpacity={0.85}
-                style={[styles.cancelButton, { backgroundColor: colors.white }]}
-              >
-                <Text style={[styles.cancelText, { color: colors.black }]}>
-                  Cancel
-                </Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                activeOpacity={0.9}
-                style={[styles.gradientTouchable, { borderColor: colors.primary, borderWidth: 1.6 }]}
-                onPress={() => onConfirm(selected)}
-              >
-                <GradientBox
-                  colors={[colors.black, colors.bgBox]}
-                  style={styles.gradientFill}
-                >
-                  <Text style={styles.startText}>Start Now</Text>
-                </GradientBox>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </View>
-    </Modal>
-  );
-};
-
-/* ----------------- Extracted Card Content ----------------- */
+// --- CardContent Component ko bahar nikala gaya hai taake code saaf rahe ---
 const CardContent = ({
   p,
   isActive,
   colors,
+  t, // t function ko as a prop pass kiya gaya hai
 }: {
   p: { title: string; sub: string; strike?: string; perWeek: string; badge?: string };
   isActive: boolean;
   colors: any;
+  t: (key: string) => string;
 }) => (
   <>
     {/* Left title area */}
@@ -210,11 +100,125 @@ const CardContent = ({
           { color: isActive ? colors.black : colors.white, opacity: 0.7 },
         ]}
       >
-        per week
+        {t('subscription_per_week')}
       </Text>
     </View>
   </>
 );
+
+const SubscriptionPlanModal: React.FC<SubscriptionPlanModalProps> = ({
+  isVisible,
+  onClose,
+  onConfirm,
+}) => {
+  const colors = useThemeStore((s) => s.theme.colors);
+  const [selected, setSelected] = useState<PlanKey>('yearly');
+  const { t } = useTranslation();
+
+  // --- CHANGED: `plans` object ab component ke andar hai taake `t` function use kar sakay ---
+  const plans: Record<
+    PlanKey,
+    { title: string; sub: string; strike?: string; perWeek: string; badge?: string }
+  > = {
+    yearly: {
+      title: t('subscription_yearly'),
+      sub: t('subscription_12_mo'),
+      strike: '$39.99',
+      perWeek: '$3.34',
+      badge: t('subscription_save_55'),
+    },
+    monthly: { title: t('subscription_monthly'), sub: t('subscription_1_mo'), strike: '$3.99', perWeek: '$1.34' },
+    weekly: { title: t('subscription_weekly'), sub: t('subscription_4_week'), strike: '$1.99', perWeek: '$1.34' },
+  };
+
+  const Card = ({ k, withShadow }: { k: PlanKey; withShadow?: boolean }) => {
+    const p = plans[k];
+    const isActive = selected === k;
+
+    return (
+      <TouchableOpacity
+        activeOpacity={0.9}
+        onPress={() => setSelected(k)}
+        style={[
+          styles.card,
+          withShadow && styles.shadowCard,
+          isActive && { backgroundColor: colors.white, borderColor: colors.primary, borderWidth: 2 },
+        ]}
+      >
+        {isActive ? (
+          <View style={[styles.gradientCard]}>
+            <CardContent p={p} isActive={isActive} colors={colors} t={t as any} />
+          </View>
+        ) : (
+          <GradientBox colors={[colors.bgBox, colors.black]} style={styles.gradientCard}>
+            <CardContent p={p} isActive={isActive} colors={colors} t={t as any} />
+          </GradientBox>
+        )}
+      </TouchableOpacity>
+    );
+  };
+
+  return (
+    <Modal visible={isVisible} animationType="slide" transparent>
+      <View style={[StyleSheet.absoluteFill, styles.overlayBackground]}>
+        <View style={styles.overlay}>
+          <View style={[styles.modal, { backgroundColor: colors.bgBox }]}>
+            {/* --- CHANGED: Heading translated --- */}
+            <Text style={[styles.heading, { color: colors.primary }]}>
+              {t('subscription_plan_title')}
+            </Text>
+
+            <ImageBackground
+              source={require('../assets/images/heroImage.png')}
+              style={[styles.hero, { width: SCREEN_WIDTH - 40 }]}
+              resizeMode="cover"
+            >
+              <View style={styles.heroOverlay}>
+                {/* --- CHANGED: Hero title translated --- */}
+                <Text style={[styles.heroTitle, { color: colors.white }]}>
+                  {t('subscription_unlock_title')}
+                </Text>
+              </View>
+            </ImageBackground>
+
+            <View style={styles.cardsWrap}>
+              <Card k="yearly" withShadow />
+              <Card k="monthly" />
+              <Card k="weekly" />
+            </View>
+
+            <View style={styles.buttonRow}>
+              <TouchableOpacity
+                onPress={onClose}
+                activeOpacity={0.85}
+                style={[styles.cancelButton, { backgroundColor: colors.white }]}
+              >
+                <Text style={[styles.cancelText, { color: colors.black }]}>
+                  {/* --- CHANGED: Cancel button translated --- */}
+                  {t('cancel_button')}
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                activeOpacity={0.9}
+                style={[styles.gradientTouchable, { borderColor: colors.primary, borderWidth: 1.6 }]}
+                onPress={() => onConfirm(selected)}
+              >
+                <GradientBox
+                  colors={[colors.black, colors.bgBox]}
+                  style={styles.gradientFill}
+                >
+                  {/* --- CHANGED: Start Now button translated --- */}
+                  <Text style={styles.startText}>{t('subscription_start_now')}</Text>
+                </GradientBox>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </View>
+    </Modal>
+  );
+};
 
 export default SubscriptionPlanModal;
 

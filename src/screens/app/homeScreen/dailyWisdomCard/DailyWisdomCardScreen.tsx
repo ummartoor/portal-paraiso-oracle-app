@@ -10,6 +10,7 @@ import {
   Image,
   ScrollView,
   ActivityIndicator,
+  Vibration,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -78,6 +79,7 @@ const DailyWisdomCardScreen: React.FC = () => {
   // --- Reveal Card Handler (Calls mark-used API) ---
   const handleRevealCard = () => {
     // Only mark as used if the card exists and is not already used
+           Vibration.vibrate([0, 35, 40, 35]); 
     if (wisdomCard && !wisdomCard.is_used) {
       markCardAsUsed();
     }
@@ -315,7 +317,7 @@ const styles = StyleSheet.create({
   },
   cardFrame: {},
   playButton: { marginTop: 20 },
-  playIcon: { width: 44, height: 44 },
+  playIcon: { width: 35, height: 35 },
   description: {
     fontFamily: Fonts.aeonikRegular,
     fontSize: 16,

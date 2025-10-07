@@ -13,6 +13,7 @@ import {
   ImageSourcePropType,
   ActivityIndicator,
   Alert,
+  Vibration,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
@@ -31,7 +32,7 @@ import { useThemeStore } from '../../../../../store/useThemeStore';
 import { AppStackParamList } from '../../../../../navigation/routeTypes';
 import SubscriptionPlanModal from '../../../../../components/SubscriptionPlanModal';
 import { useBuziosStore } from '../../../../../store/useBuziousStore';
-
+import { useTranslation } from 'react-i18next';
 // 🔊 TTS
 import Tts from 'react-native-tts';
 
@@ -119,7 +120,7 @@ const CaurisCardDetailScreen: React.FC = () => {
     useNavigation<NativeStackNavigationProp<AppStackParamList>>();
   const route = useRoute<RouteProp<AppStackParamList, 'CaurisCardDetail'>>();
   const { userQuestion } = route.params;
-
+  const { t } = useTranslation(); 
   // --- Zustand Store Integration ---
   const {
     reading,
@@ -234,6 +235,7 @@ const CaurisCardDetailScreen: React.FC = () => {
   const oSV = shellConfigs.map(() => useSharedValue(0));
 
   const onActionPress = async () => {
+           Vibration.vibrate([0, 35, 40, 35]); 
     if (phase === 0) {
       setPhase(1); // Show "Casting the Shells"
       // Start API call in the background while animation runs
@@ -280,6 +282,7 @@ const CaurisCardDetailScreen: React.FC = () => {
   }, [isLoadingReading, reading, phase]);
 
   const handleSave = () => {
+           Vibration.vibrate([0, 35, 40, 35]); 
     if (reading && !isSaving) {
       saveBuziosReading(reading).then(success => {
         if (success) {
@@ -290,33 +293,26 @@ const CaurisCardDetailScreen: React.FC = () => {
     }
   };
 
-  const titleTop =
-    phase === 0
-      ? 'Cowrie Shells Divination'
-      : phase === 1
-      ? 'Casting the Shells'
-      : phase === 2
-      ? 'Your divine pattern is'
-      : 'Your Divine Message';
+  const titleTop = t(
+    phase === 0 ? 'cauris_phase0_title' :
+    phase === 1 ? 'cauris_phase1_title' :
+    phase === 2 ? 'cauris_phase2_title' :
+    'cauris_phase3_title'
+  );
+  
+  const subtitle = phase < 2 ? t(
+    phase === 0 ? 'cauris_phase0_subtitle' :
+    'cauris_phase1_subtitle'
+  ) : undefined;
 
-  const subtitle =
-    phase === 0
-      ? 'Unveil sacred wisdom through ancient African spiritual practice.'
-      : phase === 1
-      ? 'The spirits are being summoned…'
-      : undefined;
-
-  const actionLabel =
-    phase === 0
-      ? 'Throw the Shells'
-      : phase === 1
-      ? 'Continue' // Will be disabled while loading
-      : phase === 2
-      ? 'Reveal My Reading'
-      : 'Get Premium For Full Reading';
+  const actionLabel = 
+    phase === 0 ? t('cauris_phase0_button') :
+    phase === 1 ? t('continue_button') :
+    phase === 2 ? t('cauris_phase2_button') :
+    t('get_premium_button'); // Reusing this key
 
   const showShells = phase >= 1;
-  const divineMessage = reading?.ai_reading ?? 'Your divine message awaits...';
+const divineMessage = reading?.ai_reading ?? t('cauris_default_message');
 
   type TtsSub = { remove?: () => void; removeListener?: () => void };
 
@@ -364,7 +360,7 @@ const CaurisCardDetailScreen: React.FC = () => {
   };
 
   if (readingError) {
-    Alert.alert('API Error', readingError, [
+    Alert.alert(t('alert_error_title'), readingError, [
       { text: 'OK', onPress: () => navigation.goBack() },
     ]);
   }
@@ -394,12 +390,12 @@ const CaurisCardDetailScreen: React.FC = () => {
             />
           </TouchableOpacity>
           <View style={styles.headerTitleWrap} pointerEvents="none">
-            <Text
+             <Text
               numberOfLines={1}
               ellipsizeMode="tail"
               style={[styles.headerTitle, { color: colors.white }]}
             >
-              Cauris
+              {t('cauris_header')}
             </Text>
           </View>
         </View>
@@ -514,7 +510,7 @@ const CaurisCardDetailScreen: React.FC = () => {
                     resizeMode="contain"
                   />
                   <Text style={[styles.smallBtnText, { color: colors.white }]}>
-                    Share
+           {t('share_button')}
                   </Text>
                 </GradientBox>
 
@@ -535,7 +531,7 @@ const CaurisCardDetailScreen: React.FC = () => {
                         <Text
                           style={[styles.smallBtnText, { color: colors.white }]}
                         >
-                          Save
+                   {t('save_button')}
                         </Text>
                       </>
                     )}
@@ -557,7 +553,7 @@ const CaurisCardDetailScreen: React.FC = () => {
                 style={[styles.actionButton, { borderColor: colors.primary }]}
               >
                 {phase === 1 && isLoadingReading ? (
-                  <ActivityIndicator color={colors.white} />
+                  <ActivityIndicator color={colors.primary} />
                 ) : (
                   <Text style={[styles.actionLabel, { color: colors.white }]}>
                     {actionLabel}

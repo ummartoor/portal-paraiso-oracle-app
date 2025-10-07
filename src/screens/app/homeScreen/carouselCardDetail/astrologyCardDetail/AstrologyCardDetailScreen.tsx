@@ -12,6 +12,7 @@ import {
   ScrollView,
   ImageSourcePropType,
   ActivityIndicator,
+  Vibration,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
@@ -23,7 +24,7 @@ import { Fonts } from '../../../../../constants/fonts';
 import { useThemeStore } from '../../../../../store/useThemeStore';
 import { AppStackParamList } from '../../../../../navigation/routeTypes';
 import InsightTabs from './InsightTabs';
-
+import { useTranslation } from 'react-i18next';
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 const DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -44,70 +45,9 @@ type ZodiacKey =
 
 type Zodiac = { key: ZodiacKey; name: string; icon: ImageSourcePropType };
 
-const ZODIACS: Zodiac[] = [
-  {
-    key: 'aries',
-    name: 'Aries',
-    icon: require('../../../../../assets/icons/AriesIcon.png'),
-  },
-  {
-    key: 'taurus',
-    name: 'Taurus',
-    icon: require('../../../../../assets/icons/TaurusIcon.png'),
-  },
-  {
-    key: 'gemini',
-    name: 'Gemini',
-    icon: require('../../../../../assets/icons/GeminiIcon.png'),
-  },
-  {
-    key: 'cancer',
-    name: 'Cancer',
-    icon: require('../../../../../assets/icons/CancerIcon.png'),
-  },
-  {
-    key: 'leo',
-    name: 'Leo',
-    icon: require('../../../../../assets/icons/leoIcon.png'),
-  },
-  {
-    key: 'virgo',
-    name: 'Virgo',
-    icon: require('../../../../../assets/icons/VirgoIcon.png'),
-  },
-  {
-    key: 'libra',
-    name: 'Libra',
-    icon: require('../../../../../assets/icons/libraIcon.png'),
-  },
-  {
-    key: 'scorpio',
-    name: 'Scorpio',
-    icon: require('../../../../../assets/icons/ScorpioIcon.png'),
-  },
-  {
-    key: 'sagittarius',
-    name: 'Sagittarius',
-    icon: require('../../../../../assets/icons/SagittariusIcon.png'),
-  },
-  {
-    key: 'capricorn',
-    name: 'Capricorn',
-    icon: require('../../../../../assets/icons/CapricornIcon.png'),
-  },
-  {
-    key: 'aquarius',
-    name: 'Aquarius',
-    icon: require('../../../../../assets/icons/AquariusIcon.png'),
-  },
-  {
-    key: 'pisces',
-    name: 'Pisces',
-    icon: require('../../../../../assets/icons/PiscesIcon.png'),
-  },
-];
 
-const wrapIndex = (i: number) => (i + ZODIACS.length) % ZODIACS.length;
+
+
 const ZODIAC_ICON_BOX = 160;
 const ZODIAC_ICON_INNER = 128;
 
@@ -118,11 +58,26 @@ const AstrologyCardDetailScreen: React.FC = () => {
 
   const route = useRoute<RouteProp<AppStackParamList, 'AstrologyCardDetail'>>();
   const { userQuestion } = route.params;
-
+  const { t } = useTranslation();
   const { user, fetchCurrentUser } = useAuthStore();
   const { horoscope, isLoading, createHoroscope, saveHoroscope, isSaving } =
     useAstrologyStore();
 
+      const ZODIACS: Zodiac[] = [
+    { key: "aries", name: t('zodiac_aries'), icon: require('../../../../../assets/icons/AriesIcon.png') },
+    { key: "taurus", name: t('zodiac_taurus'), icon: require('../../../../../assets/icons/TaurusIcon.png') },
+    { key: "gemini", name: t('zodiac_gemini'), icon: require('../../../../../assets/icons/GeminiIcon.png') },
+    { key: "cancer", name: t('zodiac_cancer'), icon: require('../../../../../assets/icons/CancerIcon.png') },
+    { key: "leo", name: t('zodiac_leo'), icon: require('../../../../../assets/icons/leoIcon.png') },
+    { key: "virgo", name: t('zodiac_virgo'), icon: require('../../../../../assets/icons/VirgoIcon.png') },
+    { key: "libra", name: t('zodiac_libra'), icon: require('../../../../../assets/icons/libraIcon.png') },
+    { key: "scorpio", name: t('zodiac_scorpio'), icon: require('../../../../../assets/icons/ScorpioIcon.png') },
+    { key: "sagittarius", name: t('zodiac_sagittarius'), icon: require('../../../../../assets/icons/SagittariusIcon.png') },
+    { key: "capricorn", name: t('zodiac_capricorn'), icon: require('../../../../../assets/icons/CapricornIcon.png') },
+    { key: "aquarius", name: t('zodiac_aquarius'), icon: require('../../../../../assets/icons/AquariusIcon.png') },
+    { key: "pisces", name: t('zodiac_pisces'), icon: require('../../../../../assets/icons/PiscesIcon.png') },
+  ];
+const wrapIndex = (i: number) => (i + ZODIACS.length) % ZODIACS.length;
   const days = useMemo(() => {
     const today = new Date();
     return Array.from({ length: 7 }).map((_, i) => {
@@ -172,7 +127,7 @@ const AstrologyCardDetailScreen: React.FC = () => {
   const goNext = () => setZIndex(i => wrapIndex(i + 1));
 
   const handleSave = async () => {
-
+       Vibration.vibrate([0, 35, 40, 35]); 
     if (!horoscope || isSaving || !userQuestion) return;
 
     const selectedSign = ZODIACS[zIndex]?.key;
@@ -212,12 +167,8 @@ const AstrologyCardDetailScreen: React.FC = () => {
             />
           </TouchableOpacity>
           <View style={styles.headerTitleWrap} pointerEvents="none">
-            <Text
-              numberOfLines={1}
-              ellipsizeMode="tail"
-              style={[styles.headerTitle, { color: colors.white }]}
-            >
-              Astrology
+           <Text numberOfLines={1} ellipsizeMode="tail" style={[styles.headerTitle, { color: colors.white }]}>
+              {t('astrology_screen_header')}
             </Text>
           </View>
         </View>
@@ -228,22 +179,11 @@ const AstrologyCardDetailScreen: React.FC = () => {
         >
           {/* Title */}
           <View style={styles.contentHeader}>
-            <Text
-              style={[
-                styles.contentTitle,
-                { color: colors.primary, textAlign: 'center' },
-              ]}
-            >
-              Unlock your celestial blueprint
+         <Text style={[styles.contentTitle, { color: colors.primary, textAlign: 'center' }]}>
+              {t('astrology_unlock_title')}
             </Text>
-            <Text
-              style={[
-                styles.contentSubtitle,
-                { color: colors.white, textAlign: 'center' },
-              ]}
-            >
-              Explore who you are, what’s ahead, and how the stars shape your
-              path.
+          <Text style={[styles.contentSubtitle, { color: colors.white, textAlign: 'center' }]}>
+              {t('astrology_explore_subtitle')}
             </Text>
           </View>
 
@@ -347,9 +287,7 @@ const AstrologyCardDetailScreen: React.FC = () => {
             <InsightTabs horoscopeData={horoscope} />
           ) : (
             <View style={styles.errorContainer}>
-              <Text style={styles.errorText}>
-                Horoscope not available for this day.
-              </Text>
+             <Text style={styles.errorText}>{t('astrology_horoscope_not_available')}</Text>
             </View>
           )}
 
@@ -369,9 +307,7 @@ const AstrologyCardDetailScreen: React.FC = () => {
                   style={[styles.actionIcon, { tintColor: colors.white }]}
                   resizeMode="contain"
                 />
-                <Text style={[styles.actionLabel, { color: colors.white }]}>
-                  Share
-                </Text>
+               <Text style={[styles.actionLabel, { color: colors.white }]}>{t('share_button')}</Text>
               </GradientBox>
             </TouchableOpacity>
             {/* <TouchableOpacity activeOpacity={0.7} style={styles.actionTouchable} onPress={() => {}}>
@@ -393,7 +329,7 @@ const AstrologyCardDetailScreen: React.FC = () => {
                 style={styles.actionButton}
               >
                 {isSaving ? (
-                  <ActivityIndicator color={colors.white} size="small" />
+                  <ActivityIndicator color={colors.primary} size="small" />
                 ) : (
                   <>
                     <Image
@@ -401,9 +337,7 @@ const AstrologyCardDetailScreen: React.FC = () => {
                       style={[styles.actionIcon, { tintColor: colors.white }]}
                       resizeMode="contain"
                     />
-                    <Text style={[styles.actionLabel, { color: colors.white }]}>
-                      Save
-                    </Text>
+                           <Text style={[styles.actionLabel, { color: colors.white }]}>{t('save_button')}</Text>
                   </>
                 )}
               </GradientBox>

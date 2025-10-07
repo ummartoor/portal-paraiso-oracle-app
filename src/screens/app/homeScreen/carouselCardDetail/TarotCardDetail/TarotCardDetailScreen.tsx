@@ -1,4 +1,3 @@
-
 import React, { useEffect, useMemo, useState, useRef } from 'react';
 import {
   View,
@@ -24,15 +23,12 @@ import Animated, {
   useAnimatedStyle,
   withTiming,
   runOnJS,
-    withDecay,
-
+  withDecay,
 } from 'react-native-reanimated';
 import {
   GestureHandlerRootView,
   Gesture,
   GestureDetector,
-  
-
 } from 'react-native-gesture-handler';
 import GradientBox from '../../../../../components/GradientBox';
 import { Fonts } from '../../../../../constants/fonts';
@@ -41,7 +37,7 @@ import { AppStackParamList } from '../../../../../navigation/routeTypes';
 import Tts from 'react-native-tts';
 import Video from 'react-native-video';
 import { useTarotCardStore } from '../../../../../store/useTarotCardStore';
-
+import { useTranslation } from 'react-i18next';
 const { height: SCREEN_HEIGHT, width: SCREEN_WIDTH } = Dimensions.get('window');
 
 type TarotCardFromAPI = {
@@ -93,6 +89,7 @@ const TarotCardDetailScreen: React.FC = () => {
     useNavigation<NativeStackNavigationProp<AppStackParamList>>();
   const route = useRoute<TarotCardDetailRouteProp>();
   const { userQuestion } = route.params;
+  const { t } = useTranslation();
   const {
     cards: apiCards,
     isLoading: isDeckLoading,
@@ -115,12 +112,12 @@ const TarotCardDetailScreen: React.FC = () => {
   const selectedCardsScrollViewRef = useRef<ScrollView>(null);
 
   const handleSaveReading = async () => {
-   
+           Vibration.vibrate([0, 35, 40, 35]); 
     if (isSavingLoading) return;
 
     await saveReading();
 
-    navigation.navigate('MainTabs')
+    navigation.navigate('MainTabs');
   };
   const availableDeck = useMemo(() => {
     const selectedIds = new Set(selectedCards.map(c => c._id));
@@ -193,10 +190,12 @@ const TarotCardDetailScreen: React.FC = () => {
     triggerHaptic();
   };
   const handleStartRevealFlow = () => {
+       
     setShowVideo(true);
   };
 
   const handleRevealMeaning = async () => {
+           Vibration.vibrate([0, 35, 40, 35]); 
     // FIX 4: Add a check for userQuestion before calling the API
     if (isReadingLoading || selectedCards.length === 0 || !userQuestion) return;
 
@@ -208,6 +207,7 @@ const TarotCardDetailScreen: React.FC = () => {
     if (result) {
       setShowRevealGrid(false);
       setShowReading(true);
+      
     }
   };
 
@@ -229,7 +229,7 @@ const TarotCardDetailScreen: React.FC = () => {
           ellipsizeMode="tail"
           style={[styles.headerTitle, { color: colors.white }]}
         >
-          Tarot Reader
+          {t('tarot_reader_header')}
         </Text>
       </View>
     </View>
@@ -264,6 +264,7 @@ const TarotCardDetailScreen: React.FC = () => {
               <View style={styles.footer}>
                 <TouchableOpacity
                   onPress={() => {
+                           Vibration.vibrate([0, 35, 40, 35]); 
                     setShowVideo(false);
                     setShowRevealGrid(true);
                   }}
@@ -274,7 +275,9 @@ const TarotCardDetailScreen: React.FC = () => {
                       colors={[colors.black, colors.bgBox]}
                       style={styles.revealBtnGrad}
                     >
-                      <Text style={styles.revealBtnText}>Continue</Text>
+                      <Text style={styles.revealBtnText}>
+                        {t('continue_button')}
+                      </Text>
                     </GradientBox>
                   </View>
                 </TouchableOpacity>
@@ -286,10 +289,10 @@ const TarotCardDetailScreen: React.FC = () => {
                 {renderHeader()}
                 <View style={styles.content}>
                   <Text style={[styles.focusTitle, { color: colors.primary }]}>
-                    Your Cards
+                    {t('tarot_your_cards_title')}
                   </Text>
                   <Text style={[styles.paragraph, { color: colors.white }]}>
-                    Discover the deeper meaning behind the cards.
+                    {t('tarot_your_cards_subtitle')}
                   </Text>
                 </View>
                 <View style={styles.revealGridContainer}>
@@ -344,7 +347,9 @@ const TarotCardDetailScreen: React.FC = () => {
                       {isReadingLoading ? (
                         <ActivityIndicator color="#fff" />
                       ) : (
-                        <Text style={styles.revealBtnText}>Reveal Meaning</Text>
+                        <Text style={styles.revealBtnText}>
+                          {t('tarot_reveal_meaning_button')}
+                        </Text>
                       )}
                                                
                     </GradientBox>
@@ -364,7 +369,7 @@ const TarotCardDetailScreen: React.FC = () => {
                     <Text
                       style={[styles.focusTitle, { color: colors.primary }]}
                     >
-                      Your Reading
+                      {t('tarot_your_reading_title')}
                     </Text>
                   </View>
                                    
@@ -445,7 +450,7 @@ const TarotCardDetailScreen: React.FC = () => {
                                 },
                               ]}
                             >
-                              Read More
+                              {t('read_more_button')}
                             </Text>
                           </TouchableOpacity>
                         </View>
@@ -478,7 +483,9 @@ const TarotCardDetailScreen: React.FC = () => {
                         style={styles.smallIcon}
                         resizeMode="contain"
                       />
-                      <Text style={styles.smallBtnText}>Share</Text>
+                      <Text style={styles.smallBtnText}>
+                        {t('share_button')}
+                      </Text>
                     </GradientBox>
 
                     {/* <GradientBox colors={[colors.black, colors.bgBox]} style={styles.smallBtn}>
@@ -502,7 +509,9 @@ const TarotCardDetailScreen: React.FC = () => {
                               style={styles.smallIcon}
                               resizeMode="contain"
                             />
-                            <Text style={styles.smallBtnText}>Save</Text>
+                            <Text style={styles.smallBtnText}>
+                              {t('save_button')}
+                            </Text>
                           </>
                         )}
                       </GradientBox>
@@ -519,7 +528,7 @@ const TarotCardDetailScreen: React.FC = () => {
                         style={[styles.revealBtnGrad, { borderRadius: 60 }]}
                       >
                         <Text style={styles.revealBtnText}>
-                          Get Premium For Full Reading
+                          {t('get_premium_button')}
                         </Text>
                       </GradientBox>
                     </View>
@@ -537,11 +546,11 @@ const TarotCardDetailScreen: React.FC = () => {
                 <View style={styles.content}>
                                          
                   <Text style={[styles.focusTitle, { color: colors.primary }]}>
-                    Focus on Your Question
+                    {t('tarot_focus_question_title')}
                   </Text>
                                              
                   <Text style={[styles.paragraph, { color: colors.white }]}>
-                    Tap on cards to select them.
+                    {t('tarot_focus_question_subtitle')}
                   </Text>
                                          
                 </View>
@@ -611,7 +620,7 @@ const TarotCardDetailScreen: React.FC = () => {
                           style={styles.revealBtnGrad}
                         >
                           <Text style={styles.revealBtnText}>
-                            Start Revealing
+                            {t('tarot_start_revealing_button')}
                           </Text>
                         </GradientBox>
                       </View>
@@ -641,7 +650,9 @@ const TarotCardDetailScreen: React.FC = () => {
                 )}
                                        
                 {!isDeckLoading && (
-                  <Text style={styles.hint}>tap to select</Text>
+                  <Text style={styles.hint}>
+                    {t('tarot_tap_to_select_hint')}
+                  </Text>
                 )}
                                      
               </View>
@@ -694,8 +705,8 @@ function ArcCard({
     const opacity = 1 - 0.1 * t;
     return {
       position: 'absolute',
-        left: x,
-      top:y,
+      left: x,
+      top: y,
       width: CARD_W,
       height: CARD_H,
       opacity,
@@ -713,17 +724,20 @@ function ArcCard({
         maxIndex,
       );
     })
- .onEnd((e) => {
-    // ENHANCEMENT: Inertia ke liye withDecay use karein
-    progress.value = withDecay({
-      velocity: -e.velocityX / ITEM_STRIDE, // Velocity ko use karein
-      clamp: [0, maxIndex], // Ensure it stops at the ends
-        rubberBandEffect: true,
-      deceleration: 0.997,
-    }, () => {
-      // Jab decay khatam ho to nearest card par snap karein
-      progress.value = withTiming(wRound(progress.value));
-    });
+    .onEnd(e => {
+      // ENHANCEMENT: Inertia ke liye withDecay use karein
+      progress.value = withDecay(
+        {
+          velocity: -e.velocityX / ITEM_STRIDE, // Velocity ko use karein
+          clamp: [0, maxIndex], // Ensure it stops at the ends
+          rubberBandEffect: true,
+          deceleration: 0.997,
+        },
+        () => {
+          // Jab decay khatam ho to nearest card par snap karein
+          progress.value = withTiming(wRound(progress.value));
+        },
+      );
     });
   const tap = Gesture.Tap().onEnd(() => {
     runOnJS(onSelect)(card);
@@ -943,54 +957,6 @@ const styles = StyleSheet.create({
     paddingBottom: 100,
   },
 });
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 // import React, { useEffect, useMemo, useState, useRef } from 'react';
 // import {
@@ -1225,21 +1191,21 @@ const styles = StyleSheet.create({
 
 //   return (
 //     <GestureHandlerRootView style={{ flex: 1 }}>
-//            
+//
 //       <ImageBackground
 //         source={require('../../../../../assets/images/backgroundImage.png')}
 //         style={{ flex: 1 }}
 //         resizeMode="cover"
 //       >
-//          
+//
 //         <SafeAreaView style={styles.container}>
-//                
+//
 //           <StatusBar
 //             barStyle="light-content"
 //             translucent
 //             backgroundColor="transparent"
 //           />
-//                  
+//
 //           {showVideo ? (
 //             <View style={styles.fullscreenCenter}>
 //               <Video
@@ -1282,7 +1248,7 @@ const styles = StyleSheet.create({
 //                 </View>
 //                 <View style={styles.revealGridContainer}>
 //                   <ScrollView contentContainerStyle={styles.selectedScroll}>
-//                                    
+//
 //                     {selectedCards
 //                       .reduce((rows: DeckCard[][], card, index) => {
 //                         if (index % 3 === 0) rows.push([card]);
@@ -1308,39 +1274,39 @@ const styles = StyleSheet.create({
 //                             ))}
 //                         </View>
 //                       ))}
-//                                      
+//
 //                   </ScrollView>
 //                 </View>
-//                              
+//
 //               </View>
-//                            
+//
 //               <View style={styles.footer}>
-//                                
+//
 //                 <TouchableOpacity
 //                   onPress={handleRevealMeaning}
 //                   activeOpacity={0.9}
 //                   disabled={isReadingLoading}
 //                 >
-//                                      
+//
 //                   <View style={styles.buttonBorder}>
-//                                            
+//
 //                     <GradientBox
 //                       colors={[colors.black, colors.bgBox]}
 //                       style={styles.revealBtnGrad}
 //                     >
-//                                                  
+//
 //                       {isReadingLoading ? (
 //                         <ActivityIndicator color="#fff" />
 //                       ) : (
 //                         <Text style={styles.revealBtnText}>Reveal Meaning</Text>
 //                       )}
-//                                                
+//
 //                     </GradientBox>
-//                                          
+//
 //                   </View>
-//                                    
+//
 //                 </TouchableOpacity>
-//                              
+//
 //               </View>
 //             </>
 //           ) : showReading ? (
@@ -1355,11 +1321,11 @@ const styles = StyleSheet.create({
 //                       Your Reading
 //                     </Text>
 //                   </View>
-//                                    
+//
 //                   <View style={styles.readingCardsContainer}>
-//                                          
+//
 //                     <ScrollView nestedScrollEnabled={true}>
-//                                            
+//
 //                       {readingData?.selected_cards
 //                         .reduce((rows: any[][], card, index) => {
 //                           if (index % 3 === 0) rows.push([card]);
@@ -1368,7 +1334,7 @@ const styles = StyleSheet.create({
 //                         }, [])
 //                         .map((row, rowIndex) => (
 //                           <View key={rowIndex} style={styles.selectedRow}>
-//                                                        
+//
 //                             {row.map(card => (
 //                               <View key={card.card_id} style={styles.box}>
 //                                 <Image
@@ -1377,7 +1343,7 @@ const styles = StyleSheet.create({
 //                                 />
 //                               </View>
 //                             ))}
-//                                                          
+//
 //                             {row.length < 3 &&
 //                               [...Array(3 - row.length)].map((_, i) => (
 //                                 <View
@@ -1385,14 +1351,14 @@ const styles = StyleSheet.create({
 //                                   style={[styles.box, { opacity: 0 }]}
 //                                 />
 //                               ))}
-//                                                        
+//
 //                           </View>
 //                         ))}
-//                                            
+//
 //                     </ScrollView>
-//                                      
+//
 //                   </View>
-//                                    
+//
 //                   <View style={{ alignItems: 'center', marginTop: 10 }}>
 //                     <TouchableOpacity
 //                       onPress={onPressPlayToggle}
@@ -1409,13 +1375,13 @@ const styles = StyleSheet.create({
 //                       />
 //                     </TouchableOpacity>
 //                   </View>
-//                                                    
+//
 //                   <View style={styles.readingContentContainer}>
-//                                        
+//
 //                     {readingData?.reading?.introduction && (
 //                       <>
 //                         {/*                           <Text style={styles.readingTitle}>Introduction</Text> */}
-//                                                
+//
 //                         <Text style={styles.readingParagraph}>
 //                           "{readingData.reading.introduction}"
 //                         </Text>
@@ -1437,10 +1403,10 @@ const styles = StyleSheet.create({
 //                             </Text>
 //                           </TouchableOpacity>
 //                         </View>
-//                                            
+//
 //                       </>
 //                     )}
-//                                          
+//
 //                     {/* {readingData?.reading?.love && (
 //                         <>
 //                           <Text style={[styles.readingTitle, { marginTop: 15 }]}>Love</Text>
@@ -1453,9 +1419,9 @@ const styles = StyleSheet.create({
 //                           <Text style={styles.readingParagraph}>"{readingData.reading.career}"</Text>
 //                         </>
 //                       )} */}
-//                                  
+//
 //                   </View>
-//                                
+//
 //                   <View style={styles.shareRow}>
 //                     <GradientBox
 //                       colors={[colors.black, colors.bgBox]}
@@ -1496,7 +1462,7 @@ const styles = StyleSheet.create({
 //                       </GradientBox>
 //                     </TouchableOpacity>
 //                   </View>
-//                              
+//
 //                   <TouchableOpacity
 //                     style={{ marginTop: 40, alignItems: 'center' }}
 //                     onPress={() => setShowSubscriptionModal(true)}
@@ -1512,36 +1478,36 @@ const styles = StyleSheet.create({
 //                       </GradientBox>
 //                     </View>
 //                   </TouchableOpacity>
-//                                  
+//
 //                 </ScrollView>
 //               </View>
 //             </>
 //           ) : (
 //             <>
-//                                  
+//
 //               <View style={styles.topContentContainer}>
-//                                             {renderHeader()}                   
-//                      
+//                                             {renderHeader()}
+//
 //                 <View style={styles.content}>
-//                                          
+//
 //                   <Text style={[styles.focusTitle, { color: colors.primary }]}>
 //                     Focus on Your Question
 //                   </Text>
-//                                              
+//
 //                   <Text style={[styles.paragraph, { color: colors.white }]}>
 //                     Tap on cards to select them.
 //                   </Text>
-//                                          
+//
 //                 </View>
-//                                          
+//
 //                 {selectedCards.length > 0 && (
 //                   <View style={styles.selectedArea}>
-//                                              
+//
 //                     <ScrollView
 //                       ref={selectedCardsScrollViewRef}
 //                       contentContainerStyle={styles.selectedScroll}
 //                     >
-//                                                
+//
 //                       {selectedCards
 //                         .reduce((rows: DeckCard[][], card, index) => {
 //                           if (index % 3 === 0) rows.push([card]);
@@ -1550,7 +1516,7 @@ const styles = StyleSheet.create({
 //                         }, [])
 //                         .map((row, rowIndex) => (
 //                           <View key={rowIndex} style={styles.selectedRow}>
-//                                                                
+//
 //                             {row.map(card => (
 //                               <View key={card._id} style={styles.box}>
 //                                 <Image
@@ -1568,7 +1534,7 @@ const styles = StyleSheet.create({
 //                                 </TouchableOpacity>
 //                               </View>
 //                             ))}
-//                                                                
+//
 //                             {row.length < 3 &&
 //                               [...Array(3 - row.length)].map((_, i) => (
 //                                 <View
@@ -1576,23 +1542,23 @@ const styles = StyleSheet.create({
 //                                   style={[styles.box, { opacity: 0 }]}
 //                                 />
 //                               ))}
-//                                                              
+//
 //                           </View>
 //                         ))}
-//                                                
+//
 //                     </ScrollView>
-//                                                
+//
 //                   </View>
 //                 )}
-//                                          
+//
 //                 {selectedCards.length > 0 && (
 //                   <View style={styles.revealBtnWrap}>
-//                                                
+//
 //                     <TouchableOpacity
 //                       onPress={handleStartRevealFlow}
 //                       activeOpacity={0.9}
 //                     >
-//                                                    
+//
 //                       <View style={styles.buttonBorder}>
 //                         <GradientBox
 //                           colors={[colors.black, colors.bgBox]}
@@ -1603,16 +1569,16 @@ const styles = StyleSheet.create({
 //                           </Text>
 //                         </GradientBox>
 //                       </View>
-//                                                  
+//
 //                     </TouchableOpacity>
-//                                                
+//
 //                   </View>
 //                 )}
-//                                      
+//
 //               </View>
-//                                      
+//
 //               <View style={styles.deckWrap}>
-//                                            
+//
 //                 {isDeckLoading ? (
 //                   <ActivityIndicator size="large" color={colors.primary} />
 //                 ) : (
@@ -1627,16 +1593,16 @@ const styles = StyleSheet.create({
 //                     />
 //                   ))
 //                 )}
-//                                        
+//
 //                 {!isDeckLoading && (
 //                   <Text style={styles.hint}>tap to select</Text>
 //                 )}
-//                                      
+//
 //               </View>
-//                                  
+//
 //             </>
 //           )}
-//                      
+//
 //           <SubscriptionPlanModal
 //             isVisible={showSubscriptionModal}
 //             onClose={() => setShowSubscriptionModal(false)}
@@ -1645,11 +1611,11 @@ const styles = StyleSheet.create({
 //               setShowSubscriptionModal(false);
 //             }}
 //           />
-//                    
+//
 //         </SafeAreaView>
-//              
+//
 //       </ImageBackground>
-//        
+//
 //     </GestureHandlerRootView>
 //   );
 // };
@@ -1922,55 +1888,6 @@ const styles = StyleSheet.create({
 //     paddingBottom: 100,
 //   },
 // });
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 // import React, { useEffect, useMemo, useState, useRef } from 'react';
 // import {

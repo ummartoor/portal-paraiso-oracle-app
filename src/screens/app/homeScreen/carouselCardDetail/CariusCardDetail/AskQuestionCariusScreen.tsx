@@ -13,6 +13,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  Vibration,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useThemeStore } from '../../../../../store/useThemeStore';
@@ -33,6 +34,7 @@ const AskQuestionCariusScreen= () => {
   const [question, setQuestion] = useState('');
 
   const handleNext = () => {
+      Vibration.vibrate([0, 35, 40, 35]); 
     if (!question.trim()) {
     Alert.alert(
         t('alert_input_required_title'),

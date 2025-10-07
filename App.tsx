@@ -61,7 +61,7 @@ function App() {
 
     // Foreground messages (modular API)
     const unsubscribe = onMessage(messaging, async remoteMessage => {
-      Alert.alert('📩 New FCM message!', JSON.stringify(remoteMessage));
+      // Alert.alert('📩 New FCM message!', JSON.stringify(remoteMessage));
     });
 
     return unsubscribe;

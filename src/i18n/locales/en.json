@@ -340,23 +340,6 @@
   "daily_wisdom_save": "Save",
   "daily_wisdom_premium_button": "Get Premium For Full Reading",
 
-  "astrology_save": "Save",
-  "astrology_share": "Share",
-
-  "tarot_continue": "Continue",
-  "tarot_reveal_meaning": "Reveal Meaning",
-  "tarot_love": "Love",
-  "tarot_share": "Share",
-  "tarot_save": "Save",
-  "tarot_get_premium": "Get Premium For Full Reading",
-  "tarot_your_cards": "Your Cards",
-  "tarot_discover_meaning": "Discover the deeper meaning behind the cards.",
-  "tarot_your_reading": "Your Reading",
-  "tarot_focus_question": "Focus on Your Question",
-  "tarot_start_revealing": "Start Revealing",
-
-  "cauris_share": "Share",
-  "cauris_save": "Save",
 
   "library_your_reading": "Your Reading",
   "library_read_more": "Read More",
@@ -376,8 +359,61 @@
   "chat_no_recent_chats": "No recent chats",
   "chat_no_recent_chats_subtitle": "Tap 'Start New Chat' to begin your journey.",
   "chat_detail_how_can_i_help": "How can I help you?",
-  "chat_detail_placeholder": "Ask the Oracle..."
+  "chat_detail_placeholder": "Ask the Oracle...",
 
 
+
+
+  "tarot_reader_header": "Tarot Reader",
+  "tarot_focus_question_title": "Focus on Your Question",
+  "tarot_focus_question_subtitle": "Tap on cards to select them.",
+  "tarot_tap_to_select_hint": "tap to select",
+  "tarot_start_revealing_button": "Start Revealing",
+  "tarot_your_cards_title": "Your Cards",
+  "tarot_your_cards_subtitle": "Discover the deeper meaning behind the cards.",
+  "tarot_reveal_meaning_button": "Reveal Meaning",
+  "tarot_your_reading_title": "Your Reading",
+  "read_more_button": "Read More",
+  "share_button": "Share",
+  "save_button": "Save",
+  "get_premium_button": "Get Premium For Full Reading",
+
+
+
+  "cauris_header": "Cauris",
+  "cauris_phase0_title": "Cowrie Shells Divination",
+  "cauris_phase0_subtitle": "Unveil sacred wisdom through ancient African spiritual practice.",
+  "cauris_phase0_button": "Throw the Shells",
+  "cauris_phase1_title": "Casting the Shells",
+  "cauris_phase1_subtitle": "The spirits are being summoned…",
+  "cauris_phase2_title": "Your divine pattern is",
+  "cauris_phase2_button": "Reveal My Reading",
+  "cauris_phase3_title": "Your Divine Message",
+  "cauris_default_message": "Your divine message awaits...",
+
+
+
+
+  "astrology_screen_header": "Astrology",
+  "astrology_unlock_title": "Unlock your celestial blueprint",
+  "astrology_explore_subtitle": "Explore who you are, what’s ahead, and how the stars shape your path.",
+  "astrology_horoscope_not_available": "Horoscope not available for this day.",
+  "insight_tabs_morning": "Morning Vibe",
+  "insight_tabs_career": "Career & Work",
+  "insight_tabs_love": "Love & Relationships",
+  "insight_tabs_money": "Money & Finances",
+  "insight_tabs_health": "Health & Well-being",
+  "insight_tabs_divine": "Divine Guidance",
+
+
+
+
+  "notifications_screen_header": "Notifications",
+  "notifications_delete_button": "Delete",
+  "notifications_empty_state": "You have no notifications yet.",
+  "time_ago_seconds": "{{count}}s ago",
+  "time_ago_minutes": "{{count}}m ago",
+  "time_ago_hours": "{{count}}h ago",
+  "time_ago_days": "{{count}}d ago"
 }
 

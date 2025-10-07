@@ -345,23 +345,7 @@
   "daily_wisdom_save": "Salvar",
   "daily_wisdom_premium_button": "Obter Premium Para Leitura Completa",
 
-  "astrology_save": "Salvar",
-  "astrology_share": "Compartilhar",
 
-  "tarot_continue": "Continuar",
-  "tarot_reveal_meaning": "Revelar Significado",
-  "tarot_love": "Amor",
-  "tarot_share": "Compartilhar",
-  "tarot_save": "Salvar",
-  "tarot_get_premium": "Obter Premium Para Leitura Completa",
-  "tarot_your_cards": "Suas Cartas",
-  "tarot_discover_meaning": "Descubra o significado mais profundo por trás das cartas.",
-  "tarot_your_reading": "Sua Leitura",
-  "tarot_focus_question": "Foque na Sua Pergunta",
-  "tarot_start_revealing": "Começar a Revelar",
-
-  "cauris_share": "Compartilhar",
-  "cauris_save": "Salvar",
 
   "library_your_reading": "Sua Leitura",
   "library_read_more": "Ler Mais",
@@ -381,7 +365,69 @@
   "chat_no_recent_chats": "Nenhum chat recente",
   "chat_no_recent_chats_subtitle": "Toque em 'Iniciar Novo Chat' para começar sua jornada.",
   "chat_detail_how_can_i_help": "Como posso ajudar?",
-  "chat_detail_placeholder": "Pergunte ao Oráculo..."
+  "chat_detail_placeholder": "Pergunte ao Oráculo...",
+
+
+
+
+
+
+
+"tarot_reader_header": "Leitor de Tarô",
+  "tarot_focus_question_title": "Concentre-se na Sua Pergunta",
+  "tarot_focus_question_subtitle": "Toque nas cartas para selecioná-las.",
+  "tarot_tap_to_select_hint": "toque para selecionar",
+  "tarot_start_revealing_button": "Começar a Revelar",
+  "tarot_your_cards_title": "Suas Cartas",
+  "tarot_your_cards_subtitle": "Descubra o significado mais profundo por trás das cartas.",
+  "tarot_reveal_meaning_button": "Revelar Significado",
+  "tarot_your_reading_title": "Sua Leitura",
+  "read_more_button": "Ler Mais",
+  "share_button": "Compartilhar",
+  "save_button": "Salvar",
+  "get_premium_button": "Obtenha Premium para Leitura Completa",
+
+
+
+
+
+  "cauris_header": "Búzios",
+  "cauris_phase0_title": "Adivinhação com Búzios",
+  "cauris_phase0_subtitle": "Desvende a sabedoria sagrada através da antiga prática espiritual africana.",
+  "cauris_phase0_button": "Lançar os Búzios",
+  "cauris_phase1_title": "Lançando os Búzios",
+  "cauris_phase1_subtitle": "Os espíritos estão sendo convocados…",
+  "cauris_phase2_title": "Seu padrão divino é",
+  "cauris_phase2_button": "Revelar Minha Leitura",
+  "cauris_phase3_title": "Sua Mensagem Divina",
+  "cauris_default_message": "Sua mensagem divina aguarda...",
+
+
+
+
+
+  "astrology_screen_header": "Astrologia",
+  "astrology_unlock_title": "Desbloqueie seu mapa celestial",
+  "astrology_explore_subtitle": "Explore quem você é, o que está por vir e como as estrelas moldam seu caminho.",
+  "astrology_horoscope_not_available": "Horóscopo não disponível para este dia.",
+  "insight_tabs_morning": "Vibração da Manhã",
+  "insight_tabs_career": "Carreira & Trabalho",
+  "insight_tabs_love": "Amor & Relacionamentos",
+  "insight_tabs_money": "Dinheiro & Finanças",
+  "insight_tabs_health": "Saúde & Bem-estar",
+  "insight_tabs_divine": "Orientação Divina",
+
+
+
+
+  "notifications_screen_header": "Notificações",
+  "notifications_delete_button": "Excluir",
+  "notifications_empty_state": "Você ainda não tem notificações.",
+  "time_ago_seconds": "há {{count}}s",
+  "time_ago_minutes": "há {{count}}m",
+  "time_ago_hours": "há {{count}}h",
+  "time_ago_days": "há {{count}}d"
+
 
 
 }
