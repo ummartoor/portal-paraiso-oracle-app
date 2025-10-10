@@ -53,10 +53,10 @@ export interface StripePackage {
 
 // --- NEW Interface for Payment Intent Response ---
 export interface PaymentIntentResponse {
-    clientSecret: string;
-    paymentIntentID: string;
-    amount: number;
-    currency: string;
+  clientSecret: string;
+  paymentIntentID: string;
+  amount: number;
+  currency: string;
 }
 
 // =================================================================
@@ -73,16 +73,13 @@ interface StripeState {
   // --- States for creating a payment intent ---
   isCreatingIntent: boolean;
   intentError: string | null;
-  createPaymentIntent: (packageId: string, priceId: string) => Promise<string | null>;
-
-
-  isConfirmingPayment: boolean;
-  confirmError: string | null;
-  confirmStripePayment: (paymentIntentId: string, paymentMethod: string) => Promise<boolean>; 
-
+  createPaymentIntent: (
+    packageId: string,
+    priceId: string,
+  ) => Promise<string | null>;
 }
 
-export const useStripeStore = create<StripeState>((set) => ({
+export const useStripeStore = create<StripeState>(set => ({
   // --- INITIAL STATE ---
   packages: null,
   isLoading: false,
@@ -90,9 +87,6 @@ export const useStripeStore = create<StripeState>((set) => ({
   isCreatingIntent: false,
   intentError: null,
 
-
-    isConfirmingPayment: false, // ✅ NEW
-  confirmError: null,
   // =================================================================
   // ACTIONS
   // =================================================================
@@ -107,10 +101,9 @@ export const useStripeStore = create<StripeState>((set) => ({
       if (!token) throw new Error('Authentication token not found.');
       const headers = { 'x-auth-token': token };
 
-      const response = await axios.get(
-        `${API_BASEURL}/stripe/packages`,
-        { headers }
-      );
+      const response = await axios.get(`${API_BASEURL}/stripe/packages`, {
+        headers,
+      });
 
       if (response.data?.success) {
         set({
@@ -118,96 +111,61 @@ export const useStripeStore = create<StripeState>((set) => ({
           isLoading: false,
         });
       } else {
-        throw new Error(response.data.message || 'Failed to fetch Stripe packages.');
+        throw new Error(
+          response.data.message || 'Failed to fetch Stripe packages.',
+        );
       }
     } catch (error: any) {
       const errorMessage =
         error.response?.data?.message ||
         error.message ||
         'An unknown error occurred while fetching packages.';
-      
+
       set({ error: errorMessage, isLoading: false });
       Alert.alert('Error', errorMessage);
     }
   },
 
- 
- createPaymentIntent: async (packageId: string, priceId: string): Promise<string | null> => {
-      set({ isCreatingIntent: true, intentError: null });
-      try {
-          const token = await AsyncStorage.getItem('x-auth-token');
-          if (!token) throw new Error('Authentication token not found.');
-
-          const headers = { 'x-auth-token': token };
-          const payload = { packageId, priceId };
-
-          const response = await axios.post(
-              `${API_BASEURL}/stripe/payment-intent`,
-              payload,
-              { headers }
-          );
-
-   
-          console.log('Create Payment Intent Response:', response.data);
-
-          if (response.data?.success && response.data.clientSecret) {
-              set({ isCreatingIntent: false });
-              return response.data.clientSecret;
-          } else {
-           
-              throw new Error(response.data.message || response.data.error || 'Failed to create payment intent.');
-          }
-      } catch (error: any) {
-
-          const errorMessage =
-              error.response?.data?.error ||
-              error.response?.data?.message ||
-              error.message ||
-              'An unknown error occurred during payment setup.';
-          
-          set({ intentError: errorMessage, isCreatingIntent: false });
-          Alert.alert('Payment Error', errorMessage);
-          return null;
-      }
-  },
-
-//confirm payment screen
-    confirmStripePayment: async (paymentIntentId: string, paymentMethod: string): Promise<boolean> => {
-    set({ isConfirmingPayment: true, confirmError: null });
+  createPaymentIntent: async (
+    packageId: string,
+    priceId: string,
+  ): Promise<string | null> => {
+    set({ isCreatingIntent: true, intentError: null });
     try {
       const token = await AsyncStorage.getItem('x-auth-token');
       if (!token) throw new Error('Authentication token not found.');
 
       const headers = { 'x-auth-token': token };
-      const payload = { 
-        paymentIntentId: paymentIntentId, 
-        paymentMethod: paymentMethod 
-      };
+      const payload = { packageId, priceId };
 
       const response = await axios.post(
-        `${API_BASEURL}/stripe/confirm-payment`,
+        `${API_BASEURL}/stripe/payment-intent`,
         payload,
-        { headers }
+        { headers },
       );
 
-      console.log(response)
-      if (response.data?.success) {
-        set({ isConfirmingPayment: false });
-        return true; // Payment was successful
+      console.log('Create Payment Intent Response:', response.data);
+
+      if (response.data?.success && response.data.clientSecret) {
+        set({ isCreatingIntent: false });
+        return response.data.clientSecret;
       } else {
-        throw new Error(response.data.message || 'Failed to confirm payment.');
+        throw new Error(
+          response.data.message ||
+            response.data.error ||
+            'Failed to create payment intent.',
+        );
       }
     } catch (error: any) {
       const errorMessage =
+        error.response?.data?.error ||
         error.response?.data?.message ||
         error.message ||
-        'An unknown error occurred while confirming the payment.';
-      
-      set({ confirmError: errorMessage, isConfirmingPayment: false });
-      Alert.alert('Confirmation Error', errorMessage);
-      return false; // Payment failed
+        'An unknown error occurred during payment setup.';
+
+      set({ intentError: errorMessage, isCreatingIntent: false });
+      Alert.alert('Payment Error', errorMessage);
+      return null;
     }
   },
-
 }));
-
