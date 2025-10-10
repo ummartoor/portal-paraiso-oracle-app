@@ -14,14 +14,14 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import Tts from 'react-native-tts';
+import SoundPlayer from 'react-native-sound-player';
 
-import { useRitualTipStore } from '../../../../store/useRitualTipStore'; // Import the new store
+import { useRitualTipStore } from '../../../../store/useRitualTipStore';
+import { useOpenAiStore } from '../../../../store/useOpenAiStore';
 import { Fonts } from '../../../../constants/fonts';
 import { useThemeStore } from '../../../../store/useThemeStore';
 import { AppStackParamList } from '../../../../navigation/routeTypes';
 
-// --- Import Icons ---
 const BackIcon = require('../../../../assets/icons/backIcon.png');
 const PlayIcon = require('../../../../assets/icons/playIcon.png');
 const PauseIcon = require('../../../../assets/icons/pauseIcon.png');
@@ -33,48 +33,72 @@ const RitualTipScreen: React.FC = () => {
   const navigation =
     useNavigation<NativeStackNavigationProp<AppStackParamList>>();
 
-  // --- API State from Zustand Store ---
-  const { ritualTip, isLoading, getDailyRitualTip, markRitualTipAsUsed } =
-    useRitualTipStore();
+  const {
+    ritualTip,
+    isLoading: isTipLoading,
+    getDailyRitualTip,
+    markRitualTipAsUsed,
+  } = useRitualTipStore();
+  const {
+    isLoading: isAudioLoading,
+    generateAndPlaySpeech,
+    preloadSpeech,
+  } = useOpenAiStore();
 
-  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [audioFilePath, setAudioFilePath] = useState<string | null>(null); // State for preloaded audio path
 
-  // --- Fetch Data on Screen Load ---
   useEffect(() => {
     getDailyRitualTip();
   }, []);
 
-  // --- Mark Tip as Used when data is available ---
+  // --- Preload audio when ritual tip data is available ---
   useEffect(() => {
-    if (ritualTip && !ritualTip.is_used) {
-      markRitualTipAsUsed();
+    if (ritualTip) {
+      // Mark as used
+      if (!ritualTip.is_used) {
+        markRitualTipAsUsed();
+      }
+      // Preload the speech in the background
+      preloadSpeech(ritualTip.ai_response, ritualTip.ritual_tip.id).then(
+        path => {
+          setAudioFilePath(path); // Save the local file path
+        },
+      );
     }
   }, [ritualTip]);
 
-  // --- TTS Setup ---
   useEffect(() => {
-    Tts.setDefaultLanguage('en-US').catch(() => {});
-    Tts.setDefaultRate(0.45, true);
-    const subs = [
-      Tts.addEventListener('tts-start', () => setIsSpeaking(true)),
-      Tts.addEventListener('tts-finish', () => setIsSpeaking(false)),
-      Tts.addEventListener('tts-cancel', () => setIsSpeaking(false)),
-    ];
+    const onFinishedPlaying = SoundPlayer.addEventListener(
+      'FinishedPlaying',
+      () => {
+        setIsPlaying(false);
+      },
+    );
     return () => {
-      subs.forEach(sub => (sub as any)?.remove?.());
-      Tts.stop();
+      onFinishedPlaying.remove();
+      SoundPlayer.stop();
     };
   }, []);
 
-  // --- TTS Play/Stop Handler ---
   const onPressPlayToggle = async () => {
-    if (!ritualTip?.ai_response) return;
-
-    if (isSpeaking) {
-      await Tts.stop();
+    if (isPlaying) {
+      SoundPlayer.stop();
+      setIsPlaying(false);
     } else {
-      await Tts.stop();
-      Tts.speak(ritualTip.ai_response);
+      // --- UPDATED LOGIC ---
+      if (audioFilePath) {
+        // If file is preloaded, play it instantly
+        SoundPlayer.playUrl(`file://${audioFilePath}`);
+        setIsPlaying(true);
+      } else {
+      
+        setIsPlaying(true);
+        const success = await generateAndPlaySpeech(ritualTip!.ai_response);
+        if (!success) {
+          setIsPlaying(false);
+        }
+      }
     }
   };
 
@@ -89,7 +113,6 @@ const RitualTipScreen: React.FC = () => {
     });
   };
 
-  // --- Header Component ---
   const renderHeader = () => (
     <View style={styles.header}>
       <TouchableOpacity
@@ -113,9 +136,8 @@ const RitualTipScreen: React.FC = () => {
     </View>
   );
 
-  // --- Main Content Renderer ---
   const renderContent = () => {
-    if (isLoading) {
+    if (isTipLoading) {
       return (
         <ActivityIndicator
           size="large"
@@ -124,7 +146,6 @@ const RitualTipScreen: React.FC = () => {
         />
       );
     }
-
     if (!ritualTip) {
       return (
         <View style={styles.centeredContent}>
@@ -134,7 +155,6 @@ const RitualTipScreen: React.FC = () => {
         </View>
       );
     }
-
     return (
       <View style={styles.contentWrapper}>
         <Text style={[styles.title, { color: colors.primary }]}>
@@ -143,7 +163,6 @@ const RitualTipScreen: React.FC = () => {
         <Text style={[styles.subtitle, { color: colors.white }]}>
           Simple practices to ground, heal and empower your energy
         </Text>
-
         <View style={styles.ritualCard}>
           <Text style={styles.cardDate}>{formatDate(ritualTip.tip_date)}</Text>
           <Image
@@ -153,17 +172,20 @@ const RitualTipScreen: React.FC = () => {
           <Text style={styles.ritualName}>
             {ritualTip.ritual_tip.ritual_name}
           </Text>
-
           <TouchableOpacity
             onPress={onPressPlayToggle}
             style={styles.playButton}
+            disabled={isAudioLoading && !audioFilePath}
           >
-            <Image
-              source={isSpeaking ? PauseIcon : PlayIcon}
-              style={styles.playIcon}
-            />
+            {isAudioLoading && !audioFilePath ? (
+              <ActivityIndicator color="#FFFFFF" />
+            ) : (
+              <Image
+                source={isPlaying ? PauseIcon : PlayIcon}
+                style={styles.playIcon}
+              />
+            )}
           </TouchableOpacity>
-
           <Text style={styles.description}>{ritualTip.ai_response}</Text>
         </View>
       </View>
@@ -183,7 +205,6 @@ const RitualTipScreen: React.FC = () => {
           backgroundColor="transparent"
         />
         {renderHeader()}
-
         <ScrollView contentContainerStyle={styles.scrollContent}>
           {renderContent()}
         </ScrollView>
@@ -224,10 +245,15 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
     textTransform: 'capitalize',
   },
-  scrollContent: { flexGrow: 1, paddingHorizontal: 20, paddingBottom: 50 },
-  contentWrapper: { width: '100%', alignItems: 'center', marginTop: 20 },
+  scrollContent: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    paddingHorizontal: 20,
+    paddingBottom: 50,
+  },
+  contentWrapper: { width: '100%', alignItems: 'center' },
   centeredContent: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  centeredLoader: { marginTop: SCREEN_WIDTH * 0.5 },
+  centeredLoader: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   errorText: {
     fontFamily: Fonts.aeonikRegular,
     fontSize: 16,
@@ -244,7 +270,7 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   ritualCard: {
-    backgroundColor: 'rgba(74, 63, 80, 0.8)', // Semi-transparent background
+    backgroundColor: 'rgba(74, 63, 80, 0.8)',
     borderRadius: 20,
     width: '100%',
     padding: 25,
@@ -271,7 +297,13 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 1,
   },
-  playButton: { marginVertical: 20 },
+  playButton: {
+    marginVertical: 20,
+    height: 48,
+    width: 48,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   playIcon: { width: 35, height: 35 },
   description: {
     fontFamily: Fonts.aeonikRegular,
