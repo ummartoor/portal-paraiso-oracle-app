@@ -115,7 +115,7 @@ const SubscriptionPlanModal: React.FC<SubscriptionPlanModalProps> = ({
   const [selected, setSelected] = useState<PlanKey>('yearly');
   const { t } = useTranslation();
 
-  // --- CHANGED: `plans` object ab component ke andar hai taake `t` function use kar sakay ---
+
   const plans: Record<
     PlanKey,
     { title: string; sub: string; strike?: string; perWeek: string; badge?: string }

@@ -37,8 +37,11 @@ import { AppStackParamList } from '../../../../../navigation/routeTypes';
 import Tts from 'react-native-tts';
 import Video from 'react-native-video';
 import { useTarotCardStore } from '../../../../../store/useTarotCardStore';
+
 import { useTranslation } from 'react-i18next';
 const { height: SCREEN_HEIGHT, width: SCREEN_WIDTH } = Dimensions.get('window');
+import SoundPlayer from 'react-native-sound-player';
+
 
 type TarotCardFromAPI = {
   _id: string;
@@ -957,6 +960,19 @@ const styles = StyleSheet.create({
     paddingBottom: 100,
   },
 });
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 // import React, { useEffect, useMemo, useState, useRef } from 'react';
 // import {
