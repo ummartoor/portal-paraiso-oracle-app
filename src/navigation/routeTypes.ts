@@ -29,6 +29,8 @@ RitualTipHistoryDetail: { historyItem: RitualHistoryItem };
     SupportScreen: undefined;
       EditProfile: undefined;
       BuySubscription:undefined;
+      SubscriptionDetails:undefined;
+      PurchaseHistory:undefined;
       TermOfService :undefined;
        SubscriptionTerms :undefined;
        PrivacyPolicy:undefined

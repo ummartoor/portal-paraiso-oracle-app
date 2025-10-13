@@ -90,7 +90,7 @@ import { useNotification } from './src/store/useNotification';
 import { getApp } from '@react-native-firebase/app';
 import { getMessaging, onMessage } from '@react-native-firebase/messaging';
 import { useEffect } from 'react';
-
+import Toast from 'react-native-toast-message';
 function App() {
   useNotification();
 
@@ -119,6 +119,7 @@ function App() {
           </KeyboardVisibilityProvider>
         </GestureHandlerRootView>
       </SafeAreaProvider>
+          <Toast />
     </StripeProvider>
   );
 }

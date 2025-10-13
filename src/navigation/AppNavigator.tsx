@@ -34,6 +34,8 @@ import ChatDetailScreen from '../screens/app/chatScreen/ChatDetailScreen';
 import DailyWisdomCardHistoryDetail from '../screens/app/libraryScreen/DailyWisdomCardHistoryDetail';
 import NotificationScreen from '../screens/app/homeScreen/notification/NotificationScreen';
 import RitualTipHistoryDetail from '../screens/app/libraryScreen/RitualTipHistoryDetail';
+import PurchaseHistoryScreen from '../screens/app/ProfileScreen/profile/subscription/PurchaseHistoryScreen';
+import SubscriptionDetailsScreen from '../screens/app/ProfileScreen/profile/subscription/SubscriptionDetailsScreen';
 
 
 
@@ -74,6 +76,8 @@ const AppNavigator = () => {
       <Stack.Screen name='SupportScreen' component={SupportScreen} />
       <Stack.Screen name='EditProfile' component={EditProfileScreen} />
       <Stack.Screen name='BuySubscription' component={BuySubscriptionScreen} />
+           <Stack.Screen name='PurchaseHistory' component={PurchaseHistoryScreen} />
+             <Stack.Screen name='SubscriptionDetails' component={SubscriptionDetailsScreen} />
       <Stack.Screen name='TermOfService' component={TermOfServiceScreen} />
       <Stack.Screen name='SubscriptionTerms' component={SubscriptionTermsScreen} />
       <Stack.Screen name='PrivacyPolicy' component={PrivacyPolicyScreen} />

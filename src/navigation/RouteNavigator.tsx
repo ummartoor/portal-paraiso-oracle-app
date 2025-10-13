@@ -52,13 +52,13 @@ import {
 import AuthNavigator from './AuthNavigator';
 import AppNavigator from './AppNavigator';
 import { useAuthStore } from '../store/useAuthStore';
-import { useThemeStore } from '../store/useThemeStore'; // 1. Import Theme Store
-import { Fonts } from '../constants/fonts'; // 2. Import Fonts
+import { useThemeStore } from '../store/useThemeStore';
+import { Fonts } from '../constants/fonts'; 
 
 const RouteNavigator = () => {
   const { isLoggedIn, checkAuthStatus } = useAuthStore();
   const [loading, setLoading] = useState(true);
-  const { colors } = useThemeStore(s => s.theme); // 3. Get colors from theme
+  const { colors } = useThemeStore(s => s.theme);
 
   useEffect(() => {
     const init = async () => {
@@ -92,7 +92,7 @@ const RouteNavigator = () => {
 
 export default RouteNavigator;
 
-// --- 5. NEW: Styles for the loading screen ---
+//  Styles for the loading screen ---
 const styles = StyleSheet.create({
     bgImage: {
         flex: 1,

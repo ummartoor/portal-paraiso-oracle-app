@@ -1,5 +1,3 @@
-
-
 import React, { useState, useCallback, useRef } from 'react';
 import {
   View,
@@ -31,7 +29,7 @@ import GradientBox from '../../../../../components/GradientBox';
 import { useStripe } from '@stripe/stripe-react-native';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('screen');
-const CARD_WIDTH = SCREEN_WIDTH * 0.7;
+const CARD_WIDTH = SCREEN_WIDTH * 0.8;
 const CARD_SPACING = 15;
 
 const BuySubscriptionScreen = () => {
@@ -39,21 +37,28 @@ const BuySubscriptionScreen = () => {
   const navigation = useNavigation<any>();
   const { t } = useTranslation();
   const { initPaymentSheet, presentPaymentSheet } = useStripe();
-  const { packages, isLoading, fetchStripePackages, createPaymentIntent } =
-    useStripeStore(
-      useShallow(state => ({
-        packages: state.packages,
-        isLoading: state.isLoading,
-        fetchStripePackages: state.fetchStripePackages,
-        createPaymentIntent: state.createPaymentIntent,
-      })),
-    );
+
+  // --- CHANGE: Added `confirmPayment` from the store ---
+  const {
+    packages,
+    isLoading,
+    fetchStripePackages,
+    createPaymentIntent,
+    confirmPayment,
+  } = useStripeStore(
+    useShallow(state => ({
+      packages: state.packages,
+      isLoading: state.isLoading,
+      fetchStripePackages: state.fetchStripePackages,
+      createPaymentIntent: state.createPaymentIntent,
+      confirmPayment: state.confirmPayment, // <-- Added this
+    })),
+  );
 
   const [activeIndex, setActiveIndex] = useState(0);
   const [processingPackageId, setProcessingPackageId] = useState<string | null>(
     null,
   );
-
   const [activatedPackageId, setActivatedPackageId] = useState<string | null>(
     null,
   );
@@ -62,7 +67,6 @@ const BuySubscriptionScreen = () => {
   useFocusEffect(
     useCallback(() => {
       fetchStripePackages();
-
     }, []),
   );
 
@@ -77,8 +81,8 @@ const BuySubscriptionScreen = () => {
       ?.filter(p => p.type !== 'free')
       .sort((a, b) => a.sort_order - b.sort_order) || [];
 
+  // --- CHANGE: Updated handleChoosePlan to call `confirmPayment` ---
   const handleChoosePlan = async (item: StripePackage) => {
-
     if (activatedPackageId) {
       Alert.alert(
         'Subscription Active',
@@ -96,6 +100,7 @@ const BuySubscriptionScreen = () => {
     setProcessingPackageId(item.id);
 
     try {
+      // Step 1: Create a payment intent on your server
       const clientSecret = await createPaymentIntent(
         item.id,
         defaultPrice.stripe_price_id,
@@ -103,9 +108,10 @@ const BuySubscriptionScreen = () => {
 
       if (!clientSecret) {
         setProcessingPackageId(null);
-        return;
+        return; // Error is already shown by the store
       }
 
+      // Step 2: Initialize the Stripe payment sheet
       const { error: initError } = await initPaymentSheet({
         merchantDisplayName: 'Portal Paraiso, Inc.',
         paymentIntentClientSecret: clientSecret,
@@ -117,9 +123,11 @@ const BuySubscriptionScreen = () => {
         );
       }
 
+      // Step 3: Present the payment sheet to the user
       const { error: paymentError } = await presentPaymentSheet();
 
       if (paymentError) {
+        // Handle payment error (e.g., user canceled)
         if (paymentError.code !== 'Canceled') {
           Alert.alert(
             `Payment Error: ${paymentError.code}`,
@@ -127,10 +135,24 @@ const BuySubscriptionScreen = () => {
           );
         }
       } else {
-        Alert.alert('Success', 'Your subscription has been activated!');
-    
-        setActivatedPackageId(item.id);
-        navigation.goBack();
+        // Step 4: (NEW) If payment is successful, confirm it with your backend
+        const paymentIntentId = clientSecret.split('_secret_')[0];
+        if (!paymentIntentId) {
+          throw new Error(
+            'Critical error: Could not extract Payment Intent ID.',
+          );
+        }
+
+        // This function will call your backend and show success/error alerts
+        const wasConfirmed = await confirmPayment(paymentIntentId);
+
+        if (wasConfirmed) {
+          // If backend confirmation is successful, update UI and navigate
+          setActivatedPackageId(item.id);
+          navigation.goBack();
+        }
+        // If 'wasConfirmed' is false, the store has already shown an error alert.
+        // The user stays on the screen to try again.
       }
     } catch (error: any) {
       console.error('Payment processing failed:', error);
@@ -139,6 +161,7 @@ const BuySubscriptionScreen = () => {
         error.message || 'Please try again later.',
       );
     } finally {
+      // Stop the loading indicator
       setProcessingPackageId(null);
     }
   };
@@ -147,68 +170,80 @@ const BuySubscriptionScreen = () => {
     const defaultPrice = item.prices.find(p => p.is_default);
     const isProcessing = processingPackageId === item.id;
     const isActivated = activatedPackageId === item.id;
-
+    const [isExpanded, setIsExpanded] = useState(false);
+    const features = item.feature_list_for_ui;
+    const hasMoreFeatures = features.length > 8;
+    const displayedFeatures = isExpanded ? features : features.slice(0, 8);
     return (
       <View style={[styles.cardContainer, { width: CARD_WIDTH }]}>
         <GradientBox
           colors={[colors.bgBox, colors.bgBox]}
           style={[styles.card]}
         >
-     
           <>
-            {item.is_popular && !isActivated && (
+            {/* {item.is_popular && !isActivated && (
               <View style={[styles.badge, { backgroundColor: colors.primary }]}>
                 <Text style={styles.badgeText}>Popular</Text>
               </View>
-            )}
+            )} */}
             <Text style={styles.cardTitle}>{item.display_name}</Text>
             <View style={styles.priceRow}>
               <Text style={styles.priceAmount}>
-                ${defaultPrice?.amount.toFixed(2)}
+                {defaultPrice?.amount.toFixed(2)}
               </Text>
               <Text style={styles.priceInterval}>
                 /{defaultPrice?.interval}
               </Text>
             </View>
             <View style={styles.featuresList}>
-              {item.feature_list_for_ui.slice(0, 5).map((feature, i) => (
+              {displayedFeatures.map((feature, i) => (
                 <Text key={i} style={styles.featureText}>
                   • {feature}
                 </Text>
               ))}
+
+              {hasMoreFeatures && (
+                <TouchableOpacity onPress={() => setIsExpanded(!isExpanded)}>
+                  <Text style={styles.seeMoreText}>
+                    {isExpanded ? 'See Less' : 'See More'}
+                  </Text>
+                </TouchableOpacity>
+              )}
             </View>
 
-            <TouchableOpacity
-          
-              style={[
-                styles.actionBtn,
-                isActivated
-                  ? styles.activatedButton
-                  : { backgroundColor: colors.primary },
-              ]}
-              onPress={() => handleChoosePlan(item)}
-   
-              disabled={
-                isProcessing ||
-                isActivated ||
-                (activatedPackageId !== null && !isActivated)
-              }
-            >
-   
-              {isProcessing ? (
-                <ActivityIndicator color="#000" />
-              ) : isActivated ? (
+            {isActivated ? (
+              <TouchableOpacity
+                style={[styles.actionBtn, styles.activatedButton]}
+                disabled={true}
+              >
                 <Text style={styles.activatedText}>Activated</Text>
-              ) : (
-                <Text style={styles.actionText}>Start Now</Text>
-              )}
-            </TouchableOpacity>
+              </TouchableOpacity>
+            ) : (
+           <TouchableOpacity
+  style={styles.actionBtn} // The main button style now goes here
+  onPress={() => handleChoosePlan(item)}
+  disabled={
+    isProcessing ||
+    (activatedPackageId !== null && !isActivated)
+  }
+>
+  <GradientBox
+    colors={[colors.black, colors.bgBox]}
+    style={styles.gradientWrapper} // A new style to fill the button
+  >
+    {isProcessing ? (
+      <ActivityIndicator color="#D9B699" />
+    ) : (
+      <Text style={styles.actionText}>Start Now</Text>
+    )}
+  </GradientBox>
+</TouchableOpacity>
+            )}
           </>
         </GradientBox>
       </View>
     );
   };
-
 
   return (
     <ImageBackground
@@ -277,7 +312,6 @@ const BuySubscriptionScreen = () => {
                   <View style={{ width: CARD_SPACING }} />
                 )}
               />
-   
             </View>
           )}
         </ScrollView>
@@ -288,7 +322,7 @@ const BuySubscriptionScreen = () => {
 
 export default BuySubscriptionScreen;
 
-
+// --- Styles (No changes) ---
 const styles = StyleSheet.create({
   bgImage: { flex: 1 },
   container: {
@@ -343,6 +377,7 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.aeonikBold,
     fontSize: 18,
     textAlign: 'center',
+    marginBottom: 20,
   },
   carouselSection: {
     marginTop: -40,
@@ -351,13 +386,13 @@ const styles = StyleSheet.create({
     paddingVertical: 20,
   },
   card: {
-    height: 400,
+    // height: 400,
     borderRadius: 24,
-    borderWidth: 1.5,
+    // borderWidth: 1.5,
     padding: 20,
     justifyContent: 'space-between',
     alignItems: 'center',
-    borderColor: 'rgba(255,255,255,0.2)',
+    // borderColor: 'rgba(255,255,255,0.2)',
   },
   badge: {
     position: 'absolute',
@@ -375,8 +410,8 @@ const styles = StyleSheet.create({
   cardTitle: {
     fontFamily: Fonts.cormorantSCBold,
     fontSize: 22,
-    color: '#fff',
-    marginTop: 40,
+    color: '#D9B699',
+    // marginTop: 40,
   },
   priceRow: {
     flexDirection: 'row',
@@ -398,7 +433,6 @@ const styles = StyleSheet.create({
   },
   featuresList: {
     gap: 8,
-  
   },
   featureText: {
     fontFamily: Fonts.aeonikRegular,
@@ -406,6 +440,15 @@ const styles = StyleSheet.create({
     color: '#fff',
     opacity: 0.9,
   },
+
+
+gradientWrapper: {
+  width: '100%',
+  height: '100%',
+  justifyContent: 'center',
+  alignItems: 'center',
+  borderRadius: 26, 
+},
   actionBtn: {
     height: 52,
     width: '100%',
@@ -413,15 +456,16 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginTop: 15,
+    borderColor: '#D9B699',
+    borderWidth: 1,
   },
   actionText: {
     fontSize: 16,
-    color: '#000',
-    fontFamily: Fonts.aeonikBold,
+    color: '#fff',
+    fontFamily: Fonts.aeonikRegular,
   },
-
   activatedButton: {
-    backgroundColor: '#4CAF50', // A green color for success
+    backgroundColor: '#4CAF50', 
     height: 52,
     width: '100%',
     borderRadius: 26,
@@ -434,35 +478,14 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontFamily: Fonts.aeonikBold,
   },
+  // Add this to your styles object at the bottom
+  seeMoreText: {
+    fontFamily: Fonts.aeonikBold,
+    fontSize: 13,
+    color: '#D9B699', // Or any color you like
+    marginTop: 8,
+  },
 });
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 // import React, { useState } from 'react';
 // import {

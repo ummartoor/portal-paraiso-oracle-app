@@ -5,6 +5,7 @@ import axios from 'axios';
 import { Alert } from 'react-native';
 import { API_BASEURL } from '@env';
 
+import { showErrorToast, showSuccessToast } from '../utils/toastHelper';
 // --- Interfaces ---
 
 // --- ADDED: Interface to define the structure of the user object ---
@@ -67,7 +68,7 @@ export const useRegisterStore = create<RegisterState>((set, get) => ({
         headers: { 'Content-Type': 'application/json' },
       });
       const token = response.data?.token; 
-      const user = response.data?.user as User; // Cast to our User interface
+      const user = response.data?.user as User; 
       console.log(response.data)
       if (token && user) {
         await AsyncStorage.setItem('x-auth-token', token);
@@ -83,9 +84,13 @@ export const useRegisterStore = create<RegisterState>((set, get) => ({
         return { success: false };
       }
     } catch (error: any) {
-      const apiError = error.response?.data;
-      const message = Array.isArray(apiError?.message) ? apiError.message.join('\n') : apiError?.message || 'Registration failed';
-      Alert.alert('Error', message);
+        const apiError = error.response?.data;
+      const message = Array.isArray(apiError?.message)
+        ? apiError.message.join('\n')
+        : apiError?.message || 'Registration failed due to a network error.';
+      
+      // --- CHANGE: Replaced Alert with toast ---
+      showErrorToast('Registration Error', message);
       set({ isRegistering: false });
       return { success: false };
     }

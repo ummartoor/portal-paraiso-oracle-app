@@ -13,12 +13,16 @@ import {
   Image,
   ScrollView,
   ImageSourcePropType,
+  
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useThemeStore } from '../../../store/useThemeStore';
 import { useAuthStore } from '../../../store/useAuthStore';
 import { Fonts } from '../../../constants/fonts';
 import LogOutModal from '../../../components/LogOutModal';
+
+import NotificationToggleModal from './NotificationToggleModal'; 
+
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { AppStackParamList } from '../../../navigation/routeTypes';
 import { useTranslation } from 'react-i18next'; 
@@ -44,13 +48,21 @@ const formatDate = (dateString?: string) => {
 
 const ProfileScreen: React.FC = () => {
   const { colors } = useThemeStore(state => state.theme);
+   const [notificationModalVisible, setNotificationModalVisible] = useState(false);
     const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const [logoutModalVisible, setLogoutModalVisible] = useState(false);
   const navigation = useNavigation<NativeStackNavigationProp<AppStackParamList>>();
   const { user, fetchCurrentUser, logout } = useAuthStore();
 
-
+ const handleNotificationUpdate = async (settings: {
+    allNotifications: boolean;
+    dailyWisdom: boolean;
+    ritual: boolean;
+  }) => {
+    console.log('Modal "Update" button clicked. Settings received:', settings);
+    return true; 
+  };
     const ZODIACS: Zodiac[] = [
     { key: "aries", name: t('zodiac_aries'), icon: require("../../../assets/icons/AriesIcon.png") },
     { key: "taurus", name: t('zodiac_taurus'), icon: require("../../../assets/icons/TaurusIcon.png") },
@@ -66,7 +78,7 @@ const ProfileScreen: React.FC = () => {
     { key: "pisces", name: t('zodiac_pisces'), icon: require("../../../assets/icons/PiscesIcon.png") },
   ];
 
-  // --- FIX: Fetches fresh user data every time the screen is focused ---
+ 
   useFocusEffect(
     useCallback(() => {
       fetchCurrentUser();
@@ -167,24 +179,29 @@ console.log('Checking User Profile Image URL:', user?.profile_image);
             </View>
 
             {/* Box 2 */}
-            <View
-              style={[
-                styles.infoCard,
-                {
-                  backgroundColor: colors.bgBox,
-                  width: CARD_WIDTH,
-                },
-              ]}
+  <TouchableOpacity
+              activeOpacity={0.8}
+              onPress={() => setNotificationModalVisible(true)}
             >
-              <Image
-                source={require('../../../assets/icons/NotificationIcons.png')}
-                style={{ width: 50, height: 50, marginBottom: 12 }}
-                resizeMode="contain"
-              />
-       <Text style={[styles.cardTitle, { color: colors.primary }]}>{t('profile_notification_title')}</Text>
-
-              <Text style={[styles.cardSub, { color: colors.white, opacity: 0.8 }]}>{t('profile_notification_status_disabled')}</Text>
-            </View>
+              <View
+                style={[
+                  styles.infoCard,
+                  {
+                    backgroundColor: colors.bgBox,
+                    width: CARD_WIDTH,
+                  },
+                ]}
+              >
+        
+                <Image
+                  source={require('../../../assets/icons/NotificationIcons.png')}
+                  style={{ width: 50, height: 50, marginBottom: 12 }}
+                  resizeMode="contain"
+                />
+                <Text style={[styles.cardTitle, { color: colors.primary }]}>{t('profile_notification_title')}</Text>
+                <Text style={[styles.cardSub, { color: colors.white, opacity: 0.8 }]}>{t('profile_notification_status_disabled')}</Text>
+              </View>
+            </TouchableOpacity>
           </View>
 
           {/* Subscription */}
@@ -198,6 +215,27 @@ console.log('Checking User Profile Image URL:', user?.profile_image);
               resizeMode="contain"
             />
           </TouchableOpacity>
+          
+             <TouchableOpacity activeOpacity={0.85} onPress={() => navigation.navigate('PurchaseHistory')}
+            style={[styles.rowBtn, { backgroundColor: colors.bgBox }]}>
+            <Text style={[styles.rowText, { color: colors.white }]}>Purchase History</Text>
+            <Image
+              source={require('../../../assets/icons/rightArrowIcon.png')}
+              style={{ width: 18, height: 18 }}
+              resizeMode="contain"
+            />
+          </TouchableOpacity>
+             <TouchableOpacity activeOpacity={0.85} onPress={() => navigation.navigate('SubscriptionDetails')}
+            style={[styles.rowBtn, { backgroundColor: colors.bgBox }]}>
+            <Text style={[styles.rowText, { color: colors.white }]}>Subscription Details</Text>
+            <Image
+              source={require('../../../assets/icons/rightArrowIcon.png')}
+              style={{ width: 18, height: 18 }}
+              resizeMode="contain"
+            />
+          </TouchableOpacity>
+          
+      
 
           {/* Document */}
             <Text style={[styles.sectionTitle, { color: colors.primary, marginTop: 18 }]}>{t('profile_document_header')}</Text>
@@ -271,6 +309,19 @@ console.log('Checking User Profile Image URL:', user?.profile_image);
             logout();
           }}
         />
+   <NotificationToggleModal
+          isVisible={notificationModalVisible}
+          onClose={() => setNotificationModalVisible(false)}
+          onConfirm={handleNotificationUpdate} 
+        
+          defaultValues={{
+            allNotifications: true,
+            dailyWisdom: true,
+            ritual: true,
+          }}
+        />
+
+        
       </ImageBackground>
     </SafeAreaView>
   );
