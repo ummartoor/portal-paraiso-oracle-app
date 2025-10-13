@@ -1,3 +1,4 @@
 <resources>
-    <string name="app_name">portal_paraiso_oracle_app</string>
+    <!-- <string name="app_name">portal_paraiso_oracle_app</string> -->
+       <string name="app_name">PortalParaiso</string>
 </resources>
