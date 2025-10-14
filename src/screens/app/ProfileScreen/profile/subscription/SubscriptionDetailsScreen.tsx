@@ -86,14 +86,13 @@ const SubscriptionDetailsScreen = () => {
     const { vipSubscription } = currentSubscription;
 
     return (
-      <View style={styles.contentContainer}>
+   <View style={styles.contentContainer}>
         <GradientBox
           colors={[colors.bgBox, colors.bgBox]}
           style={styles.currentPlanCard}
         >
           <View style={styles.planHeader}>
             <Text style={[styles.currentPlanName, {color:colors.primary}]}>
-              {/* --- CHANGE: Using packageName from vipSubscription --- */}
               {vipSubscription?.packageName || 'Active Plan'}
             </Text>
             {vipSubscription?.tier && (
@@ -105,18 +104,25 @@ const SubscriptionDetailsScreen = () => {
 
           <View style={styles.divider} />
 
-          {/* --- CHANGE: Display start and expiry dates from vipSubscription --- */}
+          {/* --- NEW: Display Price --- */}
+          <View style={styles.dateInfoRow}>
+            <Text style={styles.dateLabel}>Price</Text>
+            <Text style={styles.dateValue}>
+             
+   {`${vipSubscription?.currency?.toUpperCase()} ${(vipSubscription?.amount / 100 || 0).toFixed(2)} / ${vipSubscription?.interval}`}
+            </Text>
+          </View>
+
+          {/* --- Display start and expiry dates --- */}
           <View style={styles.dateInfoRow}>
             <Text style={styles.dateLabel}>Activated On</Text>
             <Text style={styles.dateValue}>
-              {/* Using startDate from vipSubscription */}
               {formatDate(vipSubscription?.startDate)}
             </Text>
           </View>
           <View style={styles.dateInfoRow}>
             <Text style={styles.dateLabel}>Expires On</Text>
             <Text style={styles.dateValue}>
-              {/* Using currentPeriodEnd from vipSubscription for expiry */}
               {formatDate(vipSubscription?.currentPeriodEnd)}
             </Text>
           </View>
