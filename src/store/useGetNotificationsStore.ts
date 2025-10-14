@@ -339,6 +339,13 @@ export interface RitualTipDetailData {
     };
 }
 
+// --- NEW: Interface for Notification Settings ---
+export interface NotificationSettings {
+  email: boolean;
+  push: boolean;
+  daily_wisdom_cards: boolean;
+  ritual_tips: boolean;
+}
 
 // =================================================================
 // ZUSTAND STORE
@@ -368,6 +375,13 @@ interface NotificationState {
   ritualTipDetail: RitualTipDetailData | null;
   isLoadingRitualTip: boolean;
   getRitualTipNotification: () => Promise<RitualTipDetailData | null>;
+
+
+  // for Notification settings ---
+  notificationSettings: NotificationSettings | null;
+  isUpdatingSettings: boolean;
+  settingsError: string | null;
+  updateNotificationSettings: (settings: Partial<NotificationSettings>) => Promise<boolean>;
 }
 
 export const useGetNotificationsStore = create<NotificationState>((set, get) => ({
@@ -385,6 +399,10 @@ export const useGetNotificationsStore = create<NotificationState>((set, get) => 
   ritualTipDetail: null,
   isLoadingRitualTip: false,
 
+
+    notificationSettings: null,
+  isUpdatingSettings: false,
+  settingsError: null,
   // =================================================================
   // ACTIONS
   // =================================================================
@@ -546,6 +564,41 @@ export const useGetNotificationsStore = create<NotificationState>((set, get) => 
         set({ isLoadingRitualTip: false });
         Alert.alert('Error', error.message);
         return null;
+    }
+  },
+
+
+   updateNotificationSettings: async (settings: Partial<NotificationSettings>) => {
+    set({ isUpdatingSettings: true, settingsError: null });
+    try {
+      const token = await AsyncStorage.getItem('x-auth-token');
+      if (!token) throw new Error('Authentication token not found.');
+      
+      const headers = { 'x-auth-token': token };
+      const payload = { notifications: settings };
+
+      const response = await axios.put(
+        `${API_BASEURL}/user/change-notifications-settings`,
+        payload,
+        { headers }
+      );
+
+      if (response.data?.success) {
+        // Update local state with the new settings from the response
+        set({
+          notificationSettings: response.data.data.notifications,
+          isUpdatingSettings: false,
+        });
+        Alert.alert('Success', 'Settings updated successfully!');
+        return true;
+      } else {
+        throw new Error(response.data.message || 'Failed to update settings.');
+      }
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.message || error.message || 'An unknown error occurred.';
+      set({ settingsError: errorMessage, isUpdatingSettings: false });
+      Alert.alert('Error', errorMessage);
+      return false;
     }
   },
 }));

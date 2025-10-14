@@ -38,7 +38,7 @@ const BuySubscriptionScreen = () => {
   const { t } = useTranslation();
   const { initPaymentSheet, presentPaymentSheet } = useStripe();
 
-  // --- CHANGE: Added `confirmPayment` from the store ---
+
   const {
     packages,
     isLoading,
@@ -322,7 +322,7 @@ const BuySubscriptionScreen = () => {
 
 export default BuySubscriptionScreen;
 
-// --- Styles (No changes) ---
+// --- Styles ---
 const styles = StyleSheet.create({
   bgImage: { flex: 1 },
   container: {
@@ -478,14 +478,28 @@ gradientWrapper: {
     color: '#fff',
     fontFamily: Fonts.aeonikBold,
   },
-  // Add this to your styles object at the bottom
+
   seeMoreText: {
     fontFamily: Fonts.aeonikBold,
     fontSize: 13,
-    color: '#D9B699', // Or any color you like
+    color: '#D9B699', 
     marginTop: 8,
   },
 });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 // import React, { useState } from 'react';
 // import {

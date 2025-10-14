@@ -34,6 +34,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import { Alert } from 'react-native';
 import { API_BASEURL } from   '@env';
+import { useGetNotificationsStore } from './useGetNotificationsStore';
 
 // --- Interfaces ---
 
@@ -55,9 +56,18 @@ interface User {
     key: string | null;
     url: string | null;
   };
+
+    // preferences object add karein
+  preferences?: {
+    notifications: {
+      email: boolean;
+      push: boolean;
+      daily_wisdom_cards: boolean;
+      ritual_tips: boolean;
+    };
 }
 
-
+}
 
 type UpdateProfileData = {
   name?: string;
@@ -178,47 +188,41 @@ login: async (email, password, deviceToken) => {
 
 // --- FETCH CURRENT USER ---
 fetchCurrentUser: async () => {
-  try {
-    // 1. Get token from storage, as this often runs on app start
-    const token = await AsyncStorage.getItem('x-auth-token');
+    try {
+      const token = await AsyncStorage.getItem('x-auth-token');
+      if (!token) {
+        set({ isLoggedIn: false, user: null, token: null });
+        return false;
+      }
 
-    if (!token) {
+      const response = await axios.get(`${API_BASEURL}/auth/me`, {
+        headers: { 'x-auth-token': token },
+      });
 
-      set({ isLoggedIn: false, user: null, token: null });
+      if (response.data && response.data.success) {
+        const updatedUser = response.data.user as User;
+
+        set({ user: updatedUser, isLoggedIn: true, token });
+        await AsyncStorage.setItem('user', JSON.stringify(updatedUser));
+        
+        // --- CHANGE: Sahi path se notification settings haasil karein ---
+        if (updatedUser.preferences?.notifications) {
+          useGetNotificationsStore.setState({ 
+            notificationSettings: updatedUser.preferences.notifications 
+          });
+        }
+        
+        return true;
+      } else {
+        throw new Error(response.data.message || 'Failed to fetch user profile.');
+      }
+    } catch (error: any) {
+      console.log('FETCH USER ERROR:', error.response?.data?.message || error.message);
+      await AsyncStorage.clear();
+      set({ isLoggedIn: false, token: null, user: null });
       return false;
     }
-
-
-    const response = await axios.get(`${API_BASEURL}/auth/me`, {
-      headers: {
-        'x-auth-token': token,
-      },
-    });
-    
-    console.log('FETCH CURRENT USER RESPONSE:', response.data);
-
-
-    if (response.data && response.data.success) {
-      const updatedUser = response.data.user as User;
-      
-
-      set({ user: updatedUser, isLoggedIn: true, token });
-      await AsyncStorage.setItem('user', JSON.stringify(updatedUser));
-      
-      return true;
-    } else {
-      throw new Error(response.data.message || 'Failed to fetch user profile.');
-    }
-  } catch (error: any) {
-    console.log('FETCH USER ERROR:', error.response?.data?.message || error.message);
-    
-    // If token is invalid, the API might return an error. Log the user out.
-    await AsyncStorage.clear();
-    set({ isLoggedIn: false, token: null, user: null });
-    
-    return false;
-  }
-},
+  },
   googleLogin: async (accessToken: string, deviceToken: string) => {
     try {
       const response = await axios.post(

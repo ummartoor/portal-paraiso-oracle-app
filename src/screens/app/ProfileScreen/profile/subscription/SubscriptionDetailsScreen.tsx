@@ -19,8 +19,8 @@ import { useThemeStore } from '../../../../../store/useThemeStore';
 import { useStripeStore } from '../../../../../store/useStripeStore';
 import GradientBox from '../../../../../components/GradientBox';
 
-// --- CHANGE: Date formatting helper ---
-const formatDate = (dateString: string | undefined) => {
+// --- Date formatting helper ---
+const formatDate = (dateString: string | undefined | null) => {
   if (!dateString) return 'N/A';
   return new Date(dateString).toLocaleDateString(undefined, {
     year: 'numeric',
@@ -33,21 +33,24 @@ const SubscriptionDetailsScreen = () => {
   const { colors } = useThemeStore(s => s.theme);
   const navigation = useNavigation<any>();
 
-  // --- Zustand store: Fetching subscription data ---
-  const { subscriptionDetails, isFetchingSubscription, fetchSubscriptionDetails } =
-    useStripeStore(
-      useShallow(state => ({
-        subscriptionDetails: state.subscriptionDetails,
-        isFetchingSubscription: state.isFetchingSubscription,
-        fetchSubscriptionDetails: state.fetchSubscriptionDetails,
-      })),
-    );
+  // --- Zustand store: Using the new fetchCurrentSubscription ---
+  const {
+    currentSubscription,
+    isFetchingSubscription,
+    fetchCurrentSubscription,
+  } = useStripeStore(
+    useShallow(state => ({
+      currentSubscription: state.currentSubscription,
+      isFetchingSubscription: state.isFetchingSubscription,
+      fetchCurrentSubscription: state.fetchCurrentSubscription,
+    })),
+  );
 
   // --- Fetch data when the screen is focused ---
   useFocusEffect(
     useCallback(() => {
-      fetchSubscriptionDetails();
-    }, [fetchSubscriptionDetails]),
+      fetchCurrentSubscription();
+    }, [fetchCurrentSubscription]),
   );
 
   const renderContent = () => {
@@ -61,8 +64,8 @@ const SubscriptionDetailsScreen = () => {
     }
 
     // --- No Active Subscription State ---
-    // --- CHANGE: Updated to check for vip_subscription as well for more accuracy ---
-    if (!subscriptionDetails?.current_package && !subscriptionDetails?.vip_subscription) {
+    // --- CHANGE: Updated to check for vipSubscription from the new API response ---
+    if (!currentSubscription?.vipSubscription) {
       return (
         <View style={styles.emptyContainer}>
           <Text style={styles.emptyTitle}>No Active Subscription</Text>
@@ -80,7 +83,7 @@ const SubscriptionDetailsScreen = () => {
     }
 
     // --- Active Subscription Details ---
-    const { current_package, vip_subscription } = subscriptionDetails;
+    const { vipSubscription } = currentSubscription;
 
     return (
       <View style={styles.contentContainer}>
@@ -89,32 +92,32 @@ const SubscriptionDetailsScreen = () => {
           style={styles.currentPlanCard}
         >
           <View style={styles.planHeader}>
-            <Text style={styles.currentPlanName}>
-              {/* --- CHANGE: Show package name, fall back to a default if needed --- */}
-              {current_package?.name || 'Active Plan'}
+            <Text style={[styles.currentPlanName, {color:colors.primary}]}>
+              {/* --- CHANGE: Using packageName from vipSubscription --- */}
+              {vipSubscription?.packageName || 'Active Plan'}
             </Text>
-            {current_package?.tier && (
-              <View style={[styles.tierBadge, { backgroundColor: colors.primary }]}>
-                <Text style={styles.tierText}>Tier {current_package.tier}</Text>
+            {vipSubscription?.tier && (
+              <View style={[styles.tierBadge, { backgroundColor: colors.white}]}>
+                <Text style={styles.tierText}>Tier {vipSubscription.tier}</Text>
               </View>
             )}
           </View>
 
           <View style={styles.divider} />
 
-          {/* --- CHANGE: Display start and expiry dates --- */}
+          {/* --- CHANGE: Display start and expiry dates from vipSubscription --- */}
           <View style={styles.dateInfoRow}>
             <Text style={styles.dateLabel}>Activated On</Text>
             <Text style={styles.dateValue}>
-              {/* Assumes start_date is in the vip_subscription object */}
-              {formatDate(vip_subscription?.start_date)}
+              {/* Using startDate from vipSubscription */}
+              {formatDate(vipSubscription?.startDate)}
             </Text>
           </View>
           <View style={styles.dateInfoRow}>
             <Text style={styles.dateLabel}>Expires On</Text>
             <Text style={styles.dateValue}>
-              {/* Assumes end_date is in the vip_subscription object */}
-              {formatDate(vip_subscription?.end_date)}
+              {/* Using currentPeriodEnd from vipSubscription for expiry */}
+              {formatDate(vipSubscription?.currentPeriodEnd)}
             </Text>
           </View>
         </GradientBox>
@@ -190,22 +193,20 @@ const styles = StyleSheet.create({
   },
   backIcon: { width: 22, height: 22, tintColor: '#fff' },
   headerTitleWrap: {
-    maxWidth: '70%',
+    maxWidth: '100%',
     alignItems: 'center',
     justifyContent: 'center',
   },
   headerTitle: {
     fontFamily: Fonts.cormorantSCBold,
     fontSize: 24,
-    letterSpacing: 1,
-    textTransform: 'capitalize',
+
   },
   loaderContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  // --- CHANGE: Renamed from scrollContainer ---
   contentContainer: {
     flex: 1,
     paddingHorizontal: 20,
@@ -213,11 +214,8 @@ const styles = StyleSheet.create({
   },
   currentPlanCard: {
     borderRadius: 16,
-    borderWidth: 1.5,
-    borderColor: 'rgba(255,255,255,0.2)',
     padding: 20,
   },
-  // --- CHANGE: New styles for plan header ---
   planHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -227,7 +225,7 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.cormorantSCBold,
     fontSize: 22,
     color: '#fff',
-    flex: 1, // Allows text to wrap if long
+    flex: 1, 
   },
   tierBadge: {
     borderRadius: 12,
@@ -240,7 +238,6 @@ const styles = StyleSheet.create({
     color: '#000',
     textTransform: 'uppercase',
   },
-  // --- CHANGE: New styles for dates ---
   divider: {
     height: 1,
     backgroundColor: 'rgba(255,255,255,0.1)',
@@ -258,7 +255,7 @@ const styles = StyleSheet.create({
     color: 'rgba(255,255,255,0.7)',
   },
   dateValue: {
-    fontFamily: Fonts.aeonikBold,
+    fontFamily: Fonts.aeonikRegular,
     fontSize: 15,
     color: '#fff',
   },

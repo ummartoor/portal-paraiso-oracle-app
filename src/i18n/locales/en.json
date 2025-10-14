@@ -211,6 +211,7 @@
   "profile_user_name_fallback": "User Name",
   "profile_zodiac_sign_label": "Zodiac Sign",
   "profile_notification_title": "Notification",
+  "profile_notification_status_enabled" :"Enable",
   "profile_notification_status_disabled": "Disabled",
   "profile_subscription_header": "Subscription",
   "profile_buy_subscription_button": "Buy Subscription",

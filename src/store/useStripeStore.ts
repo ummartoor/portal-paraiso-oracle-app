@@ -264,32 +264,28 @@ export interface Purchase {
   metadata: PurchaseMetadata;
 }
 
-// --- NEW: Interfaces for Subscription Details ---
-export interface FeatureSet {
-  oracles: Record<string, boolean>;
-  readings: Record<string, any>;
-  games: Record<string, any>;
-  history: Record<string, any>;
-  content: Record<string, boolean>;
-  experience: Record<string, boolean>;
-  game_packs: Record<string, any>;
-}
-
-export interface CurrentPackageDetails {
-  id: string;
-  name: string;
-  type: string;
+// --- NEW: Interfaces for Current Subscription ---
+export interface VipSubscription {
+  subscriptionId: string;
+  packageId: string;
+  packageName: string;
+  amount: number;
+  currency: string;
+  interval: string;
+  status: string;
+  startDate: string;
+  currentPeriodStart: string;
+  currentPeriodEnd: string;
+  endedAt: string | null;
   tier: number;
-  features: FeatureSet & { _id: string };
+  cancelAtPeriodEnd: boolean;
 }
 
-export interface SubscriptionData {
-  current_package: CurrentPackageDetails | null;
-  current_features: FeatureSet;
-  vip_subscription: any | null;
-  game_packs: any[];
-  free_package: any | null;
+export interface CurrentSubscriptionData {
+  vipSubscription: VipSubscription | null;
+  gamePacks: any[]; // You can define a more specific type for gamePacks if needed
 }
+
 
 // =================================================================
 // ZUSTAND STORE
@@ -321,11 +317,11 @@ interface StripeState {
   historyError: string | null;
   fetchPurchaseHistory: () => Promise<void>;
   
-  // --- NEW: States for fetching subscription details ---
-  subscriptionDetails: SubscriptionData | null;
+  // --- NEW: States for fetching current subscription ---
+  currentSubscription: CurrentSubscriptionData | null;
   isFetchingSubscription: boolean;
   subscriptionError: string | null;
-  fetchSubscriptionDetails: () => Promise<void>;
+  fetchCurrentSubscription: () => Promise<void>;
 }
 
 export const useStripeStore = create<StripeState>(set => ({
@@ -340,8 +336,8 @@ export const useStripeStore = create<StripeState>(set => ({
   purchaseHistory: null,
   isFetchingHistory: false,
   historyError: null,
-  // --- NEW: Initial states for subscription details ---
-  subscriptionDetails: null,
+  // --- NEW: Initial states for current subscription ---
+  currentSubscription: null,
   isFetchingSubscription: false,
   subscriptionError: null,
 
@@ -494,11 +490,11 @@ export const useStripeStore = create<StripeState>(set => ({
       Alert.alert('Error', errorMessage);
     }
   },
-
+  
   /**
    * NEW: Fetches the user's current subscription details from the server.
    */
-  fetchSubscriptionDetails: async () => {
+  fetchCurrentSubscription: async () => {
     set({ isFetchingSubscription: true, subscriptionError: null });
     try {
       const token = await AsyncStorage.getItem('x-auth-token');
@@ -508,13 +504,13 @@ export const useStripeStore = create<StripeState>(set => ({
 
       const headers = { 'x-auth-token': token };
 
-      const response = await axios.get(`${API_BASEURL}/user/subscription-details`, {
+      const response = await axios.get(`${API_BASEURL}/stripe/current-subscription`, {
         headers,
       });
 
       if (response.data?.success) {
         set({
-          subscriptionDetails: response.data.data as SubscriptionData,
+          currentSubscription: response.data.data as CurrentSubscriptionData,
           isFetchingSubscription: false,
         });
       } else {
