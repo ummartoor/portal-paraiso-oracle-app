@@ -70,6 +70,27 @@ const STEP_DEG = 12;
 const HALF_WINDOW = (VISIBLE_COUNT - 1) / 2;
 const MAX_VISIBLE_DEG = HALF_WINDOW * STEP_DEG;
 const ITEM_STRIDE = 65;
+
+const shuffleArray = (array: TarotCardFromAPI[]): TarotCardFromAPI[] => {
+  // Create a copy to avoid mutating the original array
+  const newArray = [...array];
+  let currentIndex = newArray.length;
+  let randomIndex;
+
+  // While there remain elements to shuffle...
+  while (currentIndex !== 0) {
+    // Pick a remaining element...
+    randomIndex = Math.floor(Math.random() * currentIndex);
+    currentIndex--;
+
+    // And swap it with the current element.
+    [newArray[currentIndex], newArray[randomIndex]] = [
+      newArray[randomIndex], newArray[currentIndex],
+    ];
+  }
+  return newArray;
+};
+
 function triggerHaptic() {
   if (Platform.OS === 'android') {
     Vibration.vibrate([0, 35, 40, 35]);
@@ -100,8 +121,8 @@ const TarotCardDetailScreen: React.FC = () => {
     generateReading,
     readingData,
     isReadingLoading,
-    saveReading, // <-- Add this
-    isSavingLoading, // <-- And this
+    saveReading, 
+    isSavingLoading, 
   } = useTarotCardStore();
 
   const [fullDeck, setFullDeck] = useState<DeckCard[]>([]);
@@ -133,14 +154,37 @@ const TarotCardDetailScreen: React.FC = () => {
     fetchTarotCards();
   }, [fetchTarotCards]);
 
-  useEffect(() => {
-    if (apiCards.length > 0) {
-      const cardBackImg = require('../../../../../assets/images/deskCard.png');
-      const transformedDeck = apiCards.map(card => ({ ...card, cardBackImg }));
-      setFullDeck(transformedDeck);
-      progress.value = Math.floor(transformedDeck.length / 2);
-    }
-  }, [apiCards]);
+  // useEffect(() => {
+  //   if (apiCards.length > 0) {
+  //     const cardBackImg = require('../../../../../assets/images/deskCard.png');
+  //     const transformedDeck = apiCards.map(card => ({ ...card, cardBackImg }));
+  //     setFullDeck(transformedDeck);
+  //     progress.value = Math.floor(transformedDeck.length / 2);
+  //   }
+  // }, [apiCards]);
+
+
+
+  // NEW UPDATED CODE
+useEffect(() => {
+    if (apiCards.length > 0) {
+      // 1. Cards ko pehle shuffle karein
+      const shuffledApiCards = shuffleArray(apiCards);
+
+      const cardBackImg = require('../../../../../assets/images/deskCard.png');
+
+      // 2. Shuffled array ko use karke deck banayein
+      const transformedDeck = shuffledApiCards.map(card => ({
+        ...card,
+        cardBackImg,
+      }));
+      
+      setFullDeck(transformedDeck);
+      progress.value = Math.floor(transformedDeck.length / 2);
+    }
+}, [apiCards]);
+
+  
   useEffect(() => {
     const newMaxIndex = availableDeck.length > 0 ? availableDeck.length - 1 : 0;
     if (progress.value > newMaxIndex) {
