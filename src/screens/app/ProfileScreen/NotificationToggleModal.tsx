@@ -15,10 +15,12 @@ import GradientBox from '../../../components/GradientBox';
 import { useTranslation } from 'react-i18next';
 import { useGetNotificationsStore } from '../../../store/useGetNotificationsStore';
 import { useShallow } from 'zustand/react/shallow';
+
 interface NotificationToggleModalProps {
   isVisible: boolean;
   onClose: () => void;
   defaultValues?: {
+    email: boolean;
     push: boolean;
     daily_wisdom_cards: boolean;
     ritual_tips: boolean;
@@ -28,7 +30,7 @@ interface NotificationToggleModalProps {
 const NotificationToggleModal: React.FC<NotificationToggleModalProps> = ({
   isVisible,
   onClose,
-  defaultValues = { push: true, daily_wisdom_cards: true, ritual_tips: true },
+  defaultValues = { email: true, push: true, daily_wisdom_cards: true, ritual_tips: true },
 }) => {
   const colors = useThemeStore(state => state.theme.colors);
   const { t } = useTranslation();
@@ -40,45 +42,25 @@ const NotificationToggleModal: React.FC<NotificationToggleModalProps> = ({
     })),
   );
 
+  const [emailNotifications, setEmailNotifications] = useState(defaultValues.email);
   const [allNotifications, setAllNotifications] = useState(defaultValues.push);
   const [dailyWisdom, setDailyWisdom] = useState(defaultValues.daily_wisdom_cards);
   const [ritual, setRitual] = useState(defaultValues.ritual_tips);
 
   useEffect(() => {
     if (isVisible) {
+      setEmailNotifications(defaultValues.email);
       setAllNotifications(defaultValues.push);
       setDailyWisdom(defaultValues.daily_wisdom_cards);
       setRitual(defaultValues.ritual_tips);
     }
   }, [isVisible, defaultValues]);
 
-  // --- CHANGE: Updated logic for the master toggle ---
-  const handleAllNotificationsToggle = (newValue: boolean) => {
-    setAllNotifications(newValue);
-    // Jab master toggle ON ho, to baaqi dono bhi ON ho jayen
-    if (newValue) {
-      setDailyWisdom(true);
-      setRitual(true);
-    } else {
-      // Jab master toggle OFF ho, to baaqi dono bhi OFF ho jayen
-      setDailyWisdom(false);
-      setRitual(false);
-    }
-  };
-
-  useEffect(() => {
-    // Agar individual toggles ON/OFF hon, to master toggle ko sync karein
-    if (dailyWisdom && ritual) {
-      setAllNotifications(true);
-    } else if (!dailyWisdom && !ritual) {
-      setAllNotifications(false);
-    }
-  }, [dailyWisdom, ritual]);
-
   const handleUpdate = async () => {
     Vibration.vibrate([0, 35, 40, 35]);
     if (!isUpdatingSettings) {
       const settingsPayload = {
+        email: emailNotifications,
         push: allNotifications,
         daily_wisdom_cards: dailyWisdom,
         ritual_tips: ritual,
@@ -96,43 +78,55 @@ const NotificationToggleModal: React.FC<NotificationToggleModalProps> = ({
         <View style={styles(colors).overlay}>
           <View style={styles(colors).modal}>
             <Text style={styles(colors).heading}>Notification Settings</Text>
-            
+
             <View style={styles(colors).headerRow}>
-              <Text style={styles(colors).label}>All Push Notifications</Text>
+              <Text style={styles(colors).label}>Email Notifications</Text>
+              <Switch
+                trackColor={{ false: '#767577', true: colors.primary }}
+                thumbColor={emailNotifications ? colors.white : '#f4f3f4'}
+                ios_backgroundColor="#3e3e3e"
+                onValueChange={setEmailNotifications}
+                value={emailNotifications}
+                disabled={isUpdatingSettings}
+              />
+            </View>
+
+            <View style={styles(colors).headerRow}>
+              <Text style={styles(colors).label}>Push Notifications</Text>
               <Switch
                 trackColor={{ false: '#767577', true: colors.primary }}
                 thumbColor={allNotifications ? colors.white : '#f4f3f4'}
                 ios_backgroundColor="#3e3e3e"
-                onValueChange={handleAllNotificationsToggle}
+                onValueChange={setAllNotifications}
                 value={allNotifications}
                 disabled={isUpdatingSettings}
               />
             </View>
 
-            <View style={styles(colors).notificationContainer}>
-              <View style={styles(colors).notificationRow}>
-                <Text style={styles(colors).label}>Daily Wisdom Card</Text>
-                <Switch
-                  trackColor={{ false: '#767577', true: colors.primary }}
-                  thumbColor={dailyWisdom ? colors.white : '#f4f3f4'}
-                  ios_backgroundColor="#3e3e3e"
-                  onValueChange={setDailyWisdom}
-                  value={dailyWisdom}
-                  disabled={isUpdatingSettings}
-                />
-              </View>
+            <View style={styles(colors).headerRow}>
+              <Text style={styles(colors).label}>Daily Wisdom Card</Text>
+              <Switch
+                trackColor={{ false: '#767577', true: colors.primary }}
+                thumbColor={dailyWisdom ? colors.white : '#f4f3f4'}
+                ios_backgroundColor="#3e3e3e"
+                onValueChange={setDailyWisdom}
+                value={dailyWisdom}
+                // --- FIX: Removed dependency on 'allNotifications' ---
+                disabled={isUpdatingSettings}
+              />
+            </View>
 
-              <View style={styles(colors).notificationRow}>
-                <Text style={styles(colors).label}>Ritual Tip</Text>
-                <Switch
-                  trackColor={{ false: '#767577', true: colors.primary }}
-                  thumbColor={ritual ? colors.white : '#f4f3f4'}
-                  ios_backgroundColor="#3e3e3e"
-                  onValueChange={setRitual}
-                  value={ritual}
-                  disabled={isUpdatingSettings}
-                />
-              </View>
+            <View style={styles(colors).headerRow}>
+              <Text style={styles(colors).label}>Ritual Tip</Text>
+              <Switch
+                trackColor={{ false: '#767577', true: colors.primary }}
+                thumbColor={ritual ? colors.white : '#f4f3f4'}
+                ios_backgroundColor="#3e3e3e"
+                onValueChange={setRitual}
+                value={ritual}
+                // --- FIX: Removed dependency on 'allNotifications' ---
+                disabled={isUpdatingSettings}
+              />
             </View>
 
             <View style={styles(colors).buttonRow}>
@@ -201,17 +195,6 @@ const styles = (colors: any) =>
       color: colors.primary,
       marginBottom: 16,
     },
-    notificationContainer: {
-      width: '100%',
-      marginBottom: 20,
-    },
-    notificationRow: {
-      width: '100%',
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      paddingVertical: 12,
-    },
     label: {
       fontFamily: Fonts.aeonikRegular,
       fontSize: 16,
@@ -242,7 +225,7 @@ const styles = (colors: any) =>
       flexGrow: 1,
       flexBasis: 0,
       height: 50,
-      borderWidth: 1.7,
+      borderWidth: 1,
       borderColor: '#D9B699',
       borderRadius: 200,
       overflow: 'hidden',

@@ -129,7 +129,18 @@ const ProfileScreen: React.FC = () => {
       fetchCurrentUser();
     }, []),
   );
+  // --- CHANGE: Logic to determine if any notification is enabled ---
+  const isAnyNotificationEnabled = useMemo(() => {
+    if (!notificationSettings) return false;
+    return (
+      notificationSettings.email ||
+      notificationSettings.push ||
+      notificationSettings.daily_wisdom_cards ||
+      notificationSettings.ritual_tips
+    );
+  }, [notificationSettings]);
 
+  
   const userZodiac = useMemo(() => {
     if (!user?.sign_in_zodiac) return null;
     return ZODIACS.find(z => z.key === user.sign_in_zodiac);
@@ -232,6 +243,7 @@ const ProfileScreen: React.FC = () => {
 
             {/* Box 2 */}
             {/* Notification Box */}
+                {/* Notification Box */}
             <TouchableOpacity
               activeOpacity={0.8}
               onPress={() => setNotificationModalVisible(true)}
@@ -253,15 +265,15 @@ const ProfileScreen: React.FC = () => {
                 <Text style={[styles.cardTitle, { color: colors.primary }]}>
                   {t('profile_notification_title')}
                 </Text>
-                {/* --- CHANGE: Dynamic status text --- */}
+                {/* --- CHANGE: Updated dynamic status text --- */}
                 <Text
                   style={[
                     styles.cardSub,
                     { color: colors.white, opacity: 0.8 },
                   ]}
                 >
-                  {notificationSettings?.push 
-                    ? t('profile_notification_status_enabled') 
+                  {isAnyNotificationEnabled
+                    ? t('profile_notification_status_enabled')
                     : t('profile_notification_status_disabled')}
                 </Text>
               </View>
@@ -439,14 +451,16 @@ const ProfileScreen: React.FC = () => {
             logout();
           }}
         />
-           <NotificationToggleModal
+          <NotificationToggleModal
           isVisible={notificationModalVisible}
           onClose={() => setNotificationModalVisible(false)}
+       
           defaultValues={notificationSettings ? {
+            email: notificationSettings.email,
             push: notificationSettings.push,
             daily_wisdom_cards: notificationSettings.daily_wisdom_cards,
             ritual_tips: notificationSettings.ritual_tips,
-          } : undefined} // Pass settings if available
+          } : undefined}
         />
 
       </ImageBackground>
