@@ -7,7 +7,7 @@ import {
   StyleSheet,
   ActivityIndicator,
   Vibration,
-  Switch,
+  Animated,
 } from 'react-native';
 import { useThemeStore } from '../../../store/useThemeStore';
 import { Fonts } from '../../../constants/fonts';
@@ -15,6 +15,12 @@ import GradientBox from '../../../components/GradientBox';
 import { useTranslation } from 'react-i18next';
 import { useGetNotificationsStore } from '../../../store/useGetNotificationsStore';
 import { useShallow } from 'zustand/react/shallow';
+
+interface CustomToggleSwitchProps {
+  value: boolean;
+  onValueChange: (newValue: boolean) => void;
+  disabled?: boolean;
+}
 
 interface NotificationToggleModalProps {
   isVisible: boolean;
@@ -27,12 +33,50 @@ interface NotificationToggleModalProps {
   };
 }
 
+const CustomToggleSwitch: React.FC<CustomToggleSwitchProps> = ({
+  value,
+  onValueChange,
+  disabled,
+}) => {
+  const { colors } = useThemeStore(state => state.theme);
+  const animatedValue = React.useRef(new Animated.Value(value ? 1 : 0)).current;
+
+  useEffect(() => {
+    Animated.timing(animatedValue, {
+      toValue: value ? 1 : 0,
+      duration: 200,
+      useNativeDriver: false,
+    }).start();
+  }, [value]);
+
+  const translateX = animatedValue.interpolate({
+    inputRange: [0, 1],
+    outputRange: [2, 22],
+  });
+
+  const backgroundColor = animatedValue.interpolate({
+    inputRange: [0, 1],
+    // --- FIX: Added a fallback color to prevent the TypeScript error ---
+    outputRange: ['#767577', colors.primary ?? '#D9B699'],
+  });
+
+  return (
+    <TouchableOpacity onPress={() => onValueChange(!value)} disabled={disabled}>
+      <Animated.View style={[styles(colors).toggleContainer, { backgroundColor }]}>
+        <Animated.View
+          style={[styles(colors).toggleThumb, { transform: [{ translateX }] }]}
+        />
+      </Animated.View>
+    </TouchableOpacity>
+  );
+};
+
 const NotificationToggleModal: React.FC<NotificationToggleModalProps> = ({
   isVisible,
   onClose,
   defaultValues = { email: true, push: true, daily_wisdom_cards: true, ritual_tips: true },
 }) => {
-  const colors = useThemeStore(state => state.theme.colors);
+  const { colors } = useThemeStore(state => state.theme);
   const { t } = useTranslation();
 
   const { updateNotificationSettings, isUpdatingSettings } = useGetNotificationsStore(
@@ -81,50 +125,36 @@ const NotificationToggleModal: React.FC<NotificationToggleModalProps> = ({
 
             <View style={styles(colors).headerRow}>
               <Text style={styles(colors).label}>Email Notifications</Text>
-              <Switch
-                trackColor={{ false: '#767577', true: colors.primary }}
-                thumbColor={emailNotifications ? colors.white : '#f4f3f4'}
-                ios_backgroundColor="#3e3e3e"
-                onValueChange={setEmailNotifications}
+              <CustomToggleSwitch
                 value={emailNotifications}
+                onValueChange={setEmailNotifications}
                 disabled={isUpdatingSettings}
               />
             </View>
 
             <View style={styles(colors).headerRow}>
               <Text style={styles(colors).label}>Push Notifications</Text>
-              <Switch
-                trackColor={{ false: '#767577', true: colors.primary }}
-                thumbColor={allNotifications ? colors.white : '#f4f3f4'}
-                ios_backgroundColor="#3e3e3e"
-                onValueChange={setAllNotifications}
+              <CustomToggleSwitch
                 value={allNotifications}
+                onValueChange={setAllNotifications}
                 disabled={isUpdatingSettings}
               />
             </View>
 
             <View style={styles(colors).headerRow}>
               <Text style={styles(colors).label}>Daily Wisdom Card</Text>
-              <Switch
-                trackColor={{ false: '#767577', true: colors.primary }}
-                thumbColor={dailyWisdom ? colors.white : '#f4f3f4'}
-                ios_backgroundColor="#3e3e3e"
-                onValueChange={setDailyWisdom}
+              <CustomToggleSwitch
                 value={dailyWisdom}
-                // --- FIX: Removed dependency on 'allNotifications' ---
+                onValueChange={setDailyWisdom}
                 disabled={isUpdatingSettings}
               />
             </View>
 
             <View style={styles(colors).headerRow}>
               <Text style={styles(colors).label}>Ritual Tip</Text>
-              <Switch
-                trackColor={{ false: '#767577', true: colors.primary }}
-                thumbColor={ritual ? colors.white : '#f4f3f4'}
-                ios_backgroundColor="#3e3e3e"
-                onValueChange={setRitual}
+              <CustomToggleSwitch
                 value={ritual}
-                // --- FIX: Removed dependency on 'allNotifications' ---
+                onValueChange={setRitual}
                 disabled={isUpdatingSettings}
               />
             </View>
@@ -241,5 +271,17 @@ const styles = (colors: any) =>
       fontFamily: Fonts.aeonikRegular,
       fontSize: 14,
       color: colors.white,
+    },
+    toggleContainer: {
+      width: 50,
+      height: 28,
+      borderRadius: 15,
+      justifyContent: 'center',
+    },
+    toggleThumb: {
+      width: 24,
+      height: 24,
+      borderRadius: 12,
+      backgroundColor: '#FFFFFF',
     },
   });

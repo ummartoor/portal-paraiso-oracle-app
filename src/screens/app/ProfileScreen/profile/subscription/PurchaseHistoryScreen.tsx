@@ -18,13 +18,13 @@ import { useShallow } from 'zustand/react/shallow';
 import { Fonts } from '../../../../../constants/fonts';
 import { useThemeStore } from '../../../../../store/useThemeStore';
 import { useStripeStore, Purchase } from '../../../../../store/useStripeStore';
-import GradientBox from '../../../../../components/GradientBox';
+// REMOVED: No longer importing GradientBox
+// import GradientBox from '../../../../../components/GradientBox';
 
 const PurchaseHistoryScreen = () => {
   const { colors } = useThemeStore(s => s.theme);
   const navigation = useNavigation<any>();
 
-  // --- Zustand store: Fetching history data ---
   const { purchaseHistory, isFetchingHistory, fetchPurchaseHistory } =
     useStripeStore(
       useShallow(state => ({
@@ -34,26 +34,21 @@ const PurchaseHistoryScreen = () => {
       })),
     );
 
-  // --- Fetch data when the screen is focused ---
   useFocusEffect(
     useCallback(() => {
       fetchPurchaseHistory();
     }, [fetchPurchaseHistory]),
   );
 
-  // --- Component for a single history item ---
   const HistoryItem = ({ item }: { item: Purchase }) => {
     const status = item.payment_status.toLowerCase();
-
-    // --- Using static colors to fix the error ---
     const statusColor =
       status === 'completed'
-        ? '#4CAF50' // Static green for success
+        ? '#4CAF50'
         : status === 'pending'
-        ? '#FFC107' // Static yellow for pending
-        : '#F44336'; // Static red for failed/other
+        ? '#FFC107'
+        : '#F44336';
 
-    // --- Format date for better readability ---
     const formattedDate = new Date(item.purchase_date).toLocaleDateString(
       undefined,
       {
@@ -64,10 +59,8 @@ const PurchaseHistoryScreen = () => {
     );
 
     return (
-      <GradientBox
-        colors={[colors.bgBox, colors.bgBox]}
-        style={styles.card}
-      >
+      // --- CHANGED: Replaced GradientBox with a standard View ---
+      <View style={[styles.card, { backgroundColor: colors.bgBox }]}>
         <View style={styles.cardHeader}>
           <Image
             source={require('../../../../../assets/icons/AquariusIcon.png')}
@@ -80,7 +73,6 @@ const PurchaseHistoryScreen = () => {
         </View>
         <View style={styles.cardFooter}>
           <Text style={styles.priceText}>
-            {/* --- FIX: Safely handle null currency --- */}
             {(item.amount / 100).toFixed(2)}{' '}
             {item.currency?.toUpperCase() ?? ''}
           </Text>
@@ -95,11 +87,10 @@ const PurchaseHistoryScreen = () => {
             </Text>
           </View>
         </View>
-      </GradientBox>
+      </View>
     );
   };
 
-  // --- Component to show when the list is empty ---
   const EmptyListComponent = () => (
     <View style={styles.emptyContainer}>
       <Text style={styles.emptyTitle}>No Purchases Yet</Text>
@@ -121,7 +112,6 @@ const PurchaseHistoryScreen = () => {
           translucent
           backgroundColor="transparent"
         />
-        {/* --- Header --- */}
         <View style={styles.header}>
           <TouchableOpacity
             onPress={() => navigation.goBack()}
@@ -143,20 +133,21 @@ const PurchaseHistoryScreen = () => {
           </View>
         </View>
 
-        {/* --- Main Content --- */}
         {isFetchingHistory ? (
           <View style={styles.loaderContainer}>
             <ActivityIndicator size="large" color={colors.primary} />
           </View>
         ) : (
-          <FlatList
-            data={purchaseHistory}
-            renderItem={({ item }) => <HistoryItem item={item} />}
-            keyExtractor={item => item.id}
-            contentContainerStyle={styles.listContainer}
-            ListEmptyComponent={EmptyListComponent}
-            ItemSeparatorComponent={() => <View style={{ height: 16 }} />}
-          />
+          <View style={styles.listWrapper}>
+            <FlatList
+              data={purchaseHistory}
+              renderItem={({ item }) => <HistoryItem item={item} />}
+              keyExtractor={item => item.id}
+              contentContainerStyle={styles.listContainer}
+              ListEmptyComponent={EmptyListComponent}
+              ItemSeparatorComponent={() => <View style={{ height: 16 }} />}
+            />
+          </View>
         )}
       </SafeAreaView>
     </ImageBackground>
@@ -165,7 +156,6 @@ const PurchaseHistoryScreen = () => {
 
 export default PurchaseHistoryScreen;
 
-// --- Styles for the Purchase History Screen ---
 const styles = StyleSheet.create({
   bgImage: { flex: 1 },
   container: {
@@ -205,15 +195,19 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  listContainer: {
+  listWrapper: {
+    flex: 1,
     paddingHorizontal: 20,
+  },
+  listContainer: {
     paddingBottom: 30,
   },
   card: {
     borderRadius: 16,
-    borderWidth: 1.5,
+
     padding: 16,
-    borderColor: 'rgba(255,255,255,0.2)',
+
+    flexDirection: 'column',
   },
   cardHeader: {
     flexDirection: 'row',
@@ -271,12 +265,6 @@ const styles = StyleSheet.create({
     marginTop: 100,
     paddingHorizontal: 20,
   },
-  emptyIcon: {
-    width: 80,
-    height: 80,
-    tintColor: 'rgba(255,255,255,0.5)',
-    marginBottom: 20,
-  },
   emptyTitle: {
     fontFamily: Fonts.cormorantSCBold,
     fontSize: 20,
@@ -291,21 +279,3 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
 });
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

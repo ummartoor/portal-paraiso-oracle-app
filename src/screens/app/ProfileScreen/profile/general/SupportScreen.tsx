@@ -173,7 +173,7 @@ const SupportScreen = () => {
               >
                 <GradientBox
                   colors={[colors.black, colors.bgBox]}
-                  style={[styles.actionBtn, { borderWidth: 1.5, borderColor: colors.primary }]}
+                  style={[styles.actionBtn, { borderWidth: 1, borderColor: colors.primary }]}
                 >
                   {isSending ? (
                     <ActivityIndicator color={colors.white} />

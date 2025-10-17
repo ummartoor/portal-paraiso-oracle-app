@@ -397,7 +397,7 @@ const SubscriptionDetailsScreen = () => {
           </Text>
           <TouchableOpacity
             style={[styles.actionBtn, { backgroundColor: colors.primary }]}
-            onPress={() => navigation.navigate('BuySubscriptionScreen')}
+            onPress={() => navigation.navigate('BuySubscription')}
           >
             <Text style={styles.actionText}>View Plans</Text>
           </TouchableOpacity>
@@ -410,8 +410,8 @@ const SubscriptionDetailsScreen = () => {
 
     return (
       <View style={styles.contentContainer}>
-        <GradientBox
-          colors={[colors.bgBox, colors.bgBox]}
+        <View
+       
           style={styles.currentPlanCard}
         >
           <View style={styles.planHeader}>
@@ -450,7 +450,7 @@ const SubscriptionDetailsScreen = () => {
               {formatDate(vipSubscription?.currentPeriodEnd)}
             </Text>
           </View>
-        </GradientBox>
+        </View>
 
         {/* --- CHANGE 3: Cancel button ya status message --- */}
         {vipSubscription?.cancelAtPeriodEnd ? (
@@ -560,10 +560,12 @@ const styles = StyleSheet.create({
     paddingBottom: 30,
   },
   currentPlanCard: {
+
     borderRadius: 16,
-    padding: 20,
+    // padding: 20,
   },
   planHeader: {
+    marginTop:20,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',

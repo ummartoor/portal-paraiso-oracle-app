@@ -163,13 +163,14 @@ const styles = StyleSheet.create({
     marginBottom: 30,
   },
   newChatButton: {
+    height:56,
     marginTop:20,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 18,
+    // paddingVertical: 18,
     borderRadius: 15,
-    borderWidth: 1.5,
+    borderWidth: 1,
     borderColor: '#D9B699', // Gold border for gradient button
   },
   addIcon: { width: 24, height: 24, marginRight: 12, tintColor: '#FFFFFF' },

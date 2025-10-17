@@ -125,7 +125,7 @@ const handleNext = () => {
                   styles.nextBtn,
                   isButtonDisabled
                     ? { borderWidth: 0 } 
-                    : { borderWidth: 1.5, borderColor: colors.primary }, 
+                    : { borderWidth: 1, borderColor: colors.primary }, 
                 ]}
               >
                 <Text style={styles.nextText}>{t('continue_button')}</Text>

@@ -146,7 +146,7 @@ const DeleteAccountScreen = () => {
                 onPress={() => setStep(2)}>
                 <GradientBox
                     colors={[colors.black, colors.bgBox]}
-                    style={[styles.actionBtn, { borderColor: colors.primary, borderWidth: 1.5 }]}>
+                    style={[styles.actionBtn, { borderColor: colors.primary, borderWidth: 1 }]}>
                     <Text style={[styles.actionText, { color: colors.white }]}>{t('continue_button')}</Text>
                 </GradientBox>
             </TouchableOpacity>
@@ -217,7 +217,7 @@ const DeleteAccountScreen = () => {
             style={[
               styles.actionBtn,
               {
-                borderWidth: 1.5,
+                borderWidth: 1,
                 borderColor: canDelete ? colors.primary : colors.bgBox,
               },
             ]}>

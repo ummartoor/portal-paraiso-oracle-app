@@ -224,7 +224,7 @@ const DailyWisdomCardScreen: React.FC = () => {
                 </GradientBox>
               </View>
 
-              <TouchableOpacity
+              {/* <TouchableOpacity
                 onPress={() => setShowSubscriptionModal(true)}
                 style={{ marginTop: 30 }}
               >
@@ -238,7 +238,7 @@ const DailyWisdomCardScreen: React.FC = () => {
                     </Text>
                   </GradientBox>
                 </View>
-              </TouchableOpacity>
+              </TouchableOpacity> */}
             </View>
           ) : (
             // --- PHASE 1: INITIAL STATE ---
@@ -365,8 +365,8 @@ const styles = StyleSheet.create({
     minWidth: 120,
     height: 46,
     borderRadius: 23,
-    paddingHorizontal: 16,
-    borderWidth: 1.1,
+
+    borderWidth: 0.7,
     borderColor: '#D9B699',
     flexDirection: 'row',
     justifyContent: 'center',
@@ -393,10 +393,11 @@ const styles = StyleSheet.create({
   },
   mainButton: {
     height: 52,
+    width:'100%',
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    borderRadius: 60,
+    // paddingHorizontal: 20,
+  
   },
   buttonText: { color: '#fff', fontSize: 16, fontFamily: Fonts.aeonikRegular },
 });

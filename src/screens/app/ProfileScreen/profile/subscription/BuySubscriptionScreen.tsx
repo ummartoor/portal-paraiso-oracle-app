@@ -715,9 +715,9 @@ const BuySubscriptionScreen = () => {
     const displayedFeatures = isExpanded ? features : features.slice(0, 8);
     return (
       <View style={[styles.cardContainer, { width: CARD_WIDTH }]}>
-        <GradientBox
-          colors={[colors.bgBox, colors.bgBox]}
-          style={[styles.card]}
+        <View
+          
+          style={[styles.card ,{ backgroundColor:colors.bgBox}]}
         >
           <>
             {/* {item.is_popular && !isActivated && (
@@ -778,7 +778,7 @@ const BuySubscriptionScreen = () => {
               </TouchableOpacity>
             )}
           </>
-        </GradientBox>
+        </View>
       </View>
     );
   };
