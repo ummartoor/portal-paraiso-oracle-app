@@ -167,19 +167,25 @@ const ProfileScreen: React.FC = () => {
           showsVerticalScrollIndicator={false}
         >
           {/* Header */}
-          <View style={styles.header}>
-            <View style={{ width: 18, height: 18 }} />
-            <Text style={[styles.headerTitle, { color: colors.white }]}>
-              {t('profile_screen_title')}
-            </Text>
-            <TouchableOpacity activeOpacity={0.8} onPress={() => {}}>
-              {/* <Image
-                source={require('../../../assets/icons/settingIcon.png')}
-                style={{ width: 18, height: 18 }}
-                resizeMode="contain"
-              /> */}
-            </TouchableOpacity>
-          </View>
+          {/* Header */}
+        <View style={styles.header}>
+                   <TouchableOpacity
+                      onPress={() => navigation.goBack()}
+                      style={styles.backBtn}
+                    >
+                      <Image
+                        source={require('../../../assets/icons/backIcon.png')}
+                        style={styles.backIcon}
+                        resizeMode="contain"
+                      />
+                    </TouchableOpacity>
+                    <View style={styles.headerTitleWrap}>
+                      <Text style={[styles.headerTitle, { color: colors.white }]}>
+                        Profile
+                      </Text>
+                    </View>
+                  </View>   
+
 
           {/* profile name  */}
           <TouchableOpacity
@@ -473,18 +479,29 @@ export default ProfileScreen;
 const styles = StyleSheet.create({
   container: { flex: 1 },
   imageBackground: { flex: 1 },
-  header: {
-    height: 48,
-    flexDirection: 'row',
+   header: {
+    height: 56,
+    justifyContent: 'center',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    marginTop: 8,
+    marginBottom: 20,
   },
+  backBtn: {
+    position: 'absolute',
+    left: 20,
+    height: 40,
+    width: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  backIcon: { width: 22, height: 22, tintColor: '#fff' },
+  headerTitleWrap: { alignItems: 'center', justifyContent: 'center' },
   headerTitle: {
-    fontSize: 24,
-    lineHeight: 26,
-    textTransform: 'uppercase',
     fontFamily: Fonts.cormorantSCBold,
-    textAlign: 'center',
+    fontSize: 22,
+    letterSpacing: 1,
+    textTransform: 'capitalize',
+    color: '#fff',
   },
   topRow: {
     marginTop: 12,

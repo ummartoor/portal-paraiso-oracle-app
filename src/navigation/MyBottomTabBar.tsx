@@ -11,7 +11,7 @@ import {
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { useThemeStore } from '../store/useThemeStore';
 import GradientBox from '../components/GradientBox';
-import { useSafeAreaInsets } from 'react-native-safe-area-context'; 
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import HomeIcon from '../assets/icons/homeIcon.png';
 import DivineIcon from '../assets/icons/divineIcon.png';
 import LibraryIcon from '../assets/icons/libraryIcon.png';
@@ -60,7 +60,7 @@ export const MyBottomTabBar = ({
   const isKeyboardVisible = useUIStore(state => state.isKeyboardVisible);
   const { t } = useTranslation();
 
-    const insets = useSafeAreaInsets(); 
+  const insets = useSafeAreaInsets();
   if (isKeyboardVisible) return null;
   return (
     <GradientBox
@@ -68,14 +68,10 @@ export const MyBottomTabBar = ({
       style={[
         styles.wrapper,
         {
-          bottom:insets.bottom
-   
+          bottom: insets.bottom,
         },
       ]}
     >
-
-
-
       {state.routes.map((route, index) => {
         const { options } = descriptors[route.key];
         // const label =
@@ -145,7 +141,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    height:70,
+    height: 70,
     flexDirection: 'row',
     justifyContent: 'space-around',
     alignItems: 'center',

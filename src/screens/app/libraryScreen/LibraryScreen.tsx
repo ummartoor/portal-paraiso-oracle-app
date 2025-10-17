@@ -11,45 +11,36 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Fonts } from '../../../constants/fonts';
 import { useThemeStore } from '../../../store/useThemeStore';
-import GradientBox from '../../../components/GradientBox';
+import LinearGradient from 'react-native-linear-gradient';
 import TarotHistoryList from './TarotHistoryList';
 import AstrologyHistoryList from './AstrologyHistoryList';
 import BuziosHistoryList from './BuziosHistoryList';
 import DailyWisdomCardList from './DailyWisdomCardList';
-
 import RitualTipHistoryList from './RitualTipHistoryList';
-import { useTranslation } from 'react-i18next'; 
 
-
-
-
-
+const tabs = [
+  'Tarot',
+  'Astrology',
+  'Buzious',
+  'Daily Wisdom Card',
+  'Ritual Tip',
+];
 
 const LibraryScreen: React.FC = () => {
   const { colors } = useThemeStore(s => s.theme);
-    const [activeTabKey, setActiveTabKey] = useState('tarot');
-
-const { t } = useTranslation();
-
-  const tabs = [
-    { key: 'tarot', label: t('library_tab_tarot') },
-    { key: 'astrology', label: t('library_tab_astrology') },
-    { key: 'buzious', label: t('library_tab_buzious') },
-    { key: 'daily_wisdom', label: t('library_tab_daily_wisdom') },
-    { key: 'ritual_tip', label: t('library_tab_ritual_tip') },
-  ];
+  const [activeTab, setActiveTab] = useState('Tarot');
 
   const renderContent = () => {
-    switch (activeTabKey) {
-      case 'tarot':
+    switch (activeTab) {
+      case 'Tarot':
         return <TarotHistoryList />;
-      case 'astrology':
+      case 'Astrology':
         return <AstrologyHistoryList />;
-      case 'buzious':
+      case 'Buzious':
         return <BuziosHistoryList />;
-      case 'daily_wisdom':
+      case 'Daily Wisdom Card':
         return <DailyWisdomCardList />;
-      case 'ritual_tip':
+      case 'Ritual Tip':
         return <RitualTipHistoryList />;
       default:
         return null;
@@ -63,35 +54,60 @@ const { t } = useTranslation();
       resizeMode="cover"
     >
       <SafeAreaView style={styles.container}>
-        <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+        <StatusBar
+          barStyle="light-content"
+          translucent
+          backgroundColor="transparent"
+        />
 
         <View style={styles.header}>
-    <Text style={styles.headerTitle}>{t('library_screen')}</Text>
+          <Text style={styles.headerTitle}>Library</Text>
         </View>
 
-       <Text style={styles.subtitle}>
-          {t('library_subtitle')}
+        <Text style={styles.subtitle}>
+          All your favorite rituals, readings,{'\n'}and wisdom.
         </Text>
+
         {/* Tabs */}
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
           style={styles.tabsWrapper}
-          contentContainerStyle={{ paddingHorizontal: 16, }}
+          contentContainerStyle={{ paddingHorizontal: 16 }}
         >
-         {tabs.map(tab => (
-            <TouchableOpacity key={tab.key} onPress={() => setActiveTabKey(tab.key)}>
-              {activeTabKey === tab.key ? (
-                <GradientBox colors={[colors.black, colors.bgBox]} style={styles.activeTabBtn}>
-                  <Text style={[styles.tabText, styles.activeTabText]}>{tab.label}</Text>
-                </GradientBox>
-              ) : (
-                <View style={styles.tabBtn}>
-                  <Text style={styles.tabText}>{tab.label}</Text>
-                </View>
-              )}
-            </TouchableOpacity>
-          ))}
+          {tabs.map(tab => {
+            // FIX for TypeScript Error: Ensure colors are valid strings
+            const gradientColors = [colors.black, colors.bgBox].filter(
+              Boolean,
+            ) as string[];
+
+            return (
+              <TouchableOpacity key={tab} onPress={() => setActiveTab(tab)}>
+                {activeTab === tab ? (
+                  // NEW, MORE STABLE APPROACH
+                  <View style={styles.activeTabBtn}>
+                    <LinearGradient
+                      colors={
+                        gradientColors.length >= 2
+                          ? gradientColors
+                          : ['#000', '#333'] // Fallback colors
+                      }
+                      style={StyleSheet.absoluteFill} // Fills the parent View
+                      start={{ x: 0.5, y: 0 }}
+                      end={{ x: 0.5, y: 1 }}
+                    />
+                    <Text style={[styles.tabText, styles.activeTabText]}>
+                      {tab}
+                    </Text>
+                  </View>
+                ) : (
+                  <View style={styles.tabBtn}>
+                    <Text style={styles.tabText}>{tab}</Text>
+                  </View>
+                )}
+              </TouchableOpacity>
+            );
+          })}
         </ScrollView>
 
         {/* Content */}
@@ -106,15 +122,72 @@ export default LibraryScreen;
 const styles = StyleSheet.create({
   bgImage: { flex: 1 },
   container: { flex: 1 },
-  header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, marginTop: 14 },
-  headerTitle: { flex: 1, textAlign: 'center', fontFamily: Fonts.cormorantSCBold, fontSize: 24, color: '#fff' },
-  subtitle: { textAlign: 'center', marginTop: 12, fontFamily: Fonts.aeonikRegular, fontSize: 16, color: '#D9B699', lineHeight: 20 },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    marginTop: 14,
+  },
+  headerTitle: {
+    flex: 1,
+    textAlign: 'center',
+    fontFamily: Fonts.cormorantSCBold,
+    fontSize: 24,
+    color: '#fff',
+  },
+  subtitle: {
+    textAlign: 'center',
+    marginTop: 12,
+    fontFamily: Fonts.aeonikRegular,
+    fontSize: 16,
+    color: '#D9B699',
+    lineHeight: 20,
+  },
   tabsWrapper: { marginTop: 20, marginBottom: 10, flexGrow: 0 },
-  tabBtn: { paddingVertical: 10, paddingHorizontal: 18, borderRadius: 20, backgroundColor: '#4A3F50', marginRight: 10 },
-  activeTabBtn: { paddingVertical: 10, paddingHorizontal: 18, borderRadius: 20, marginRight: 10, borderWidth: 1.5, borderColor: '#D9B699' },
-  tabText: { fontFamily: Fonts.aeonikRegular, fontSize: 14, color: '#fff' },
-  activeTabText: { fontWeight: '600' },
+  tabBtn: {
+    paddingVertical: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    borderRadius: 20,
+    backgroundColor: '#4A3F50',
+    marginRight: 10,
+  },
+  activeTabBtn: {
+    // This View now controls the layout perfectly
+    paddingVertical: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    borderRadius: 20,
+    marginRight: 10,
+    borderWidth: 1,
+    borderColor: '#D9B699',
+    overflow: 'hidden', // This makes sure the gradient respects the border radius
+  },
+  tabText: {
+    fontFamily: Fonts.aeonikRegular,
+    fontSize: 14,
+    color: '#fff',
+    backgroundColor: 'transparent',
+  },
+  activeTabText: {
+    fontWeight: '600',
+    backgroundColor: 'transparent',
+  },
   contentContainer: { flex: 1 },
-  emptyWrapper: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 30 },
-  emptyText: { fontFamily: Fonts.aeonikRegular, fontSize: 15, color: '#fff', textAlign: 'center', opacity: 0.9, lineHeight: 22 },
+  emptyWrapper: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 30,
+  },
+  emptyText: {
+    fontFamily: Fonts.aeonikRegular,
+    fontSize: 15,
+    color: '#fff',
+    textAlign: 'center',
+    opacity: 0.9,
+    lineHeight: 22,
+  },
 });
