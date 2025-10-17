@@ -126,7 +126,7 @@ const GenderScreen_1 = () => {
                       style={[
                         styles.genderBox,
                         {
-                          borderWidth: isSelected ? 1.5 : 1,
+                          borderWidth: isSelected ? 1 : 1,
                           borderColor: isSelected ? colors.primary : colors.white,
                         },
                       ]}
@@ -173,7 +173,7 @@ const GenderScreen_1 = () => {
               colors={[colors.black, colors.bgBox]}
               style={[
                 styles.nextBtn,
-                { borderWidth: 1.5, borderColor: colors.primary },
+                { borderWidth: 1, borderColor: colors.primary },
               ]}
             >
               {isLoading ? (

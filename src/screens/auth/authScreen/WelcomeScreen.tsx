@@ -60,7 +60,7 @@ const WelcomeScreen: React.FC = () => {
           >
             <GradientBox
               colors={[colors.black, colors.bgBox]}
-              style={[styles.button, { borderColor: colors.primary }]}
+              style={[styles.button, { borderWidth: 1, borderColor: colors.primary }]} 
             >
               <Text style={[styles.buttonText, { color: colors.white }]}>
                 {t('signup_button')}
@@ -75,9 +75,9 @@ const WelcomeScreen: React.FC = () => {
               navigation.navigate('Login');
             }}
             activeOpacity={0.8}
-            style={[
+           style={[
               styles.button,
-              { backgroundColor: colors.bgBox, borderColor: colors.white },
+              { backgroundColor: colors.bgBox,borderWidth:1, borderColor: colors.white },
             ]}
           >
             <Text style={[styles.buttonText, { color: colors.white }]}>
@@ -126,16 +126,13 @@ const styles = StyleSheet.create({
     gap: 14,
   },
   button: {
-    paddingVertical: 16,
-    width: '100%',
-    borderRadius: 100,
-    borderWidth: 1.5,
-    alignItems: 'center',
-    justifyContent: 'center',
+    height: 56,
+    borderRadius: 65,
+    justifyContent: "center",
+    alignItems: "center",
   },
   buttonText: {
     fontSize: 16,
-    fontWeight: '600',
     fontFamily: Fonts.aeonikRegular,
-  },
-});
+  }
+}); 

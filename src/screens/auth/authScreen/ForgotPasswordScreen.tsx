@@ -133,7 +133,7 @@ email: Yup.string().email(t('validation_email_invalid')).required(t('validation_
                       colors={[colors.black, colors.bgBox]}
                       style={[
                         styles.signinBtn,
-                        { borderWidth: 1.5, borderColor: colors.primary },
+                        { borderWidth: 1, borderColor: colors.primary },
                       ]}
                     >
                       {isSubmitting ? (

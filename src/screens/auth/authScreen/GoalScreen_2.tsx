@@ -347,7 +347,7 @@ const { t } = useTranslation();
             >
               <GradientBox
                 colors={[colors.black, colors.bgBox]}
-                style={[styles.nextBtn, { borderWidth: 1.5, borderColor: colors.primary }]}
+                style={[styles.nextBtn, { borderWidth: 1, borderColor: colors.primary }]}
               >
                 {isUpdating ? (
                   <ActivityIndicator color={colors.primary} />

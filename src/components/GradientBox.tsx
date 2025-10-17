@@ -35,8 +35,8 @@ const GradientBox: React.FC<GradientBoxProps> = ({
 
 const styles = StyleSheet.create({
   gradient: {
-    padding: 15,
-    borderRadius: 10,
+    // padding: 15,
+    // borderRadius: 10,
   },
 });
 

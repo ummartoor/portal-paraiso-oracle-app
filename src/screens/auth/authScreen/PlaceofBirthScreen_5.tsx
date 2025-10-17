@@ -111,7 +111,7 @@ const PlaceofBirthScreen_5 = () => {
             colors={[colors.black, colors.bgBox]}
             style={[
               styles.nextBtn,
-              { borderWidth: 1.5, borderColor: colors.primary },
+              { borderWidth: 1, borderColor: colors.primary },
             ]}
           >
             {isUpdating ? (

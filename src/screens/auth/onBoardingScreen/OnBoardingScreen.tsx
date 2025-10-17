@@ -204,7 +204,7 @@ const OnBoardingScreen: React.FC = () => {
                 colors={[colors.black, colors.bgBox]}
                 style={[
                   styles.button,
-                  { borderWidth: 1.5, borderColor: colors.primary },
+                  { borderWidth: 1, borderColor: colors.primary },
                 ]}
               >
                 <Text style={[styles.buttonText, { color: colors.white }]}>

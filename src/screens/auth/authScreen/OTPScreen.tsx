@@ -205,7 +205,7 @@ const handleResend = async () => {
                 colors={[colors.black, colors.bgBox]}
                 style={[
                   styles.continueBtn,
-                  { borderWidth: 1.5, borderColor: colors.primary },
+                  { borderWidth: 1, borderColor: colors.primary },
                 ]}
               >
                 {isVerifying ? (
