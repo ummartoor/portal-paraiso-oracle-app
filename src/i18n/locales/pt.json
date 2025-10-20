@@ -23,6 +23,8 @@
   "signup_link": "Inscrever-se",
 
 
+  "validation_question_min_length": "A pergunta deve ter pelo menos {{count}} caracteres.",
+"validation_question_max_length": "A pergunta não pode ter mais de {{count}} caracteres.",
 
 
   "forgot_password_header": "Esqueceu a Senha",

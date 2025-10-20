@@ -32,7 +32,10 @@ import { useThemeStore } from '../../../store/useThemeStore';
 import { AppStackParamList } from '../../../navigation/routeTypes';
 import { useBuziosStore } from '../../../store/useBuziousStore';
 
-import Tts from 'react-native-tts';
+// --- NEW: Import OpenAI Store and SoundPlayer ---
+import { useOpenAiStore } from '../../../store/useOpenAiStore';
+import SoundPlayer from 'react-native-sound-player';
+
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const CONTAINER_W = SCREEN_WIDTH - 40;
@@ -114,7 +117,13 @@ const BuziosHistoryDetail: React.FC = () => {
   const route = useRoute<RouteProp<AppStackParamList, 'BuziosHistoryDetail'>>();
   const { history_uid } = route.params;
 
-  const [isSpeaking, setIsSpeaking] = useState(false);
+  // --- NEW: State for audio playback ---
+  const [isPlayingAudio, setIsPlayingAudio] = useState(false);
+  const [preloadedAudioPath, setPreloadedAudioPath] = useState<string | null>(null);
+  const [isPreloadingAudio, setIsPreloadingAudio] = useState(false);
+
+  // --- NEW: Get preload function from store ---
+  const { preloadSpeech } = useOpenAiStore();
 
   const {
     historyItem,
@@ -134,6 +143,36 @@ const BuziosHistoryDetail: React.FC = () => {
     getBuziosHistoryItem(history_uid);
   }, [getBuziosHistoryItem, history_uid]);
 
+  // --- NEW: useEffect to preload audio when history data is ready ---
+  useEffect(() => {
+    const prepareAudio = async () => {
+      if (historyItem?.ai_response) {
+        setIsPreloadingAudio(true);
+        const audioPath = await preloadSpeech(historyItem.ai_response, history_uid);
+        if (audioPath) {
+          setPreloadedAudioPath(audioPath);
+          console.log('History audio preloaded successfully.');
+        } else {
+          console.error('Failed to preload history audio.');
+        }
+        setIsPreloadingAudio(false);
+      }
+    };
+    prepareAudio();
+  }, [historyItem, history_uid, preloadSpeech]);
+  
+  // --- NEW: useEffect for SoundPlayer events ---
+  useEffect(() => {
+    const onFinishedPlayingSubscription = SoundPlayer.addEventListener('FinishedPlaying', () => {
+      setIsPlayingAudio(false);
+    });
+    // Cleanup on unmount
+    return () => {
+      SoundPlayer.stop();
+      onFinishedPlayingSubscription.remove();
+    };
+  }, []);
+
   const shell2Set = useMemo(() => {
     if (historyItem) {
       const upCount = historyItem.mouth_up_count;
@@ -144,20 +183,13 @@ const BuziosHistoryDetail: React.FC = () => {
   }, [historyItem]);
 
   const shellConfigs: ShellConfig[] = useMemo(() => {
-    // Shell placement logic (same as CaurisCardDetailScreen)
     const effectiveSize = BOWL_SIZE - SHELL_PADDING * 2;
     const R = effectiveSize / 2;
     const center = { x: SHELL_PADDING + R, y: SHELL_PADDING + R };
-    const sizes = Array.from({ length: SHELL_COUNT }, () =>
-      rand(SHELL_MIN, SHELL_MAX),
-    );
-    const order = Array.from({ length: SHELL_COUNT }, (_, i) => i).sort(
-      (a, b) => sizes[b] - sizes[a],
-    );
+    const sizes = Array.from({ length: SHELL_COUNT }, () => rand(SHELL_MIN, SHELL_MAX));
+    const order = Array.from({ length: SHELL_COUNT }, (_, i) => i).sort((a, b) => sizes[b] - sizes[a]);
     const placed: { cx: number; cy: number; r: number }[] = [];
-    const targets: { tx: number; ty: number }[] = Array(SHELL_COUNT).fill(
-      null as any,
-    );
+    const targets: { tx: number; ty: number }[] = Array(SHELL_COUNT).fill(null as any);
     for (const idx of order) {
       const size = sizes[idx];
       const rEff = (size / 2) * RADIUS_SCALE;
@@ -169,8 +201,7 @@ const BuziosHistoryDetail: React.FC = () => {
         const cy = center.y + radius * Math.sin(angle);
         let ok = true;
         for (const p of placed) {
-          const dx = cx - p.cx,
-            dy = cy - p.cy;
+          const dx = cx - p.cx, dy = cy - p.cy;
           const minD = p.r + rEff + SHELL_GAP;
           if (dx * dx + dy * dy < minD * minD) {
             ok = false;
@@ -185,8 +216,7 @@ const BuziosHistoryDetail: React.FC = () => {
         }
       }
       if (!done) {
-        const cx = center.x,
-          cy = center.y;
+        const cx = center.x, cy = center.y;
         placed.push({ cx, cy, r: rEff });
         targets[idx] = { tx: cx - size / 2, ty: cy - size / 2 };
       }
@@ -204,11 +234,10 @@ const BuziosHistoryDetail: React.FC = () => {
   const xSV = shellConfigs.map(c => useSharedValue(c.targetX));
   const ySV = shellConfigs.map(c => useSharedValue(c.targetY));
   const rSV = shellConfigs.map(c => useSharedValue(c.rot));
-  const sSV = shellConfigs.map(() => useSharedValue(0)); // Start scaled down
-  const oSV = shellConfigs.map(() => useSharedValue(0)); // Start invisible
+  const sSV = shellConfigs.map(() => useSharedValue(0));
+  const oSV = shellConfigs.map(() => useSharedValue(0));
 
   useEffect(() => {
-    // Animate shells into view when data is loaded
     if (historyItem) {
       shellConfigs.forEach((c, i) => {
         sSV[i].value = withDelay(c.delay, withSpring(1));
@@ -219,27 +248,21 @@ const BuziosHistoryDetail: React.FC = () => {
 
   const divineMessage = historyItem?.ai_response ?? '';
 
-  useEffect(() => {
-    Tts.setDefaultLanguage('en-US').catch(() => {});
-    Tts.setDefaultRate(0.4, true);
-    const listeners = [
-      Tts.addEventListener('tts-start', () => setIsSpeaking(true)),
-      Tts.addEventListener('tts-finish', () => setIsSpeaking(false)),
-      Tts.addEventListener('tts-cancel', () => setIsSpeaking(false)),
-    ];
-    return () => {
-      listeners.forEach(listener => listener.remove());
-      Tts.stop();
-    };
-  }, []);
-
-  const onPressPlayToggle = async () => {
-    if (!divineMessage.trim()) return;
-    if (isSpeaking) {
-      await Tts.stop();
-    } else {
-      await Tts.stop(); // Stop any previous speech
-      Tts.speak(divineMessage);
+  // --- NEW: Updated playback toggle function ---
+  const onPressPlayToggle = () => {
+    if (isPlayingAudio) {
+      SoundPlayer.stop();
+      setIsPlayingAudio(false);
+      return;
+    }
+    if (preloadedAudioPath) {
+      try {
+        SoundPlayer.playUrl(`file://${preloadedAudioPath}`);
+        setIsPlayingAudio(true);
+      } catch (e) {
+        console.error('Could not play preloaded audio file', e);
+        Alert.alert('Playback Error', 'Could not play the audio file.');
+      }
     }
   };
 
@@ -344,13 +367,23 @@ const BuziosHistoryDetail: React.FC = () => {
             </View>
           </View>
 
+          {/* --- NEW: Updated Playback Button UI --- */}
           <View style={styles.playWrapper}>
-            <TouchableOpacity onPress={onPressPlayToggle} activeOpacity={0.7}>
-              <Image
-                source={isSpeaking ? PAUSE_ICON : PLAY_ICON}
-                style={styles.playIcon}
-                resizeMode="contain"
-              />
+            <TouchableOpacity
+              onPress={onPressPlayToggle}
+              activeOpacity={0.7}
+              disabled={isPreloadingAudio || !preloadedAudioPath}
+              style={styles.playBtnContainer}
+            >
+              {isPreloadingAudio ? (
+                <ActivityIndicator size="large" color={colors.primary} />
+              ) : (
+                <Image
+                  source={isPlayingAudio ? PAUSE_ICON : PLAY_ICON}
+                  style={[styles.playIcon, { tintColor: (isPreloadingAudio || !preloadedAudioPath) ? '#999' : colors.primary }]}
+                  resizeMode="contain"
+                />
+              )}
             </TouchableOpacity>
           </View>
 
@@ -475,4 +508,10 @@ const styles = StyleSheet.create({
   },
   smallIcon: { width: 15, height: 15, marginRight: 8 },
   smallBtnText: { fontFamily: Fonts.aeonikRegular, fontSize: 14 },
+  playBtnContainer: {
+    width: 60,
+    height: 60,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
 });

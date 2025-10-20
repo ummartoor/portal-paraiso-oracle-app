@@ -1,92 +1,104 @@
 import { useEffect } from 'react';
 import { PermissionsAndroid, Platform, Alert, Linking } from 'react-native';
-
-// ✅ Import modular API instead of messaging()
-import { getApp } from '@react-native-firebase/app';
-import { getMessaging, getToken } from '@react-native-firebase/messaging';
-import { useFcmStore } from './useFcmStore';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import messaging from '@react-native-firebase/messaging';
+import { useNotificationStore } from './useNotificationStore';
 
 /**
- * Ask user for notification permission
+ * Asks the user for notification permissions on both iOS and Android.
  */
-const requestUserPermission = async () => {
-  if (Platform.OS === 'android') {
+const requestUserPermission = async (): Promise<boolean> => {
+  if (Platform.OS === 'ios') {
+    try {
+      const authStatus = await messaging().requestPermission();
+      const enabled =
+        authStatus === messaging.AuthorizationStatus.AUTHORIZED ||
+        authStatus === messaging.AuthorizationStatus.PROVISIONAL;
+
+      if (enabled) {
+        console.log('✅ iOS Notification permission granted');
+        return true;
+      }
+      console.log('❌ iOS Notification permission denied');
+      return false;
+    } catch (error) {
+      console.error('❌ iOS Permission request error:', error);
+      return false;
+    }
+  } else if (Platform.OS === 'android') {
     if (Platform.Version >= 33) {
       try {
         const result = await PermissionsAndroid.request(
           PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS,
         );
-
-        if (result === PermissionsAndroid.RESULTS.GRANTED) {
-          console.log('✅ Notification permission granted');
+        if (result === 'granted') {
+           console.log('✅ Android Notification permission granted');
           return true;
-        } else if (result === PermissionsAndroid.RESULTS.DENIED) {
-          console.log('❌ Notification permission denied');
-          return false;
-        } else if (result === PermissionsAndroid.RESULTS.NEVER_ASK_AGAIN) {
-          console.log('🚫 Notification permission set to never ask again');
-          Alert.alert(
-            'Permission Needed',
-            'Notifications are disabled. Please enable them from Settings.',
-            [
-              { text: 'Cancel', style: 'cancel' },
-              {
-                text: 'Open Settings',
-                onPress: () => Linking.openSettings(),
-              },
-            ],
-          );
-          return false;
         }
+        return false;
       } catch (err) {
-        console.error('❌ Permission request error:', err);
+        console.error('❌ Android Permission request error:', err);
         return false;
       }
-    } else {
-      // ✅ Android 12 and below → always granted
-      return true;
     }
+    return true;
   }
-  return true;
+  return false;
 };
 
 /**
- * Get the FCM token (modular API)
+ * Gets the FCM token.
  */
-const getFcmToken = async () => {
+const getFcmToken = async (): Promise<string | null> => {
   try {
-    const app = getApp(); // 👈 use modular app
-    const messaging = getMessaging(app);
+    // The explicit call to registerDeviceForRemoteMessages() is no longer needed
+    // as it's handled automatically by the library unless disabled.
+    const token = await messaging().getToken();
 
-    const token = await getToken(messaging); // 👈 modular getToken
     if (token) {
       console.log('📲 FCM Token:', token);
-      
       return token;
     } else {
-      console.log('⚠️ No token received');
+      console.log('⚠️ No FCM token received');
       return null;
     }
   } catch (error) {
     console.error('❌ Failed to get FCM Token:', error);
+    console.error(error); // Log the full error object for more detail
     return null;
   }
 };
 
 /**
- * Hook to initialize notification permission + FCM token
+ * Custom hook to initialize notification permissions and register the FCM token.
  */
 export const useNotification = () => {
-  const setFcmToken = useFcmStore(state => state.setFcmToken);
+  const { registerFcmToken } = useNotificationStore();
 
   useEffect(() => {
     const init = async () => {
+      // Check if user is logged in before trying to register token
+      const authToken = await AsyncStorage.getItem('x-auth-token');
+      if (!authToken) {
+        console.log("User not logged in, skipping FCM token registration.");
+        return;
+      }
+
       const permissionGranted = await requestUserPermission();
       if (permissionGranted) {
         const fcmToken = await getFcmToken();
-        if(fcmToken){
-          // console.log('got the fcm token',fcmToken)
-          setFcmToken(fcmToken)
+        if (fcmToken) {
+          const storedToken = await AsyncStorage.getItem('fcm_token');
+          if (storedToken !== fcmToken) {
+            console.log('Registering new FCM token with the server...');
+            const success = await registerFcmToken(fcmToken);
+            if (success) {
+              await AsyncStorage.setItem('fcm_token', fcmToken);
+              console.log('✅ FCM token registered and stored.');
+            }
+          } else {
+            console.log('FCM token is already registered.');
+          }
         }
       }
     };
@@ -94,6 +106,11 @@ export const useNotification = () => {
     init();
   }, []);
 };
+
+
+
+
+
 
 // import { useEffect } from 'react';
 // import { PermissionsAndroid, Platform } from 'react-native';

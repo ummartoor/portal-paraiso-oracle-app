@@ -5,22 +5,25 @@ import {
   StyleSheet,
   TouchableOpacity,
   StatusBar,
-  Dimensions,
   ImageBackground,
-  Image,
   ScrollView,
+  Image,
+  Dimensions,
   ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
-import Tts from 'react-native-tts';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
-import { WisdomHistoryItem } from '../../../store/useDailyWisdomStore';
 import SubscriptionPlanModal from '../../../components/SubscriptionPlanModal';
 import GradientBox from '../../../components/GradientBox';
 import { Fonts } from '../../../constants/fonts';
 import { useThemeStore } from '../../../store/useThemeStore';
 import { AppStackParamList } from '../../../navigation/routeTypes';
+
+// --- NEW: Import OpenAI Store and SoundPlayer ---
+import { useOpenAiStore } from '../../../store/useOpenAiStore';
+import SoundPlayer from 'react-native-sound-player';
 
 // --- Import Icons ---
 const BackIcon = require('../../../assets/icons/backIcon.png');
@@ -30,56 +33,100 @@ const ShareIcon = require('../../../assets/icons/shareIcon.png');
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
+// --- THE FIX IS HERE (Part 1) ---
+// The _id is not reliably passed via navigation, so we remove it from the type
+// to match the actual data shape and prevent future errors.
+type WisdomHistoryItem = {
+  card: {
+    card_name: string;
+    card_image: { url: string };
+  };
+  reading: string;
+};
+
 const DailyWisdomHistoryDetail: React.FC = () => {
   const { colors } = useThemeStore(s => s.theme);
-  const navigation = useNavigation();
+  const navigation = useNavigation<NativeStackNavigationProp<AppStackParamList>>();
   const route =
     useRoute<RouteProp<AppStackParamList, 'DailyWisdomCardHistoryDetail'>>();
   const { historyItem } = route.params || {};
 
-  const [isSpeaking, setIsSpeaking] = useState(false);
+  // --- NEW: State for audio playback and preloading ---
+  const [isPlayingAudio, setIsPlayingAudio] = useState(false);
+  const [preloadedAudioPath, setPreloadedAudioPath] = useState<string | null>(null);
+  const [isPreloadingAudio, setIsPreloadingAudio] = useState(false);
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
+  
+  // --- NEW: Get preload function from OpenAI store ---
+  const { preloadSpeech } = useOpenAiStore();
 
-  // --- TTS Setup ---
+  // --- NEW: useEffect to preload audio when history data is available ---
   useEffect(() => {
-    Tts.setDefaultLanguage('en-US').catch(() => {});
-    Tts.setDefaultRate(0.45, true);
-    const listeners = [
-      Tts.addEventListener('tts-start', () => setIsSpeaking(true)),
-      Tts.addEventListener('tts-finish', () => setIsSpeaking(false)),
-      Tts.addEventListener('tts-cancel', () => setIsSpeaking(false)),
-    ];
+    const prepareAudio = async () => {
+      // --- THE FIX IS HERE (Part 2) ---
+      // We check for properties we know exist (reading and card_name)
+      if (historyItem?.reading && historyItem?.card?.card_name) {
+        setIsPreloadingAudio(true);
+        // Create a unique ID from the available data for caching.
+        const readingId = `${historyItem.card.card_name}_${historyItem.reading.substring(0,20)}`.replace(/[^a-zA-Z0-9]/g, '_');
+        const audioPath = await preloadSpeech(historyItem.reading, readingId);
+
+        if (audioPath) {
+          setPreloadedAudioPath(audioPath);
+          console.log('Wisdom history audio preloaded successfully.');
+        } else {
+          console.error('Failed to preload wisdom history audio.');
+        }
+        setIsPreloadingAudio(false);
+      }
+    };
+    prepareAudio();
+  }, [historyItem, preloadSpeech]);
+
+  // --- NEW: useEffect for SoundPlayer events ---
+  useEffect(() => {
+    const onFinishedPlayingSubscription = SoundPlayer.addEventListener('FinishedPlaying', () => {
+      setIsPlayingAudio(false);
+    });
+    // Cleanup on unmount
     return () => {
-      listeners.forEach((listener: any) => listener?.remove?.());
-      Tts.stop();
+      SoundPlayer.stop();
+      onFinishedPlayingSubscription.remove();
     };
   }, []);
 
-  const onPressPlayToggle = async () => {
-    if (!historyItem?.reading) return;
-    if (isSpeaking) {
-      await Tts.stop();
-    } else {
-      await Tts.stop();
-      Tts.speak(historyItem.reading);
+  // --- NEW: Updated playback toggle function ---
+  const onPressPlayToggle = () => {
+    if (isPlayingAudio) {
+      SoundPlayer.stop();
+      setIsPlayingAudio(false);
+      return;
+    }
+    if (preloadedAudioPath) {
+      try {
+        SoundPlayer.playUrl(`file://${preloadedAudioPath}`);
+        setIsPlayingAudio(true);
+      } catch (e) {
+        console.error('Could not play preloaded audio file', e);
+      }
     }
   };
 
   const renderHeader = () => (
    <View style={styles.header}>
-              <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-                <Image
-                  source={require('../../../assets/icons/backIcon.png')}
-                  style={[styles.backIcon, { tintColor: colors.white }]}
-                  resizeMode="contain"
-                />
-              </TouchableOpacity>
-              <View style={styles.headerTitleWrap} pointerEvents="none">
-                <Text numberOfLines={1} ellipsizeMode="tail" style={[styles.headerTitle, { color: colors.white }]}>
-             Daily Wisdom Reading
-                </Text>
-              </View>
-            </View>
+      <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
+        <Image
+          source={BackIcon}
+          style={[styles.backIcon, { tintColor: colors.white }]}
+          resizeMode="contain"
+        />
+      </TouchableOpacity>
+      <View style={styles.headerTitleWrap} pointerEvents="none">
+        <Text numberOfLines={1} ellipsizeMode="tail" style={[styles.headerTitle, { color: colors.white }]}>
+          Daily Wisdom Reading
+        </Text>
+      </View>
+    </View>
   );
 
   if (!historyItem) {
@@ -89,7 +136,7 @@ const DailyWisdomHistoryDetail: React.FC = () => {
         style={styles.bgImage}
       >
         <SafeAreaView style={[styles.container, styles.centerContent]}>
-          <ActivityIndicator size="large" color="#D9B699" />
+          <ActivityIndicator size="large" color={colors.primary} />
           <Text style={styles.errorText}>History data not found.</Text>
         </SafeAreaView>
       </ImageBackground>
@@ -125,14 +172,20 @@ const DailyWisdomHistoryDetail: React.FC = () => {
               )}
             </View>
 
+            {/* --- NEW: Updated Play Button UI --- */}
             <TouchableOpacity
               onPress={onPressPlayToggle}
               style={styles.playButton}
+              disabled={isPreloadingAudio || !preloadedAudioPath}
             >
-              <Image
-                source={isSpeaking ? PauseIcon : PlayIcon}
-                style={styles.playIcon}
-              />
+              {isPreloadingAudio ? (
+                <ActivityIndicator size="large" color={colors.primary} />
+              ) : (
+                <Image
+                  source={isPlayingAudio ? PauseIcon : PlayIcon}
+                  style={[styles.playIcon, { tintColor: (isPreloadingAudio || !preloadedAudioPath) ? '#999' : colors.primary }]}
+                />
+              )}
             </TouchableOpacity>
 
             <Text style={[styles.description, { color: colors.white }]}>
@@ -223,7 +276,6 @@ const styles = StyleSheet.create({
     fontSize: 28,
     textTransform: 'uppercase',
     marginBottom: 15,
-    color: '#D9B699',
   },
   cardImage: {
     width: SCREEN_WIDTH * 0.65,
@@ -232,8 +284,8 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   cardFrame: {},
-  playButton: { marginTop: 20 },
-  playIcon: { width: 44, height: 44 },
+  playButton: { marginTop: 20, height: 44, width: 44, justifyContent: 'center', alignItems: 'center' },
+  playIcon: { width: 40, height: 40 },
   description: {
     fontFamily: Fonts.aeonikRegular,
     fontSize: 16,
@@ -287,3 +339,4 @@ const styles = StyleSheet.create({
   },
   buttonText: { color: '#fff', fontSize: 16, fontFamily: Fonts.aeonikRegular },
 });
+

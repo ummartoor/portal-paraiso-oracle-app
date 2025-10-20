@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   View,
   Text,
@@ -9,7 +9,6 @@ import {
   Dimensions,
   ImageBackground,
   TextInput,
-  Alert,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -22,29 +21,31 @@ import { useNavigation } from '@react-navigation/native';
 import { Fonts } from '../../../../../constants/fonts';
 import GradientBox from '../../../../../components/GradientBox';
 import { AppStackParamList } from '../../../../../navigation/routeTypes';
-import { useTranslation } from 'react-i18next'; 
+import { useTranslation } from 'react-i18next';
+// --- NEW: Import Formik and Yup ---
+import { Formik } from 'formik';
+import * as Yup from 'yup';
+
 const { height: SCREEN_HEIGHT, width: SCREEN_WIDTH } = Dimensions.get('screen');
 
-const AskQuestionCariusScreen= () => {
+const AskQuestionCariusScreen = () => {
   const theme = useThemeStore(state => state.theme);
   const colors = theme.colors;
   const navigation =
     useNavigation<NativeStackNavigationProp<AppStackParamList>>();
   const { t } = useTranslation();
-  const [question, setQuestion] = useState('');
 
-  const handleNext = () => {
-      Vibration.vibrate([0, 35, 40, 35]); 
-    if (!question.trim()) {
-    Alert.alert(
-        t('alert_input_required_title'),
-        t('alert_input_required_message_question')
-      );
-      return;
-    }
-     navigation.navigate('CaurisCardDetail', { userQuestion: question });
-  };
-  const isButtonDisabled = !question.trim();
+  const requiredError = t('alert_input_required_message_question');
+  const minLengthError = t('validation_question_min_length', { count: 10 });
+  const maxLengthError = t('validation_question_max_length', { count: 500 });
+
+  const validationSchema = Yup.object().shape({
+    question: Yup.string()
+      .required(requiredError)
+      .min(10, minLengthError)
+      .max(500, maxLengthError),
+  });
+
   return (
     <ImageBackground
       source={require('../../../../../assets/images/bglinearImage.png')}
@@ -57,8 +58,6 @@ const AskQuestionCariusScreen= () => {
           backgroundColor="transparent"
           translucent
         />
-
-        {/* --- Header --- */}
         <View style={styles.header}>
           <TouchableOpacity
             onPress={() => navigation.goBack()}
@@ -75,62 +74,84 @@ const AskQuestionCariusScreen= () => {
           </View>
         </View>
 
-        {/* --- Body with scroll and keyboard handling --- */}
         <KeyboardAvoidingView
           style={{ flex: 1 }}
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         >
-          <ScrollView
-            contentContainerStyle={{ flexGrow: 1 }}
-            keyboardShouldPersistTaps="handled"
+          {/* --- FIX: Formik now wraps everything to provide context to the button --- */}
+          <Formik
+            initialValues={{ question: '' }}
+            validationSchema={validationSchema}
+            onSubmit={(values) => {
+              Vibration.vibrate([0, 35, 40, 35]);
+              navigation.navigate('CaurisCardDetail', { userQuestion: values.question });
+            }}
           >
-            <View style={styles.content}>
-              {/* Heading and Subheading in center */}
-              <Text style={[styles.heading, { color: colors.white }]}>
-             {t('ask_question_heading')}
-              </Text>
-              <Text style={[styles.subheading, { color: colors.primary }]}>
-        {t('ask_question_subheading')}
-              </Text>
+            {({
+              handleChange,
+              handleBlur,
+              handleSubmit,
+              values,
+              errors,
+              touched,
+              isValid,
+              dirty, // <-- 1. GET THE 'dirty' PROP FROM FORMIK
+            }) => (
+              <>
+                <ScrollView
+                  contentContainerStyle={styles.scrollContent}
+                  keyboardShouldPersistTaps="handled"
+                >
+                  <Text style={[styles.heading, { color: colors.white }]}>
+                    {t('ask_question_heading')}
+                  </Text>
+                  <Text style={[styles.subheading, { color: colors.primary }]}>
+                    {t('ask_question_subheading')}
+                  </Text>
+                  
+                  <TextInput
+                    style={styles.inputField}
+                    placeholder={t('ask_question_placeholder')}
+                    placeholderTextColor="#999"
+                    value={values.question}
+                    onChangeText={handleChange('question')}
+                    onBlur={handleBlur('question')}
+                    multiline={true}
+                  />
+                  {touched.question && errors.question && (
+                    <Text style={styles.errorText}>{errors.question}</Text>
+                  )}
+                </ScrollView>
 
-              {/* Input Field */}
-              <TextInput
-                style={styles.inputField}
-               placeholder={t('ask_question_placeholder')}
-                placeholderTextColor="#999"
-                value={question}
-                onChangeText={setQuestion}
-                multiline={true}
-              />
-            </View>
-          </ScrollView>
-
-          {/* Footer with button */}
-      <View style={styles.footer}>
-            <TouchableOpacity
-              activeOpacity={0.8}
-              onPress={handleNext}
-              style={{ width: '100%' }}
-              disabled={isButtonDisabled} 
-            >
-              <GradientBox
-           
-                colors={
-                  isButtonDisabled
-                      ? ['#a19a9aff', '#a19a9aff']
-                    : [colors.black, colors.bgBox] 
-                }
-                style={[
-                  styles.nextBtn,
-                  isButtonDisabled
-                    ? { borderWidth: 0 } 
-                    : { borderWidth: 1, borderColor: colors.primary }, 
-                ]}
-              >
-                <Text style={styles.nextText}>{t('continue_button')}</Text>
-              </GradientBox>
-            </TouchableOpacity>
-          </View>
+                {/* --- FIX: Footer is now outside the ScrollView but inside Formik --- */}
+                <View style={styles.footer}>
+                  <TouchableOpacity
+                    activeOpacity={0.8}
+                    onPress={() => handleSubmit()}
+                    style={{ width: '100%' }}
+                    // --- 2. THE FIX IS HERE: Button is disabled if form is not valid OR if it hasn't been touched ---
+                    disabled={!isValid || !dirty} 
+                  >
+                    <GradientBox
+                      colors={
+                        !isValid || !dirty // <-- 3. MATCH THE DISABLED LOGIC FOR STYLING
+                          ? ['#a19a9aff', '#a19a9aff']
+                          : [colors.black, colors.bgBox]
+                      }
+                      style={[
+                        styles.nextBtn,
+                        !isValid || !dirty // <-- 4. MATCH THE DISABLED LOGIC FOR STYLING
+                          ? { borderWidth: 0 }
+                          : { borderWidth: 1, borderColor: colors.primary },
+                      ]}
+                    >
+                      <Text style={styles.nextText}>{t('continue_button')}</Text>
+                    </GradientBox>
+                  </TouchableOpacity>
+                </View>
+              </>
+            )}
+          </Formik>
         </KeyboardAvoidingView>
       </SafeAreaView>
     </ImageBackground>
@@ -145,7 +166,6 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    paddingHorizontal: 20,
     paddingTop: 20,
   },
   header: {
@@ -153,10 +173,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     height: 56,
     marginBottom: 10,
+    paddingHorizontal: 20,
   },
   backBtn: {
     position: 'absolute',
-    left: -10,
+    left: 10, // Adjusted for padding
     height: 40,
     width: 40,
     zIndex: 1,
@@ -173,11 +194,11 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.cormorantSCBold,
     fontSize: 22,
   },
-  content: {
+  // --- FIX: Updated styles for better layout ---
+  scrollContent: {
+    flexGrow: 1,
  
-    justifyContent: 'center', // Center vertically
-    alignItems: 'center',
-    paddingBottom: 100, // space for button
+    paddingHorizontal: 20,
   },
   heading: {
     fontSize: 32,
@@ -207,9 +228,19 @@ const styles = StyleSheet.create({
     textAlignVertical: 'top',
     width: '100%',
   },
+  errorText: {
+    color: '#FF7070',
+    fontFamily: Fonts.aeonikRegular,
+    fontSize: 14,
+    marginTop: 8,
+    width: '100%',
+    textAlign: 'center',
+  },
   footer: {
+    paddingHorizontal: 20, 
     paddingBottom: 20,
     paddingTop: 10,
+    backgroundColor: 'transparent', 
   },
   nextBtn: {
     height: 56,
@@ -225,3 +256,4 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.aeonikRegular,
   },
 });
+

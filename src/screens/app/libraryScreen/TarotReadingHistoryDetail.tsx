@@ -15,21 +15,26 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import Tts from 'react-native-tts';
 
 import { Fonts } from '../../../constants/fonts';
 import { AppStackParamList } from '../../../navigation/routeTypes';
 import SubscriptionPlanModal from '../../../components/SubscriptionPlanModal';
 import { useTranslation } from 'react-i18next';
+import GradientBox from '../../../components/GradientBox';
+import { useThemeStore } from '../../../store/useThemeStore';
+
+// --- NEW: Import OpenAI Store and SoundPlayer ---
+import { useOpenAiStore } from '../../../store/useOpenAiStore';
+import SoundPlayer from 'react-native-sound-player';
+
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 // --- Import Icons ---
 import Back from '../../../assets/icons/backIcon.png';
 import Play from '../../../assets/icons/playIcon.png';
 import Pause from '../../../assets/icons/pauseIcon.png';
-import GradientBox from '../../../components/GradientBox';
-import { useThemeStore } from '../../../store/useThemeStore';
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 // --- TYPE DEFINITIONS ---
 type SelectedCard = {
@@ -47,62 +52,90 @@ const TarotReadingHistoryDetail: React.FC = () => {
   const { t } = useTranslation();
 
   const theme = useThemeStore(s => s.theme);
-  const colors = theme?.colors || { black: '#000000', bgBox: '#333333' };
+  const colors = theme?.colors || { black: '#000000', bgBox: '#333333', primary: '#D9B699', white: '#FFFFFF' };
 
   const route = useRoute<RouteProp<AppStackParamList, 'TarotReadingHistoryDetail'>>();
   const { readingItem } = route.params || {};
 
-  const [isSpeaking, setIsSpeaking] = useState(false);
+  
+  // --- NEW: State for audio playback and preloading ---
+  const [isPlayingAudio, setIsPlayingAudio] = useState(false);
+  const [preloadedAudioPath, setPreloadedAudioPath] = useState<string | null>(null);
+  const [isPreloadingAudio, setIsPreloadingAudio] = useState(false);
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
-console.log("readingItem", readingItem)
-  // --- TTS ---
+
+  // --- NEW: Get preload function from OpenAI store ---
+  const { preloadSpeech } = useOpenAiStore();
+
+  // --- NEW: useEffect to preload audio when reading data is available ---
   useEffect(() => {
-    Tts.setDefaultLanguage('en-US').catch(() => {});
-    Tts.setDefaultRate(0.4, true);
+    const prepareAudio = async () => {
+      if (readingItem?.reading?.introduction && readingItem?.selected_cards?.length > 0) {
+        setIsPreloadingAudio(true);
+        // Create a unique ID from the card IDs for caching
+        // --- THE FIX IS HERE: Added explicit type for 'c' ---
+        const readingId = readingItem.selected_cards.map((c: SelectedCard) => c.card_id).sort().join('-');
+        const audioPath = await preloadSpeech(readingItem.reading.introduction, readingId);
 
-    const listeners = [
-      Tts.addEventListener('tts-start', () => setIsSpeaking(true)),
-      Tts.addEventListener('tts-finish', () => setIsSpeaking(false)),
-      Tts.addEventListener('tts-cancel', () => setIsSpeaking(false)),
-    ];
+        if (audioPath) {
+          setPreloadedAudioPath(audioPath);
+          console.log('Tarot history audio preloaded successfully.');
+        } else {
+          console.error('Failed to preload tarot history audio.');
+        }
+        setIsPreloadingAudio(false);
+      }
+    };
+    prepareAudio();
+  }, [readingItem, preloadSpeech]);
 
+  // --- NEW: useEffect for SoundPlayer events ---
+  useEffect(() => {
+    const onFinishedPlayingSubscription = SoundPlayer.addEventListener('FinishedPlaying', () => {
+      setIsPlayingAudio(false);
+    });
+    // Cleanup on unmount
     return () => {
-      listeners.forEach((listener: any) => listener?.remove?.());
-      Tts.stop();
+      SoundPlayer.stop();
+      onFinishedPlayingSubscription.remove();
     };
   }, []);
 
-  const onPressPlayToggle = async () => {
-    if (!readingItem?.reading?.introduction) return;
-
-    if (isSpeaking) {
-      await Tts.stop();
-    } else {
-      await Tts.stop();
-      Tts.speak(readingItem.reading.introduction);
+  // --- NEW: Updated playback toggle function ---
+  const onPressPlayToggle = () => {
+    if (isPlayingAudio) {
+      SoundPlayer.stop();
+      setIsPlayingAudio(false);
+      return;
+    }
+    if (preloadedAudioPath) {
+      try {
+        SoundPlayer.playUrl(`file://${preloadedAudioPath}`);
+        setIsPlayingAudio(true);
+      } catch (e) {
+        console.error('Could not play preloaded audio file', e);
+      }
     }
   };
 
-  // Header
+
   const renderHeader = () => (
-   
-           <View style={styles.header}>
-             <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-               <Image
-                 source={require('../../../assets/icons/backIcon.png')}
-                 style={[styles.backIcon, { tintColor: colors.white }]}
-                 resizeMode="contain"
-               />
-             </TouchableOpacity>
-             <View style={styles.headerTitleWrap} pointerEvents="none">
-               <Text numberOfLines={1} ellipsizeMode="tail" style={[styles.headerTitle, { color: colors.white }]}>
-                Tarot Reader
-               </Text>
-             </View>
-           </View>
+    <View style={styles.header}>
+      <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
+        <Image
+          source={Back}
+          style={[styles.backIcon, { tintColor: colors.white }]}
+          resizeMode="contain"
+        />
+      </TouchableOpacity>
+      <View style={styles.headerTitleWrap} pointerEvents="none">
+        <Text numberOfLines={1} ellipsizeMode="tail" style={[styles.headerTitle, { color: colors.white }]}>
+          Tarot Reader
+        </Text>
+      </View>
+    </View>
   );
 
-  // --- Loading/Error case ---
   if (!readingItem) {
     return (
       <ImageBackground
@@ -110,7 +143,7 @@ console.log("readingItem", readingItem)
         style={styles.bgImage}
       >
         <SafeAreaView style={[styles.container, styles.centerContent]}>
-          <ActivityIndicator size="large" color="#D9B699" />
+          <ActivityIndicator size="large" color={colors.primary} />
           <Text style={styles.errorText}>Reading data not found.</Text>
         </SafeAreaView>
       </ImageBackground>
@@ -128,45 +161,53 @@ console.log("readingItem", readingItem)
         {renderHeader()}
 
         <ScrollView contentContainerStyle={styles.scrollContent}>
-          <Text style={styles.focusTitle}>{t('library_your_reading')}</Text>
+          <Text style={[styles.focusTitle, { color: colors.primary }]}>{t('library_your_reading')}</Text>
 
-
-<View style={styles.readingCardsContainer}>
-  {readingItem.selected_cards
-    .reduce((rows: SelectedCard[][], card: SelectedCard) => {
-      const lastRow = rows[rows.length - 1];
-      if (!lastRow || lastRow.length === 3) {
-        rows.push([card]);
-      } else {
-        lastRow.push(card);
-      }
-      return rows;
-    }, [])
-    .map((row: SelectedCard[], rowIndex: number) => (
-      <View key={rowIndex} style={styles.selectedRow}>
-        {row.map((card: SelectedCard) => (
-          <View key={card.card_id} style={styles.box}>
-            <Image source={{ uri: card.image.url }} style={styles.boxImg} />
+          <View style={styles.readingCardsContainer}>
+            {readingItem.selected_cards
+              .reduce((rows: SelectedCard[][], card: SelectedCard) => {
+                const lastRow = rows[rows.length - 1];
+                if (!lastRow || lastRow.length === 3) {
+                  rows.push([card]);
+                } else {
+                  lastRow.push(card);
+                }
+                return rows;
+              }, [])
+              .map((row: SelectedCard[], rowIndex: number) => (
+                <View key={rowIndex} style={styles.selectedRow}>
+                  {row.map((card: SelectedCard) => (
+                    <View key={card.card_id} style={styles.box}>
+                      <Image source={{ uri: card.image.url }} style={styles.boxImg} />
+                    </View>
+                  ))}
+                  {row.length < 3 &&
+                    [...Array(3 - row.length)].map((_, i) => (
+                      <View
+                        key={`placeholder-${rowIndex}-${i}`}
+                        style={[styles.box, { opacity: 0 }]}
+                      />
+                    ))}
+                </View>
+              ))}
           </View>
-        ))}
-        {row.length < 3 &&
-          [...Array(3 - row.length)].map((_, i) => (
-            <View
-              key={`placeholder-${rowIndex}-${i}`}
-              style={[styles.box, { opacity: 0 }]}
-            />
-          ))}
-      </View>
-    ))}
-</View>
 
-
-          {/* Play Button */}
-          <TouchableOpacity onPress={onPressPlayToggle} style={styles.playButtonContainer}>
-            <Image source={isSpeaking ? Pause : Play} style={styles.playIcon} />
+          {/* --- NEW: Updated Play Button UI --- */}
+          <TouchableOpacity 
+            onPress={onPressPlayToggle} 
+            style={styles.playButtonContainer}
+            disabled={isPreloadingAudio || !preloadedAudioPath}
+          >
+            {isPreloadingAudio ? (
+                <ActivityIndicator size="large" color={colors.primary} />
+            ) : (
+                <Image 
+                    source={isPlayingAudio ? Pause : Play} 
+                    style={[styles.playIcon, { tintColor: (isPreloadingAudio || !preloadedAudioPath) ? '#999' : colors.primary }]}
+                />
+            )}
           </TouchableOpacity>
 
-          {/* Reading Text */}
           <View style={styles.readingContentContainer}>
             {readingItem?.reading?.introduction && (
               <>
@@ -175,14 +216,13 @@ console.log("readingItem", readingItem)
                 </Text>
                 <View style={styles.readMoreContainer}>
                   <TouchableOpacity onPress={() => setShowSubscriptionModal(true)}>
-                    <Text style={styles.readMoreText}>{t('library_read_more')}</Text>
+                    <Text style={[styles.readMoreText, { color: colors.primary }]}>{t('library_read_more')}</Text>
                   </TouchableOpacity>
                 </View>
               </>
             )}
           </View>
 
-          {/* Share Button */}
           <View style={styles.shareRow}>
             <GradientBox colors={[colors.black, colors.bgBox]} style={styles.smallBtn}>
               <Image
@@ -194,7 +234,6 @@ console.log("readingItem", readingItem)
             </GradientBox>
           </View>
 
-          {/* Premium Button */}
           <TouchableOpacity
             style={{ marginTop: 40, alignItems: 'center' }}
             onPress={() => setShowSubscriptionModal(true)}
@@ -230,26 +269,20 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   centerContent: { justifyContent: 'center', alignItems: 'center' },
   errorText: { color: '#fff', marginTop: 10, fontFamily: Fonts.aeonikRegular },
- header: { height: 56, justifyContent: 'center', alignItems: 'center', marginTop: 8 },
+  header: { height: 56, justifyContent: 'center', alignItems: 'center', marginTop: 8, paddingHorizontal: 10 },
   backBtn: { position: 'absolute', left: 10, height: 40, width: 40, justifyContent: 'center', alignItems: 'center' },
   backIcon: { width: 22, height: 22 },
   headerTitleWrap: { maxWidth: '70%', alignItems: 'center', justifyContent: 'center' },
   headerTitle: { fontFamily: Fonts.cormorantSCBold, fontSize: 22, letterSpacing: 1, textTransform: 'capitalize' },
-  headerRightPlaceholder: { width: 24 },
-
   scrollContent: { paddingBottom: 40 },
   focusTitle: {
     fontFamily: Fonts.aeonikRegular,
     fontSize: 18,
-    color: '#D9B699',
     textAlign: 'center',
     marginTop: 20,
     marginBottom: 20,
   },
-
-  // ✅ Fixed height + scroll for cards
   readingCardsContainer: {
-
     marginBottom: 10,
   },
   selectedRow: {
@@ -267,10 +300,8 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   boxImg: { width: '100%', height: '100%' },
-
-  playButtonContainer: { alignItems: 'center', marginTop: 20 },
-  playIcon: { width: 50, height: 50 },
-
+  playButtonContainer: { alignItems: 'center', marginTop: 20, height: 50, justifyContent: 'center' },
+  playIcon: { width: 40, height: 40 },
   readingContentContainer: { paddingHorizontal: 24, marginTop: 20 },
   readingParagraph: {
     color: '#FFFFFF',
@@ -284,17 +315,14 @@ const styles = StyleSheet.create({
   readMoreText: {
     fontFamily: Fonts.aeonikRegular,
     fontSize: 14,
-    color: '#D9B699',
     textDecorationLine: 'underline',
   },
-
   shareRow: {
     marginTop: 24,
     flexDirection: 'row',
     justifyContent: 'center',
   },
   smallBtn: {
-    backgroundColor: '#FFFFFF26',
     minWidth: 120,
     height: 46,
     borderRadius: 23,
@@ -302,10 +330,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#CEA16A',
   },
   smallIcon: { width: 15, height: 15, marginRight: 8, tintColor: '#fff' },
   smallBtnText: { fontFamily: Fonts.aeonikRegular, fontSize: 14, color: '#fff' },
-
   revealBtnGrad: {
     height: 52,
     justifyContent: 'center',

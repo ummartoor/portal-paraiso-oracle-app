@@ -23,6 +23,9 @@
   "signup_link": "Sign up",
 
 
+    "validation_question_min_length": "Question must be at least {{count}} characters.",
+  "validation_question_max_length": "Question cannot be more than {{count}} characters.",
+
 
   "forgot_password_header": "Forgot Password",
   "forgot_password_subheader": "Enter the email associated with your account and we’ll send you a code.",
