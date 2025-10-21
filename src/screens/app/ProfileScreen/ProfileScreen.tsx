@@ -348,7 +348,7 @@ const ProfileScreen: React.FC = () => {
           >
             {t('profile_document_header')}
           </Text>
-          <TouchableOpacity
+          {/* <TouchableOpacity
             activeOpacity={0.85}
             onPress={() => navigation.navigate('TermOfService')}
             style={[styles.rowBtn, { backgroundColor: colors.bgBox }]}
@@ -361,7 +361,7 @@ const ProfileScreen: React.FC = () => {
               style={{ width: 18, height: 18 }}
               resizeMode="contain"
             />
-          </TouchableOpacity>
+          </TouchableOpacity> */}
           <TouchableOpacity
             activeOpacity={0.85}
             onPress={() => navigation.navigate('SubscriptionTerms')}
