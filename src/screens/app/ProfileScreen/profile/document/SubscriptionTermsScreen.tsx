@@ -43,7 +43,7 @@ const SubscriptionTermsScreen = () => {
           </TouchableOpacity>
           <View style={styles.headerTitleWrap} pointerEvents="none">
             <Text numberOfLines={1} ellipsizeMode="tail" style={[styles.headerTitle, { color: colors.white }]}>
-              Subscription Terms
+              Terms & Conditions
             </Text>
           </View>
         </View>
