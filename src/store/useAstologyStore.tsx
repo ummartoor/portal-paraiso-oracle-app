@@ -106,7 +106,16 @@ export const useAstrologyStore = create<AstrologyState>(set => ({
 
       // 4. Handle the response
       if (response.data && response.data.success) {
-        const horoscopeData = response.data.horoscope as HoroscopeData;
+        
+        // --- CHANGE IS HERE ---
+        // We build the HoroscopeData object to match your interface
+        // based on the API response structure from your image.
+        const horoscopeData: HoroscopeData = {
+            data: response.data.horoscope as HoroscopeDetails, // The details are in response.data.horoscope
+            message: response.data.message, // The message is at the top level
+            success: response.data.success  // The success flag is at the top level
+        };
+        
         set({ horoscope: horoscopeData, isLoading: false });
         return horoscopeData; 
       } else {

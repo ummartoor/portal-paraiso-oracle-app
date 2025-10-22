@@ -14,6 +14,7 @@ import {
   ActivityIndicator,
   Alert,
   Vibration,
+  Modal, 
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
@@ -26,6 +27,8 @@ import Animated, {
   withDelay,
 } from 'react-native-reanimated';
 
+import Video from 'react-native-video';
+
 import GradientBox from '../../../../../components/GradientBox';
 import { Fonts } from '../../../../../constants/fonts';
 import { useThemeStore } from '../../../../../store/useThemeStore';
@@ -33,7 +36,6 @@ import { AppStackParamList } from '../../../../../navigation/routeTypes';
 import SubscriptionPlanModal from '../../../../../components/SubscriptionPlanModal';
 import { useBuziosStore } from '../../../../../store/useBuziousStore';
 import { useTranslation } from 'react-i18next';
-// --- NEW: Import OpenAI Store and SoundPlayer ---
 import { useOpenAiStore } from '../../../../../store/useOpenAiStore';
 import SoundPlayer from 'react-native-sound-player';
 
@@ -132,13 +134,12 @@ const CaurisCardDetailScreen: React.FC = () => {
     saveBuziosReading,
   } = useBuziosStore();
 
-  // --- NEW: Integrate OpenAI Store ---
   const { preloadSpeech } = useOpenAiStore();
 
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
-  const [phase, setPhase] = useState<0 | 1 | 2 | 3>(0);
+  // --- UPDATED: Added phase 4 for the final reading screen ---
+  const [phase, setPhase] = useState<0 | 1 | 2 | 3 | 4>(0);
   
-  // --- NEW: State for audio playback and preloading ---
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
   const [preloadedAudioPath, setPreloadedAudioPath] = useState<string | null>(null);
   const [isPreloadingAudio, setIsPreloadingAudio] = useState(false);
@@ -239,6 +240,7 @@ const CaurisCardDetailScreen: React.FC = () => {
   const sSV = shellConfigs.map(() => useSharedValue(0.7));
   const oSV = shellConfigs.map(() => useSharedValue(0));
 
+  // --- UPDATED: onActionPress logic for new phases ---
   const onActionPress = async () => {
     Vibration.vibrate([0, 35, 40, 35]); 
     if (phase === 0) {
@@ -255,8 +257,9 @@ const CaurisCardDetailScreen: React.FC = () => {
         oSV[i].value = withDelay(c.delay, withTiming(1, { duration: 260 }));
       });
     } else if (phase === 2) {
-      setPhase(3);
-    } else if (phase === 3) {
+      // Phase 2 button now transitions to the video screen (phase 3)
+      setPhase(3); 
+    } else if (phase === 4) {
       setShowSubscriptionModal(true);
     }
   };
@@ -267,23 +270,14 @@ const CaurisCardDetailScreen: React.FC = () => {
     }
   }, [isLoadingReading, reading, phase]);
   
-  // --- NEW: useEffect to PRELOAD audio when reading is ready ---
   useEffect(() => {
     const prepareReadingAudio = async () => {
         if (reading?.ai_reading && reading?.buzios_result?.overall_polarity) {
             setIsPreloadingAudio(true);
-            
-            // --- THE FIX IS HERE ---
-            // Create a unique ID from the reading result to use for caching the audio file.
-            // We sanitize it to make it a valid filename component.
             const readingId = `${userQuestion}_${reading.buzios_result.overall_polarity}`.replace(/[^a-zA-Z0-9]/g, '_');
-
             const audioPath = await preloadSpeech(reading.ai_reading, readingId);
             if (audioPath) {
                 setPreloadedAudioPath(audioPath);
-                console.log('Cauris reading audio preloaded successfully.');
-            } else {
-                console.log('Failed to preload Cauris reading audio.');
             }
             setIsPreloadingAudio(false);
         }
@@ -291,7 +285,6 @@ const CaurisCardDetailScreen: React.FC = () => {
     prepareReadingAudio();
   }, [reading, userQuestion, preloadSpeech]);
   
-  // --- NEW: useEffect for SoundPlayer events ---
   useEffect(() => {
     const onFinishedPlayingSubscription = SoundPlayer.addEventListener('FinishedPlaying', () => {
       setIsPlayingAudio(false);
@@ -313,7 +306,6 @@ const CaurisCardDetailScreen: React.FC = () => {
     }
   };
   
-  // --- NEW: Updated playback toggle function ---
   const onPressPlayToggle = () => {
     if (isPlayingAudio) {
       SoundPlayer.stop();
@@ -327,8 +319,6 @@ const CaurisCardDetailScreen: React.FC = () => {
       } catch (e) {
         console.error('Could not play preloaded audio', e);
       }
-    } else {
-      console.warn('Audio is not ready yet or failed to preload.');
     }
   };
 
@@ -338,10 +328,12 @@ const CaurisCardDetailScreen: React.FC = () => {
     ]);
   }
   
+  // --- UPDATED: Title logic for new phases ---
   const titleTop = t(
     phase === 0 ? 'cauris_phase0_title' :
     phase === 1 ? 'cauris_phase1_title' :
     phase === 2 ? 'cauris_phase2_title' :
+    phase === 3 ? 'cauris_phase2_title' : // Video phase can reuse phase 2 title
     'cauris_phase3_title'
   );
   
@@ -350,11 +342,13 @@ const CaurisCardDetailScreen: React.FC = () => {
     'cauris_phase1_subtitle'
   ) : undefined;
 
+  // --- UPDATED: Button label logic for new phases ---
   const actionLabel = 
     phase === 0 ? t('cauris_phase0_button') :
-    phase === 1 ? t('continue_button') : // This is a temporary state, button is disabled
+    phase === 1 ? t('continue_button') : 
     phase === 2 ? t('cauris_phase2_button') :
-    t('get_premium_button');
+    phase === 4 ? t('get_premium_button') :
+    ''; // No label needed for phase 3, as the button is in the modal
 
   const showShells = phase >= 1;
   const divineMessage = reading?.ai_reading ?? t('cauris_default_message');
@@ -365,6 +359,41 @@ const CaurisCardDetailScreen: React.FC = () => {
       style={styles.bgImage}
       imageStyle={{ resizeMode: 'cover' }}
     >
+      {/* --- NEW: Full screen video modal for Phase 3 --- */}
+      <Modal
+        visible={phase === 3}
+        transparent={true}
+        animationType="fade"
+      >
+        <View style={styles.videoContainer}>
+            {/* IMPORTANT: Replace the video URI with your own video file. 
+              You can use a remote URL or a local file with require().
+            */}
+            <Video
+         source={require('../../../../../assets/videos/onboardingVideo3.mp4')}
+              style={styles.videoPlayer}
+              resizeMode="cover"
+              repeat={true}
+           
+            />
+            <View style={styles.videoOverlay}>
+                <TouchableOpacity
+                    activeOpacity={0.8}
+                    style={styles.videoContinueTouchable}
+                    onPress={() => setPhase(4)} // Pressing continue moves to final phase 4
+                >
+                    <GradientBox
+                        colors={[colors.black, colors.bgBox]}
+                        style={[styles.actionButton, { borderColor: colors.primary }]}>
+                        <Text style={[styles.actionLabel, { color: colors.white }]}>
+                            {t('continue_button')}
+                        </Text>
+                    </GradientBox>
+                </TouchableOpacity>
+            </View>
+        </View>
+      </Modal>
+
       <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
         <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
         <View style={styles.header}>
@@ -385,11 +414,12 @@ const CaurisCardDetailScreen: React.FC = () => {
             </Text>
           </View>
         </View>
-
+        
+        {/* --- MODIFIED: Main content is in ScrollView, Button is outside and at the bottom --- */}
         <ScrollView
           contentContainerStyle={[
             styles.scrollContent,
-            { paddingBottom: phase === 3 ? 20 : 24 },
+            { paddingBottom: phase === 4 ? 20 : 100 }, // Added padding to avoid overlap with bottom button
           ]}
           showsVerticalScrollIndicator={false}
         >
@@ -402,7 +432,7 @@ const CaurisCardDetailScreen: React.FC = () => {
                 {subtitle}
               </Text>
             ) : null}
-            {(phase === 2 || phase === 3) && reading && (
+            {(phase === 2 || phase === 4) && reading && (
               <Text style={[styles.patternName, { color: colors.white }]}>
                 {reading.buzios_result.overall_polarity}
               </Text>
@@ -439,8 +469,9 @@ const CaurisCardDetailScreen: React.FC = () => {
               )}
             </Animated.View>
           </View>
-
-          {phase === 3 && (
+        
+          {/* --- UPDATED: Show final content only in phase 4 --- */}
+          {phase === 4 && (
             <>
               <View style={styles.playWrapper}>
                 <TouchableOpacity
@@ -499,34 +530,36 @@ const CaurisCardDetailScreen: React.FC = () => {
             </>
           )}
 
-          <View style={styles.actionsRow}>
-            <TouchableOpacity
-              activeOpacity={0.7}
-              style={styles.actionTouchable}
-              onPress={onActionPress}
-              disabled={phase === 1 && isLoadingReading}
+    
+        
+        {/* --- MOVED: This is the main action button, now outside ScrollView and at the bottom --- */}
+        <View style={styles.actionsRow}>
+          <TouchableOpacity
+            activeOpacity={0.7}
+            style={styles.actionTouchable}
+            onPress={onActionPress}
+            disabled={(phase === 1 && isLoadingReading) || phase === 3}
+          >
+            <GradientBox
+              colors={[colors.black, colors.bgBox]}
+              style={[styles.actionButton, { borderColor: colors.primary }]}
             >
-              <GradientBox
-                colors={[colors.black, colors.bgBox]}
-                style={[styles.actionButton, { borderColor: colors.primary }]}
-              >
-                {phase === 1 && isLoadingReading ? (
-                  <ActivityIndicator color={colors.primary} />
-                ) : (
-                  <Text style={[styles.actionLabel, { color: colors.white }]}>
-                    {actionLabel}
-                  </Text>
-                )}
-              </GradientBox>
-            </TouchableOpacity>
-          </View>
-        </ScrollView>
+              {phase === 1 && isLoadingReading ? (
+                <ActivityIndicator color={colors.primary} />
+              ) : (
+                <Text style={[styles.actionLabel, { color: colors.white }]}>
+                  {actionLabel}
+                </Text>
+              )}
+            </GradientBox>
+          </TouchableOpacity>
+        </View>
+    </ScrollView>
         <SubscriptionPlanModal
           isVisible={showSubscriptionModal}
           onClose={() => setShowSubscriptionModal(false)}
           onConfirm={plan => {
             setShowSubscriptionModal(false);
-            console.log('User selected plan:', plan);
           }}
         />
       </SafeAreaView>
@@ -540,7 +573,7 @@ const styles = StyleSheet.create({
   bgImage: { flex: 1, width: SCREEN_WIDTH, backgroundColor: 'transparent' },
   container: {
     flex: 1,
-    paddingHorizontal: 20,
+    // Horizontal padding is moved to sub-containers to allow the bottom button to span full width
     paddingTop: Platform.select({ ios: 0, android: 10 }),
     backgroundColor: 'transparent',
   },
@@ -549,10 +582,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginTop: 8,
+    paddingHorizontal: 20,
   },
   backBtn: {
     position: 'absolute',
-    left: 0,
+    left: 20,
     height: 40,
     width: 40,
     justifyContent: 'center',
@@ -570,7 +604,7 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
     textTransform: 'capitalize',
   },
-  scrollContent: { alignItems: 'center' },
+  scrollContent: { alignItems: 'center', paddingHorizontal: 20 },
   contentHeader: { marginTop: 16, width: '100%', alignItems: 'center' },
   contentTitle: {
     fontFamily: Fonts.aeonikRegular,
@@ -661,6 +695,7 @@ const styles = StyleSheet.create({
   },
   smallIcon: { width: 15, height: 15, marginRight: 8, resizeMode: 'contain' },
   smallBtnText: { fontFamily: Fonts.aeonikRegular, fontSize: 14 },
+
   actionsRow: { width: '100%', marginTop: 24, marginBottom: 12 },
   actionTouchable: { flex: 1 },
   actionButton: {
@@ -682,8 +717,40 @@ const styles = StyleSheet.create({
       height: 60,
       justifyContent: 'center',
       alignItems: 'center',
-  }
+  },
+  // --- NEW: Styles for the full screen video modal ---
+  videoContainer: {
+    flex: 1,
+    backgroundColor: '#000',
+  },
+  videoPlayer: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  videoOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: 'flex-end', // Aligns children (the button) to the bottom
+    alignItems: 'center',
+  },
+  videoContinueTouchable: {
+    width: '100%',
+    paddingHorizontal: 20,
+    marginBottom: 50, // Position button up from the very bottom edge
+  },
 });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -736,8 +803,9 @@ const styles = StyleSheet.create({
 // import SubscriptionPlanModal from '../../../../../components/SubscriptionPlanModal';
 // import { useBuziosStore } from '../../../../../store/useBuziousStore';
 // import { useTranslation } from 'react-i18next';
-// // 🔊 TTS
-// import Tts from 'react-native-tts';
+// // --- NEW: Import OpenAI Store and SoundPlayer ---
+// import { useOpenAiStore } from '../../../../../store/useOpenAiStore';
+// import SoundPlayer from 'react-native-sound-player';
 
 // const { width: SCREEN_WIDTH } = Dimensions.get('window');
 // const CONTAINER_W = SCREEN_WIDTH - 40;
@@ -823,8 +891,8 @@ const styles = StyleSheet.create({
 //     useNavigation<NativeStackNavigationProp<AppStackParamList>>();
 //   const route = useRoute<RouteProp<AppStackParamList, 'CaurisCardDetail'>>();
 //   const { userQuestion } = route.params;
-//   const { t } = useTranslation(); 
-//   // --- Zustand Store Integration ---
+//   const { t } = useTranslation();
+  
 //   const {
 //     reading,
 //     isLoadingReading,
@@ -834,9 +902,16 @@ const styles = StyleSheet.create({
 //     saveBuziosReading,
 //   } = useBuziosStore();
 
+//   // --- NEW: Integrate OpenAI Store ---
+//   const { preloadSpeech } = useOpenAiStore();
+
 //   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
 //   const [phase, setPhase] = useState<0 | 1 | 2 | 3>(0);
-//   const [isSpeaking, setIsSpeaking] = useState(false);
+  
+//   // --- NEW: State for audio playback and preloading ---
+//   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
+//   const [preloadedAudioPath, setPreloadedAudioPath] = useState<string | null>(null);
+//   const [isPreloadingAudio, setIsPreloadingAudio] = useState(false);
 
 //   const circleScale = useSharedValue(1);
 //   const circleAnimStyle = useAnimatedStyle(() => ({
@@ -844,13 +919,11 @@ const styles = StyleSheet.create({
 //   }));
 
 //   const shell2Set = useMemo(() => {
-//     // Use the API response to determine which shells are "mouth up"
 //     if (reading) {
 //       const upCount = reading.buzios_result.mouth_up_count;
 //       const indices = shuffle(Array.from({ length: SHELL_COUNT }, (_, i) => i));
 //       return new Set(indices.slice(0, upCount));
 //     }
-//     // Default random set before API call
 //     const idx = shuffle(Array.from({ length: SHELL_COUNT }, (_, i) => i)).slice(
 //       0,
 //       6,
@@ -859,7 +932,6 @@ const styles = StyleSheet.create({
 //   }, [reading]);
 
 //   const shellConfigs: ShellConfig[] = useMemo(() => {
-//     // ... (rest of the shell configuration logic remains the same)
 //     const effectiveSize = BOWL_SIZE - SHELL_PADDING * 2;
 //     const R = effectiveSize / 2;
 //     const center = { x: SHELL_PADDING + R, y: SHELL_PADDING + R };
@@ -938,64 +1010,104 @@ const styles = StyleSheet.create({
 //   const oSV = shellConfigs.map(() => useSharedValue(0));
 
 //   const onActionPress = async () => {
-//            Vibration.vibrate([0, 35, 40, 35]); 
+//     Vibration.vibrate([0, 35, 40, 35]); 
 //     if (phase === 0) {
-//       setPhase(1); // Show "Casting the Shells"
-//       // Start API call in the background while animation runs
+//       setPhase(1);
 //       getBuziosReading(userQuestion);
-
-//       circleScale.value = withSpring(
-//         0.98,
-//         { damping: 20, stiffness: 240 },
-//         () => {
-//           circleScale.value = withSpring(1);
-//         },
-//       );
+//       circleScale.value = withSpring(0.98, { damping: 20, stiffness: 240 }, () => {
+//         circleScale.value = withSpring(1);
+//       });
 //       shellConfigs.forEach((c, i) => {
-//         xSV[i].value = withDelay(
-//           c.delay,
-//           withSpring(c.targetX, { damping: 14, stiffness: 170 }),
-//         );
-//         ySV[i].value = withDelay(
-//           c.delay,
-//           withSpring(c.targetY, { damping: 14, stiffness: 170 }),
-//         );
+//         xSV[i].value = withDelay(c.delay, withSpring(c.targetX, { damping: 14, stiffness: 170 }));
+//         ySV[i].value = withDelay(c.delay, withSpring(c.targetY, { damping: 14, stiffness: 170 }));
 //         rSV[i].value = withDelay(c.delay, withTiming(c.rot, { duration: 650 }));
-//         sSV[i].value = withDelay(
-//           c.delay,
-//           withSpring(1, { damping: 14, stiffness: 200 }),
-//         );
+//         sSV[i].value = withDelay(c.delay, withSpring(1, { damping: 14, stiffness: 200 }));
 //         oSV[i].value = withDelay(c.delay, withTiming(1, { duration: 260 }));
 //       });
-//     } else if (phase === 1) {
-//       // This phase is now controlled by API loading state
 //     } else if (phase === 2) {
 //       setPhase(3);
-//     } else {
+//     } else if (phase === 3) {
 //       setShowSubscriptionModal(true);
 //     }
 //   };
 
-//   // Handle API response to move to next phase
 //   useEffect(() => {
 //     if (phase === 1 && !isLoadingReading && reading) {
-//       // API call is done, move to phase 2
 //       setPhase(2);
 //     }
 //   }, [isLoadingReading, reading, phase]);
+  
+//   // --- NEW: useEffect to PRELOAD audio when reading is ready ---
+//   useEffect(() => {
+//     const prepareReadingAudio = async () => {
+//         if (reading?.ai_reading && reading?.buzios_result?.overall_polarity) {
+//             setIsPreloadingAudio(true);
+            
+//             // --- THE FIX IS HERE ---
+//             // Create a unique ID from the reading result to use for caching the audio file.
+//             // We sanitize it to make it a valid filename component.
+//             const readingId = `${userQuestion}_${reading.buzios_result.overall_polarity}`.replace(/[^a-zA-Z0-9]/g, '_');
+
+//             const audioPath = await preloadSpeech(reading.ai_reading, readingId);
+//             if (audioPath) {
+//                 setPreloadedAudioPath(audioPath);
+//                 console.log('Cauris reading audio preloaded successfully.');
+//             } else {
+//                 console.log('Failed to preload Cauris reading audio.');
+//             }
+//             setIsPreloadingAudio(false);
+//         }
+//     };
+//     prepareReadingAudio();
+//   }, [reading, userQuestion, preloadSpeech]);
+  
+//   // --- NEW: useEffect for SoundPlayer events ---
+//   useEffect(() => {
+//     const onFinishedPlayingSubscription = SoundPlayer.addEventListener('FinishedPlaying', () => {
+//       setIsPlayingAudio(false);
+//     });
+//     return () => {
+//       SoundPlayer.stop();
+//       onFinishedPlayingSubscription.remove();
+//     };
+//   }, []);
 
 //   const handleSave = () => {
-//            Vibration.vibrate([0, 35, 40, 35]); 
+//     Vibration.vibrate([0, 35, 40, 35]); 
 //     if (reading && !isSaving) {
 //       saveBuziosReading(reading).then(success => {
 //         if (success) {
-//           // Optionally navigate back or show a confirmation
 //           navigation.navigate('MainTabs');
 //         }
 //       });
 //     }
 //   };
+  
+//   // --- NEW: Updated playback toggle function ---
+//   const onPressPlayToggle = () => {
+//     if (isPlayingAudio) {
+//       SoundPlayer.stop();
+//       setIsPlayingAudio(false);
+//       return;
+//     }
+//     if (preloadedAudioPath) {
+//       try {
+//         SoundPlayer.playUrl(`file://${preloadedAudioPath}`);
+//         setIsPlayingAudio(true);
+//       } catch (e) {
+//         console.error('Could not play preloaded audio', e);
+//       }
+//     } else {
+//       console.warn('Audio is not ready yet or failed to preload.');
+//     }
+//   };
 
+//   if (readingError) {
+//     Alert.alert(t('alert_error_title'), readingError, [
+//       { text: 'OK', onPress: () => navigation.goBack() },
+//     ]);
+//   }
+  
 //   const titleTop = t(
 //     phase === 0 ? 'cauris_phase0_title' :
 //     phase === 1 ? 'cauris_phase1_title' :
@@ -1010,63 +1122,12 @@ const styles = StyleSheet.create({
 
 //   const actionLabel = 
 //     phase === 0 ? t('cauris_phase0_button') :
-//     phase === 1 ? t('continue_button') :
+//     phase === 1 ? t('continue_button') : // This is a temporary state, button is disabled
 //     phase === 2 ? t('cauris_phase2_button') :
-//     t('get_premium_button'); // Reusing this key
+//     t('get_premium_button');
 
 //   const showShells = phase >= 1;
-// const divineMessage = reading?.ai_reading ?? t('cauris_default_message');
-
-//   type TtsSub = { remove?: () => void; removeListener?: () => void };
-
-//   useEffect(() => {
-//     Tts.setDefaultLanguage('en-US').catch(() => {});
-//     Tts.setDefaultRate(0.4, true);
-
-//     const onStart = () => setIsSpeaking(true);
-//     const onFinish = () => setIsSpeaking(false);
-//     const onCancel = () => setIsSpeaking(false);
-
-//     const startSub = Tts.addEventListener(
-//       'tts-start',
-//       onStart,
-//     ) as unknown as TtsSub;
-//     const finishSub = Tts.addEventListener(
-//       'tts-finish',
-//       onFinish,
-//     ) as unknown as TtsSub;
-//     const cancelSub = Tts.addEventListener(
-//       'tts-cancel',
-//       onCancel,
-//     ) as unknown as TtsSub;
-
-//     return () => {
-//       startSub?.remove?.();
-//       startSub?.removeListener?.();
-//       finishSub?.remove?.();
-//       finishSub?.removeListener?.();
-//       cancelSub?.remove?.();
-//       cancelSub?.removeListener?.();
-//       Tts.stop();
-//     };
-//   }, []);
-
-//   const onPressPlayToggle = async () => {
-//     if (!divineMessage.trim()) return;
-//     if (isSpeaking) {
-//       await Tts.stop();
-//       setIsSpeaking(false);
-//     } else {
-//       await Tts.stop();
-//       Tts.speak(divineMessage);
-//     }
-//   };
-
-//   if (readingError) {
-//     Alert.alert(t('alert_error_title'), readingError, [
-//       { text: 'OK', onPress: () => navigation.goBack() },
-//     ]);
-//   }
+//   const divineMessage = reading?.ai_reading ?? t('cauris_default_message');
 
 //   return (
 //     <ImageBackground
@@ -1075,17 +1136,9 @@ const styles = StyleSheet.create({
 //       imageStyle={{ resizeMode: 'cover' }}
 //     >
 //       <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
-//         <StatusBar
-//           barStyle="light-content"
-//           translucent
-//           backgroundColor="transparent"
-//         />
-
+//         <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
 //         <View style={styles.header}>
-//           <TouchableOpacity
-//             onPress={() => navigation.goBack()}
-//             style={styles.backBtn}
-//           >
+//           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
 //             <Image
 //               source={require('../../../../../assets/icons/backIcon.png')}
 //               style={[styles.backIcon, { tintColor: colors.white }]}
@@ -1111,26 +1164,14 @@ const styles = StyleSheet.create({
 //           showsVerticalScrollIndicator={false}
 //         >
 //           <View style={styles.contentHeader}>
-//             <Text
-//               style={[
-//                 styles.contentTitle,
-//                 { color: colors.primary, textAlign: 'center' },
-//               ]}
-//             >
+//             <Text style={[styles.contentTitle, { color: colors.primary, textAlign: 'center' }]}>
 //               {titleTop}
 //             </Text>
-
 //             {subtitle ? (
-//               <Text
-//                 style={[
-//                   styles.contentSubtitle,
-//                   { color: colors.white, textAlign: 'center' },
-//                 ]}
-//               >
+//               <Text style={[styles.contentSubtitle, { color: colors.white, textAlign: 'center' }]}>
 //                 {subtitle}
 //               </Text>
 //             ) : null}
-
 //             {(phase === 2 || phase === 3) && reading && (
 //               <Text style={[styles.patternName, { color: colors.white }]}>
 //                 {reading.buzios_result.overall_polarity}
@@ -1139,33 +1180,19 @@ const styles = StyleSheet.create({
 //           </View>
 
 //           <View style={styles.centerImageWrap}>
-//             <Image
-//               source={DECAL_IMG}
-//               style={styles.decalFull}
-//               resizeMode="contain"
-//             />
+//             <Image source={DECAL_IMG} style={styles.decalFull} resizeMode="contain" />
 //             <Animated.View
 //               style={[
 //                 styles.circleWrap,
-//                 {
-//                   left: (CONTAINER_W - BOWL_SIZE) / 2,
-//                   borderColor: colors.primary,
-//                 },
+//                 { left: (CONTAINER_W - BOWL_SIZE) / 2, borderColor: colors.primary },
 //                 circleAnimStyle,
 //               ]}
 //             >
-//               <GradientBox
-//                 colors={[colors.black, colors.bgBox]}
-//                 style={styles.circleGradient}
-//               >
+//               <GradientBox colors={[colors.black, colors.bgBox]} style={styles.circleGradient}>
 //                 <View />
 //               </GradientBox>
-
 //               {showShells && (
-//                 <View
-//                   style={[styles.shellsOverlay, { padding: SHELL_PADDING }]}
-//                   pointerEvents="none"
-//                 >
+//                 <View style={[styles.shellsOverlay, { padding: SHELL_PADDING }]} pointerEvents="none">
 //                   {shellConfigs.map((cfg, i) => (
 //                     <ShellSprite
 //                       key={`shell-${i}`}
@@ -1189,12 +1216,21 @@ const styles = StyleSheet.create({
 //                 <TouchableOpacity
 //                   onPress={onPressPlayToggle}
 //                   activeOpacity={0.7}
+//                   disabled={isPreloadingAudio || !preloadedAudioPath}
+//                   style={styles.playBtnContainer}
 //                 >
-//                   <Image
-//                     source={isSpeaking ? PAUSE_ICON : PLAY_ICON}
-//                     style={[styles.playIcon, { opacity: isSpeaking ? 0.9 : 1 }]}
-//                     resizeMode="contain"
-//                   />
+//                   {isPreloadingAudio ? (
+//                     <ActivityIndicator size="large" color={colors.primary} />
+//                   ) : (
+//                     <Image
+//                       source={isPlayingAudio ? PAUSE_ICON : PLAY_ICON}
+//                       style={[
+//                         styles.playIcon,
+//                         { tintColor: (isPreloadingAudio || !preloadedAudioPath) ? '#999' : colors.primary }
+//                       ]}
+//                       resizeMode="contain"
+//                     />
+//                   )}
 //                 </TouchableOpacity>
 //               </View>
 
@@ -1207,16 +1243,11 @@ const styles = StyleSheet.create({
 //                   colors={[colors.black, colors.bgBox]}
 //                   style={[styles.smallBtn, { borderColor: colors.primary }]}
 //                 >
-//                   <Image
-//                     source={SHARE_ICON}
-//                     style={styles.smallIcon}
-//                     resizeMode="contain"
-//                   />
+//                   <Image source={SHARE_ICON} style={styles.smallIcon} resizeMode="contain" />
 //                   <Text style={[styles.smallBtnText, { color: colors.white }]}>
-//            {t('share_button')}
+//                     {t('share_button')}
 //                   </Text>
 //                 </GradientBox>
-
 //                 <TouchableOpacity onPress={handleSave} disabled={isSaving}>
 //                   <GradientBox
 //                     colors={[colors.black, colors.bgBox]}
@@ -1226,15 +1257,9 @@ const styles = StyleSheet.create({
 //                       <ActivityIndicator color={colors.white} />
 //                     ) : (
 //                       <>
-//                         <Image
-//                           source={SAVE_ICON}
-//                           style={styles.smallIcon}
-//                           resizeMode="contain"
-//                         />
-//                         <Text
-//                           style={[styles.smallBtnText, { color: colors.white }]}
-//                         >
-//                    {t('save_button')}
+//                         <Image source={SAVE_ICON} style={styles.smallIcon} resizeMode="contain" />
+//                         <Text style={[styles.smallBtnText, { color: colors.white }]}>
+//                           {t('save_button')}
 //                         </Text>
 //                       </>
 //                     )}
@@ -1327,12 +1352,6 @@ const styles = StyleSheet.create({
 //     fontFamily: Fonts.aeonikRegular,
 //     fontSize: 14,
 //     lineHeight: 18,
-//     opacity: 0.9,
-//   },
-//   eyebrow: {
-//     marginTop: 2,
-//     fontFamily: Fonts.aeonikRegular,
-//     fontSize: 14,
 //     opacity: 0.9,
 //   },
 //   patternName: {
@@ -1428,1727 +1447,13 @@ const styles = StyleSheet.create({
 //     elevation: 3,
 //   },
 //   actionLabel: { fontFamily: Fonts.aeonikRegular, fontSize: 14 },
+//   playBtnContainer: {
+//       width: 60,
+//       height: 60,
+//       justifyContent: 'center',
+//       alignItems: 'center',
+//   }
 // });
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// ------------------------Design--------------------
-
-// import React, { useMemo, useState, useEffect } from 'react';
-// import {
-//   View, Text, StyleSheet, TouchableOpacity, StatusBar, Dimensions,
-//   ImageBackground, Image, Platform, ScrollView, ImageSourcePropType,
-// } from 'react-native';
-// import { SafeAreaView } from 'react-native-safe-area-context';
-// import { useNavigation } from '@react-navigation/native';
-// import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-// import Animated, { useSharedValue, useAnimatedStyle, withTiming, withSpring, withDelay } from 'react-native-reanimated';
-
-// import GradientBox from '../../../../../components/GradientBox';
-// import { Fonts } from '../../../../../constants/fonts';
-// import { useThemeStore } from '../../../../../store/useThemeStore';
-// import { AppStackParamList } from '../../../../../navigation/routeTypes';
-// import SubscriptionPlanModal from '../../../../../components/SubscriptionPlanModal';
-
-// // 🔊 TTS
-// import Tts from 'react-native-tts';
-
-// const { width: SCREEN_WIDTH } = Dimensions.get('window');
-// const CONTAINER_W = SCREEN_WIDTH - 40;
-
-// /* Assets */
-// const BG_IMG = require('../../../../../assets/images/backgroundImage.png');
-// const DECAL_IMG = require('../../../../../assets/images/decalImage.png');
-// const SHELL_IMG_1 = require('../../../../../assets/images/shell1.png');
-// const SHELL_IMG_2 = require('../../../../../assets/images/shell2.png');
-
-// const PLAY_ICON = require('../../../../../assets/icons/playIcon.png');
-// const PAUSE_ICON = require('../../../../../assets/icons/pauseIcon.png');
-// const SHARE_ICON = require('../../../../../assets/icons/shareIcon.png');
-// const SAVE_ICON = require('../../../../../assets/icons/saveIcon.png');
-
-// /* Sizes */
-// const DECAL_SIZE = 352;
-// const BOWL_SIZE = 260;
-// const SHELL_COUNT = 16;
-// const SHELL_MIN = 44;
-// const SHELL_MAX = 48;
-// const SHELL_PADDING = 16;
-
-// /* No-overlap controls */
-// const SHELL_GAP = 10;
-// const RADIUS_SCALE = 0.6;
-// const MAX_ATTEMPTS = 500;
-
-// /* helpers */
-// const rand = (min: number, max: number) => Math.random() * (max - min) + min;
-// const shuffle = <T,>(a: T[]) => {
-//   const b = [...a];
-//   for (let i = b.length - 1; i > 0; i--) {
-//     const j = Math.floor(Math.random() * (i + 1));
-//     [b[i], b[j]] = [b[j], b[i]];
-//   }
-//   return b;
-// };
-
-// type ShellConfig = {
-//   size: number;
-//   startX: number;
-//   startY: number;
-//   targetX: number;
-//   targetY: number;
-//   rot: number;
-//   delay: number;
-//   source: ImageSourcePropType;
-// };
-
-// function ShellSprite({
-//   size, x, y, rot, opacity, scale, source,
-// }: {
-//   size: number;
-//   x: Animated.SharedValue<number>;
-//   y: Animated.SharedValue<number>;
-//   rot: Animated.SharedValue<number>;
-//   opacity: Animated.SharedValue<number>;
-//   scale: Animated.SharedValue<number>;
-//   source: ImageSourcePropType;
-// }) {
-//   const style = useAnimatedStyle(() => ({
-//     position: 'absolute',
-//     left: x.value,
-//     top: y.value,
-//     width: size,
-//     height: size,
-//     opacity: opacity.value,
-//     transform: [{ rotate: `${rot.value}deg` }, { scale: scale.value }],
-//   }));
-//   return <Animated.Image source={source} style={style} resizeMode="contain" />;
-// }
-
-// const CaurisCardDetailScreen: React.FC = () => {
-//   const colors = useThemeStore(s => s.theme.colors);
-//   const navigation = useNavigation<NativeStackNavigationProp<AppStackParamList>>();
-// const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
-
-//   // 0 = intro, 1 = casting, 2 = pattern reveal, 3 = divine message
-//   const [phase, setPhase] = useState<0 | 1 | 2 | 3>(0);
-//   const [isSpeaking, setIsSpeaking] = useState(false);
-
-//   const circleScale = useSharedValue(1);
-//   const circleAnimStyle = useAnimatedStyle(() => ({ transform: [{ scale: circleScale.value }] }));
-
-//   // pick 6 shells for second image
-//   const shell2Set = useMemo(() => {
-//     const idx = shuffle(Array.from({ length: SHELL_COUNT }, (_, i) => i)).slice(0, 6);
-//     return new Set(idx);
-//   }, []);
-
-//   // Non-overlapping placement
-//   const shellConfigs: ShellConfig[] = useMemo(() => {
-//     const effectiveSize = BOWL_SIZE - SHELL_PADDING * 2;
-//     const R = effectiveSize / 2;
-//     const center = { x: SHELL_PADDING + R, y: SHELL_PADDING + R };
-
-//     // sizes & place larger first
-//     const sizes = Array.from({ length: SHELL_COUNT }, () => rand(SHELL_MIN, SHELL_MAX));
-//     const order = Array.from({ length: SHELL_COUNT }, (_, i) => i).sort((a, b) => sizes[b] - sizes[a]);
-
-//     type P = { cx: number; cy: number; r: number };
-//     const placed: P[] = [];
-//     const targets: { tx: number; ty: number }[] = Array(SHELL_COUNT).fill(null as any);
-
-//     const insideCircle = (cx: number, cy: number, rEff: number) => {
-//       const dx = cx - center.x, dy = cy - center.y;
-//       return Math.hypot(dx, dy) <= (R - rEff);
-//     };
-
-//     for (const idx of order) {
-//       const size = sizes[idx];
-//       const rEff = (size / 2) * RADIUS_SCALE;
-//       let done = false;
-
-//       for (let k = 0; k < MAX_ATTEMPTS; k++) {
-//         const angle = rand(0, Math.PI * 2);
-//         const radius = Math.sqrt(Math.random()) * (R - rEff);
-//         const cx = center.x + radius * Math.cos(angle);
-//         const cy = center.y + radius * Math.sin(angle);
-//         if (!insideCircle(cx, cy, rEff)) continue;
-
-//         let ok = true;
-//         for (const p of placed) {
-//           const dx = cx - p.cx, dy = cy - p.cy;
-//           const minD = p.r + rEff + SHELL_GAP;
-//           if (dx * dx + dy * dy < minD * minD) { ok = false; break; }
-//         }
-//         if (ok) {
-//           placed.push({ cx, cy, r: rEff });
-//           targets[idx] = { tx: cx - size / 2, ty: cy - size / 2 };
-//           done = true;
-//           break;
-//         }
-//       }
-
-//       if (!done) {
-//         const cx = center.x;
-//         const cy = center.y;
-//         placed.push({ cx, cy, r: rEff });
-//         targets[idx] = { tx: cx - size / 2, ty: cy - size / 2 };
-//       }
-//     }
-
-//     // build final configs in original index order
-//     return Array.from({ length: SHELL_COUNT }).map((_, i) => {
-//       const size = sizes[i];
-//       const { tx, ty } = targets[i];
-//       const startX = center.x + rand(-25, 25) - size / 2;
-//       const startY = BOWL_SIZE + rand(40, 80);
-//       return {
-//         size,
-//         startX,
-//         startY,
-//         targetX: tx,
-//         targetY: ty,
-//         rot: rand(-150, 150),
-//         delay: i * 70 + rand(0, 120),
-//         source: shell2Set.has(i) ? SHELL_IMG_2 : SHELL_IMG_1,
-//       };
-//     });
-//   }, [shell2Set]);
-
-//   // animated SVs
-//   const xSV = shellConfigs.map(c => useSharedValue(c.startX));
-//   const ySV = shellConfigs.map(c => useSharedValue(c.startY));
-//   const rSV = shellConfigs.map(() => useSharedValue(0));
-//   const sSV = shellConfigs.map(() => useSharedValue(0.7));
-//   const oSV = shellConfigs.map(() => useSharedValue(0));
-
-//   const onActionPress = () => {
-//     if (phase === 0) {
-//       circleScale.value = withSpring(0.98, { damping: 20, stiffness: 240 }, () => {
-//         circleScale.value = withSpring(1);
-//       });
-//       shellConfigs.forEach((c, i) => {
-//         xSV[i].value = withDelay(c.delay, withSpring(c.targetX, { damping: 14, stiffness: 170 }));
-//         ySV[i].value = withDelay(c.delay, withSpring(c.targetY, { damping: 14, stiffness: 170 }));
-//         rSV[i].value = withDelay(c.delay, withTiming(c.rot, { duration: 650 }));
-//         sSV[i].value = withDelay(c.delay, withSpring(1, { damping: 14, stiffness: 200 }));
-//         oSV[i].value = withDelay(c.delay, withTiming(1, { duration: 260 }));
-//       });
-//       setPhase(1);
-//     } else if (phase === 1) {
-//       setPhase(2);
-//     } else if (phase === 2) {
-//       setPhase(3);
-//     } else {
-//   setShowSubscriptionModal(true);
-//     }
-//   };
-
-//   const titleTop =
-//     phase === 0 ? 'Cowrie Shells Divination'
-//       : phase === 1 ? 'Casting the Shells'
-//         : phase === 2 ? 'Your divine pattern is'
-//           : 'Your Divine Message';
-
-//   const subtitle =
-//     phase === 0 ? 'Unveil sacred wisdom through ancient African spiritual practice.'
-//       : phase === 1 ? 'The spirits are being summoned…'
-//         : undefined;
-
-//   const actionLabel =
-//     phase === 0 ? 'Throw the Shells'
-//       : phase === 1 ? 'Continue'
-//         : phase === 2 ? 'Reveal My Reading'
-//           : 'Get Premium For Full Reading';
-
-//   const showShells = phase >= 1;
-
-//   // 🔊 Text to speak
-//   const divineMessage = `Obara Meji reveals growth, community, and learning through connection. You are guided to seek wisdom through dialogue and remain open to spiritual instruction. This is a time to trust the flow of energy around you and lean into shared experiences. The ancestors remind you that clarity comes when you listen with your soul, not just your ears.`;
-
-//   // properly-typed subscriptions with .remove() or .removeListener() ----
-//   type TtsSub = { remove?: () => void; removeListener?: () => void };
-
-//   useEffect(() => {
-//     Tts.setDefaultLanguage('en-US').catch(() => {});
-//   Tts.setDefaultRate(0.4, true);
-
-//     const onStart = () => setIsSpeaking(true);
-//     const onFinish = () => setIsSpeaking(false);
-//     const onCancel = () => setIsSpeaking(false);
-
-//     const startSub = Tts.addEventListener('tts-start', onStart) as unknown as TtsSub;
-//     const finishSub = Tts.addEventListener('tts-finish', onFinish) as unknown as TtsSub;
-//     const cancelSub = Tts.addEventListener('tts-cancel', onCancel) as unknown as TtsSub;
-
-//     return () => {
-//       startSub?.remove?.();
-//       startSub?.removeListener?.();
-//       finishSub?.remove?.();
-//       finishSub?.removeListener?.();
-//       cancelSub?.remove?.();
-//       cancelSub?.removeListener?.();
-//       Tts.stop();
-//     };
-//   }, []);
-
-//   const onPressPlayToggle = async () => {
-//     if (!divineMessage.trim()) return;
-
-//     if (isSpeaking) {
-//       await Tts.stop();
-//       setIsSpeaking(false);
-//     } else {
-//       await Tts.stop();
-//       Tts.speak(divineMessage);
-//     }
-//   };
-
-//   return (
-//     <ImageBackground source={BG_IMG} style={styles.bgImage} imageStyle={{ resizeMode: 'cover' }}>
-//       <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
-//         <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
-
-//         {/* Header */}
-//         <View style={styles.header}>
-//           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-//             <Image
-//               source={require('../../../../../assets/icons/backIcon.png')}
-//               style={[styles.backIcon, { tintColor: colors.white }]}
-//               resizeMode="contain"
-//             />
-//           </TouchableOpacity>
-//           <View style={styles.headerTitleWrap} pointerEvents="none">
-//             <Text numberOfLines={1} ellipsizeMode="tail" style={[styles.headerTitle, { color: colors.white }]}>
-//               Cauris
-//             </Text>
-//           </View>
-//         </View>
-
-//         <ScrollView
-//           contentContainerStyle={[
-//             styles.scrollContent,
-//             { paddingBottom: phase === 3 ? 20 : 24 },
-//           ]}
-//           showsVerticalScrollIndicator={false}
-//         >
-//           {/* Top Titles */}
-//           <View style={styles.contentHeader}>
-//             <Text style={[styles.contentTitle, { color: colors.primary, textAlign: 'center' }]}>{titleTop}</Text>
-
-//             {subtitle ? (
-//               <Text style={[styles.contentSubtitle, { color: colors.white, textAlign: 'center' }]}>{subtitle}</Text>
-//             ) : null}
-
-//             {phase === 2 && (
-//               <Text style={[styles.patternName, { color: colors.white }]}>Obara Meji</Text>
-//             )}
-
-//             {phase === 3 && (
-//               <>
-//                 <Text style={[styles.patternName, { color: colors.white }]}>Obara Meji</Text>
-//               </>
-//             )}
-//           </View>
-
-//           {/* Decal + Bowl */}
-//           <View style={styles.centerImageWrap}>
-//             <Image source={DECAL_IMG} style={styles.decalFull} resizeMode="contain" />
-//             <Animated.View
-//               style={[
-//                 styles.circleWrap,
-//                 { left: (CONTAINER_W - BOWL_SIZE) / 2, borderColor: colors.primary },
-//                 circleAnimStyle,
-//               ]}
-//             >
-//               <GradientBox colors={[colors.black, colors.bgBox]} style={styles.circleGradient}>
-//                 <View />
-//               </GradientBox>
-
-//               {showShells && (
-//                 <View style={[styles.shellsOverlay, { padding: SHELL_PADDING }]} pointerEvents="none">
-//                   {shellConfigs.map((cfg, i) => (
-//                     <ShellSprite
-//                       key={`shell-${i}`}
-//                       size={cfg.size}
-//                       x={xSV[i]}
-//                       y={ySV[i]}
-//                       rot={rSV[i]}
-//                       opacity={oSV[i]}
-//                       scale={sSV[i]}
-//                       source={cfg.source}
-//                     />
-//                   ))}
-//                 </View>
-//               )}
-//             </Animated.View>
-//           </View>
-
-//           {/* Phase 3 */}
-//           {phase === 3 && (
-//             <>
-//               {/* Play/Pause icon centered */}
-//               <View style={styles.playWrapper}>
-//                 <TouchableOpacity onPress={onPressPlayToggle} activeOpacity={0.7}>
-//                   <Image
-//                     source={isSpeaking ? PAUSE_ICON : PLAY_ICON}
-//                     style={[styles.playIcon, { opacity: isSpeaking ? 0.9 : 1 }]}
-//                     resizeMode="contain"
-//                   />
-//                 </TouchableOpacity>
-//               </View>
-
-//               <Text style={[styles.messageText, { color: colors.white }]}>
-//                 {divineMessage}
-//               </Text>
-
-//               {/* Share / Save */}
-//               <View style={styles.shareRow}>
-//                 <GradientBox colors={[colors.black, colors.bgBox]} style={[styles.smallBtn, { borderColor: colors.primary }]}>
-//                   <Image source={SHARE_ICON} style={styles.smallIcon} resizeMode="contain" />
-//                   <Text style={[styles.smallBtnText, { color: colors.white }]}>Share</Text>
-//                 </GradientBox>
-
-//                 <GradientBox colors={[colors.black, colors.bgBox]} style={[styles.smallBtn, { borderColor: colors.primary }]}>
-//                   <Image source={SAVE_ICON} style={styles.smallIcon} resizeMode="contain" />
-//                   <Text style={[styles.smallBtnText, { color: colors.white }]}>Save</Text>
-//                 </GradientBox>
-//               </View>
-//             </>
-//           )}
-
-//           {/* Action Button */}
-//           <View style={styles.actionsRow}>
-//             <TouchableOpacity activeOpacity={0.7} style={styles.actionTouchable} onPress={onActionPress}>
-//               <GradientBox colors={[colors.black, colors.bgBox]} style={[styles.actionButton, { borderColor: colors.primary }]}>
-//                 <Text style={[styles.actionLabel, { color: colors.white }]}>{actionLabel}</Text>
-//               </GradientBox>
-//             </TouchableOpacity>
-//           </View>
-//         </ScrollView>
-
-//       {/* Subscription Plan Modal */}
-//         <SubscriptionPlanModal
-//   isVisible={showSubscriptionModal}
-//   onClose={() => setShowSubscriptionModal(false)}
-//   onConfirm={(plan) => {
-//     setShowSubscriptionModal(false);
-//     console.log('User selected plan:', plan);
-
-//   }}
-// />
-
-//       </SafeAreaView>
-//     </ImageBackground>
-//   );
-// };
-
-// export default CaurisCardDetailScreen;
-
-// /* ----------------- STYLES ----------------- */
-// const styles = StyleSheet.create({
-//   bgImage: {
-//     flex: 1,
-//     width: SCREEN_WIDTH,
-//     backgroundColor: 'transparent'
-//   },
-//   container: {
-//     flex: 1,
-//     paddingHorizontal: 20,
-//     paddingTop: Platform.select({ ios: 0, android: 10 }), backgroundColor: 'transparent'
-//   },
-
-//   /* Header */
-//   header: {
-//     height: 56,
-//     justifyContent: 'center',
-//     alignItems: 'center',
-//     marginTop: 8
-//   },
-//   backBtn: {
-//     position: 'absolute',
-//     left: 0,
-//     height: 40,
-//     width: 40,
-//     justifyContent: 'center',
-//     alignItems: 'center'
-//   },
-//   backIcon: {
-//     width: 22,
-//     height: 22
-//   },
-//   headerTitleWrap: {
-//     maxWidth: '70%',
-//     alignItems: 'center',
-//     justifyContent: 'center'
-//   },
-//   headerTitle: {
-//     fontFamily: Fonts.cormorantSCBold,
-//     fontSize: 22,
-//     letterSpacing: 1,
-//     textTransform: 'capitalize'
-//   },
-
-//   scrollContent: { alignItems: 'center' },
-
-//   /* Titles */
-//   contentHeader: {
-//     marginTop: 16,
-//     width: '100%',
-//     alignItems: 'center'
-//   },
-//   contentTitle: {
-//     fontFamily: Fonts.aeonikRegular,
-//     fontSize: 18,
-//     letterSpacing: 0.5
-//   },
-
-//   contentSubtitle: {
-//     marginTop: 6,
-//     fontFamily: Fonts.aeonikRegular,
-//     fontSize: 14,
-//     lineHeight: 18,
-//     opacity: 0.9
-//   },
-
-//   eyebrow: {
-//     marginTop: 2,
-//     fontFamily: Fonts.aeonikRegular,
-//     fontSize: 14,
-//     opacity: 0.9,
-//   },
-//   patternName: {
-//     marginTop: 8,
-//     fontFamily: Fonts.cormorantSCBold,
-//     fontSize: 28,
-//     letterSpacing: 1,
-//     textTransform: 'capitalize',
-//     textAlign: 'center',
-//   },
-
-//   centerImageWrap: {
-//     width: '100%',
-//     alignItems: 'center',
-//     marginTop: 15,
-//     marginBottom: 8,
-//     height: DECAL_SIZE
-//   },
-//   decalFull: {
-//     width: '100%',
-//     height: DECAL_SIZE
-//   },
-
-//   circleWrap: {
-//     position: 'absolute',
-//     top: (DECAL_SIZE - BOWL_SIZE) / 2,
-//     width: BOWL_SIZE, height: BOWL_SIZE,
-//     borderRadius: BOWL_SIZE / 2, borderWidth: 2, overflow: 'hidden',
-//     alignItems: 'center', justifyContent: 'center',
-//   },
-//   circleGradient: {
-//     position: 'absolute',
-//     left: 0,
-//     right: 0,
-//     top: 0,
-//     bottom: 0,
-//     borderRadius: BOWL_SIZE / 2,
-//     padding: 0
-//   },
-
-//   shellsOverlay: {
-//     position: 'absolute',
-//     width: BOWL_SIZE,
-//     height: BOWL_SIZE,
-//     left: 0,
-//     top: 0
-//   },
-
-//   // Divine message paragraph
-//   messageText: {
-//     marginTop: 18,
-//     paddingHorizontal: 8,
-//     textAlign: 'center',
-//     fontFamily: Fonts.aeonikRegular,
-//     fontSize: 16,
-//   lineHeight: 24,
-//     opacity: 0.95,
-//   },
-
-//   // Play/Pause icon wrapper
-//   playWrapper: {
-//     width: '100%',
-//     alignItems: 'center',
-//     justifyContent: 'center',
-//   },
-//   playIcon: { width: 40, height: 40 },
-
-//   // Share / Save small buttons
-//   shareRow: {
-//     marginTop: 16,
-//     width: '100%',
-//     flexDirection: 'row',
-//     gap: 12,
-//     justifyContent: 'center',
-//   },
-//   smallBtn: {
-//     minWidth: 120,
-//     height: 46,
-//     borderRadius: 22,
-//     paddingHorizontal: 16,
-//     borderWidth: 1.1,
-//     flexDirection: 'row',
-//     justifyContent: 'center',
-//   },
-//   smallIcon: {
-//     width: 15,
-//     height: 15,
-//     marginRight: 8,
-//     resizeMode: 'contain'
-//   },
-
-//   smallBtnText: {
-//     fontFamily: Fonts.aeonikRegular,
-//     fontSize: 14,
-//   },
-
-//   /* Action Button */
-//   actionsRow: { width: '100%', marginTop: 24, marginBottom: 12 },
-//   actionTouchable: { flex: 1 },
-//   actionButton: {
-//     height: 57,
-//     borderRadius: 28.5,
-//     paddingHorizontal: 18,
-//     alignItems: 'center',
-//     justifyContent: 'center',
-//     flexDirection: 'row',
-//     borderWidth: 1.3,
-//     shadowOpacity: 0.2,
-//     shadowRadius: 12,
-//     shadowOffset: { width: 0, height: 6 },
-//     elevation: 3,
-//   },
-//   actionLabel: {
-//     fontFamily: Fonts.aeonikRegular,
-//     fontSize: 14
-//   },
-// });
-
-// import React, { useMemo, useState } from 'react';
-// import {
-//   View,
-//   Text,
-//   StyleSheet,
-//   TouchableOpacity,
-//   StatusBar,
-//   Dimensions,
-//   ImageBackground,
-//   Image,
-//   Platform,
-//   ScrollView,
-//   ImageSourcePropType,
-// } from 'react-native';
-// import { SafeAreaView } from 'react-native-safe-area-context';
-// import { useNavigation } from '@react-navigation/native';
-// import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-// import Animated, {
-//   useSharedValue,
-//   useAnimatedStyle,
-//   withTiming,
-//   withSpring,
-//   withDelay,
-// } from 'react-native-reanimated';
-
-// import GradientBox from '../../../../components/GradientBox';
-// import { Fonts } from '../../../../constants/fonts';
-// import { useThemeStore } from '../../../../store/useThemeStore';
-// import { AppStackParamList } from '../../../../navigation/routeTypes';
-
-// const { width: SCREEN_WIDTH } = Dimensions.get('window');
-// const CONTAINER_W = SCREEN_WIDTH - 40; // container has paddingHorizontal:20
-
-// /* ---------- Assets ---------- */
-// const BG_IMG       = require('../../../../assets/images/backgroundImage.png');
-// const DECAL_IMG    = require('../../../../assets/images/decalImage.png'); // full width
-// const SHELL_IMG_1  = require('../../../../assets/images/shell1.png');
-// const SHELL_IMG_2  = require('../../../../assets/images/shell2.png');
-
-// /* ---------- Sizes ---------- */
-// const DECAL_SIZE  = 352;
-// const BOWL_SIZE   = 260;
-// /** increased sizes */
-// const SHELL_COUNT = 16;
-// const SHELL_MIN   = 44;
-// const SHELL_MAX   = 48;
-
-// /* inner padding so shells spread nicely */
-// const SHELL_PADDING = 16;
-
-// /* ---- Overlap control ---- */
-// const SHELL_GAP = 12;                 // Minimum edge-to-edge gap (px)
-// const EFFECTIVE_RADIUS_SCALE = 0.55;  // Treat image as circle with slightly bigger radius
-// const BEST_CANDIDATE_SAMPLES = 60;    // Candidates per shell
-// const MAX_ATTEMPTS_PER_SHELL = 600;   // Fallback random retries
-
-// /* ---------- Helpers ---------- */
-// const rand = (min: number, max: number) => Math.random() * (max - min) + min;
-// const shuffle = <T,>(arr: T[]) => {
-//   const a = [...arr];
-//   for (let i = a.length - 1; i > 0; i--) {
-//     const j = Math.floor(Math.random() * (i + 1));
-//     [a[i], a[j]] = [a[j], a[i]];
-//   }
-//   return a;
-// };
-
-// type ShellConfig = {
-//   size: number;
-//   startX: number;
-//   startY: number;
-//   targetX: number;
-//   targetY: number;
-//   rot: number;
-//   delay: number;
-//   source: ImageSourcePropType;
-// };
-
-// /* Single shell sprite */
-// function ShellSprite({
-//   size,
-//   x,
-//   y,
-//   rot,
-//   opacity,
-//   scale,
-//   source,
-// }: {
-//   size: number;
-//   x: Animated.SharedValue<number>;
-//   y: Animated.SharedValue<number>;
-//   rot: Animated.SharedValue<number>;
-//   opacity: Animated.SharedValue<number>;
-//   scale: Animated.SharedValue<number>;
-//   source: ImageSourcePropType;
-// }) {
-//   const style = useAnimatedStyle(() => ({
-//     position: 'absolute',
-//     left: x.value,
-//     top: y.value,
-//     width: size,
-//     height: size,
-//     opacity: opacity.value,
-//     transform: [{ rotate: `${rot.value}deg` }, { scale: scale.value }],
-//   }));
-//   return <Animated.Image source={source} style={style} resizeMode="contain" />;
-// }
-
-// const CaurisCardDetailScreen: React.FC = () => {
-//   const colors = useThemeStore(s => s.theme.colors);
-//   const navigation = useNavigation<NativeStackNavigationProp<AppStackParamList>>();
-
-//   const [thrown, setThrown] = useState(false);
-
-//   // bounce the circular box when throwing
-//   const circleScale = useSharedValue(1);
-//   const circleAnimStyle = useAnimatedStyle(() => ({
-//     transform: [{ scale: circleScale.value }],
-//   }));
-
-//   /* Pick exactly 6 indices for shell2, rest shell1 */
-//   const shell2Set = useMemo(() => {
-//     const indices = shuffle(Array.from({ length: SHELL_COUNT }, (_, i) => i)).slice(0, 6);
-//     return new Set(indices);
-//   }, []);
-
-//   /**
-//    * Best-candidate non-overlapping placement in a circle:
-//    * - Place larger shells first.
-//    * - For each shell, sample N candidates (uniform by area) and pick the one
-//    *   that maximizes the minimum clearance to already placed shells.
-//    * - Ensure inside bounds (within circle minus own radius).
-//    * - Strong gap enforced via SHELL_GAP and EFFECTIVE_RADIUS_SCALE.
-//    */
-//   const shellConfigs: ShellConfig[] = useMemo(() => {
-//     const effectiveSize = BOWL_SIZE - SHELL_PADDING * 2;
-//     const R = effectiveSize / 2;
-
-//     // Center in overlay coordinates (overlay itself is at 0,0 but we add padding visually)
-//     const center = { x: SHELL_PADDING + R, y: SHELL_PADDING + R };
-
-//     // Pre-generate sizes so we can sort by size (desc)
-//     const sizes = Array.from({ length: SHELL_COUNT }, () => rand(SHELL_MIN, SHELL_MAX));
-//     const order = Array.from({ length: SHELL_COUNT }, (_, i) => i).sort(
-//       (a, b) => sizes[b] - sizes[a]
-//     );
-
-//     type Placed = { cx: number; cy: number; r: number };
-//     const placed: Placed[] = [];
-//     const targets: { tx: number; ty: number }[] = Array(SHELL_COUNT).fill(null as any);
-
-//     const insideBounds = (cx: number, cy: number, radEff: number) => {
-//       // must lie within circle of radius R, but keep margin radEff
-//       const dx = cx - center.x;
-//       const dy = cy - center.y;
-//       const dist = Math.sqrt(dx*dx + dy*dy);
-//       return dist <= (R - radEff);
-//     };
-
-//     const minClearance = (cx: number, cy: number, radEff: number) => {
-//       // minimum (distance - (r1+r2)) across all placed shells
-//       let minC = Infinity;
-//       for (const p of placed) {
-//         const dx = cx - p.cx;
-//         const dy = cy - p.cy;
-//         const d = Math.sqrt(dx*dx + dy*dy);
-//         const required = p.r + radEff;
-//         const clearance = d - required;
-//         if (clearance < minC) minC = clearance;
-//       }
-//       return placed.length ? minC : Infinity;
-//     };
-
-//     for (const idx of order) {
-//       const size = sizes[idx];
-//       const radEff = (size / 2) * EFFECTIVE_RADIUS_SCALE; // conservative effective circle
-//       let best: { cx: number; cy: number; minC: number } | null = null;
-
-//       // Best-candidate sampling
-//       for (let s = 0; s < BEST_CANDIDATE_SAMPLES; s++) {
-//         const angle = rand(0, Math.PI * 2);
-//         const radius = Math.sqrt(Math.random()) * (R - radEff); // keep fully inside
-//         const cx = center.x + radius * Math.cos(angle);
-//         const cy = center.y + radius * Math.sin(angle);
-//         if (!insideBounds(cx, cy, radEff)) continue;
-
-//         const clearance = minClearance(cx, cy, radEff);
-//         if (best === null || clearance > best.minC) {
-//           best = { cx, cy, minC: clearance };
-//         }
-//       }
-
-//       let used = false;
-
-//       // If best candidate has acceptable clearance, place it
-//       if (best && best.minC >= SHELL_GAP) {
-//         placed.push({ cx: best.cx, cy: best.cy, r: radEff });
-//         targets[idx] = { tx: best.cx - size / 2, ty: best.cy - size / 2 };
-//         used = true;
-//       }
-
-//       // Fallback random retries if needed
-//       if (!used) {
-//         let attempts = 0;
-//         while (attempts < MAX_ATTEMPTS_PER_SHELL) {
-//           attempts++;
-//           const angle = rand(0, Math.PI * 2);
-//           const radius = Math.sqrt(Math.random()) * (R - radEff);
-//           const cx = center.x + radius * Math.cos(angle);
-//           const cy = center.y + radius * Math.sin(angle);
-//           if (!insideBounds(cx, cy, radEff)) continue;
-
-//           let ok = true;
-//           for (const p of placed) {
-//             const dx = cx - p.cx;
-//             const dy = cy - p.cy;
-//             const d2 = dx*dx + dy*dy;
-//             const minD = p.r + radEff + SHELL_GAP;
-//             if (d2 < minD * minD) {
-//               ok = false;
-//               break;
-//             }
-//           }
-//           if (ok) {
-//             placed.push({ cx, cy, r: radEff });
-//             targets[idx] = { tx: cx - size / 2, ty: cy - size / 2 };
-//             used = true;
-//             break;
-//           }
-//         }
-//       }
-
-//       // Extreme fallback: put it right at center with big margin (should rarely trigger)
-//       if (!used) {
-//         const cx = center.x;
-//         const cy = center.y;
-//         placed.push({ cx, cy, r: radEff });
-//         targets[idx] = { tx: cx - size / 2, ty: cy - size / 2 };
-//       }
-//     }
-
-//     // Build final configs in original index order
-//     const configs: ShellConfig[] = Array.from({ length: SHELL_COUNT }).map((_, i) => {
-//       const size = sizes[i];
-//       const { tx, ty } = targets[i];
-
-//       // start slightly below the bowl and near center
-//       const startX = center.x + rand(-25, 25) - size / 2;
-//       const startY = BOWL_SIZE + rand(40, 80);
-
-//       const rot = rand(-150, 150);
-//       const delay = i * 70 + rand(0, 120);
-//       const source = shell2Set.has(i) ? SHELL_IMG_2 : SHELL_IMG_1;
-
-//       return {
-//         size,
-//         startX,
-//         startY,
-//         targetX: tx,
-//         targetY: ty,
-//         rot,
-//         delay,
-//         source,
-//       };
-//     });
-
-//     return configs;
-//   }, [shell2Set]);
-
-//   /* Per-shell animated values */
-//   const xSV = shellConfigs.map(c => useSharedValue(c.startX));
-//   const ySV = shellConfigs.map(c => useSharedValue(c.startY));
-//   const rSV = shellConfigs.map(() => useSharedValue(0));
-//   const sSV = shellConfigs.map(() => useSharedValue(0.7));
-//   const oSV = shellConfigs.map(() => useSharedValue(0));
-
-//   const onThrowPress = () => {
-//     if (thrown) {
-//       // navigation.navigate('CaurisReading');
-//       return;
-//     }
-
-//     // bounce the circular gradient box
-//     circleScale.value = withSpring(0.98, { damping: 20, stiffness: 240 }, () => {
-//       circleScale.value = withSpring(1);
-//     });
-
-//     // animate to non-overlapping targets
-//     shellConfigs.forEach((c, i) => {
-//       xSV[i].value = withDelay(c.delay, withSpring(c.targetX, { damping: 14, stiffness: 170 }));
-//       ySV[i].value = withDelay(c.delay, withSpring(c.targetY, { damping: 14, stiffness: 170 }));
-//       rSV[i].value = withDelay(c.delay, withTiming(c.rot, { duration: 650 }));
-//       sSV[i].value = withDelay(c.delay, withSpring(1, { damping: 14, stiffness: 200 }));
-//       oSV[i].value = withDelay(c.delay, withTiming(1, { duration: 260 }));
-//     });
-
-//     setThrown(true);
-//   };
-
-//   return (
-//     <ImageBackground source={BG_IMG} style={styles.bgImage} imageStyle={{ resizeMode: 'cover' }}>
-//       <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
-//         <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
-
-//         {/* Header */}
-//         <View style={styles.header}>
-//           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-//             <Image
-//               source={require('../../../../assets/icons/backIcon.png')}
-//               style={[styles.backIcon, { tintColor: colors.white }]}
-//               resizeMode="contain"
-//             />
-//           </TouchableOpacity>
-
-//           <View style={styles.headerTitleWrap} pointerEvents="none">
-//             <Text numberOfLines={1} ellipsizeMode="tail" style={[styles.headerTitle, { color: colors.white }]}>
-//               Cauris
-//             </Text>
-//           </View>
-//         </View>
-
-//         {/* Content */}
-//         <ScrollView
-//           contentContainerStyle={[styles.scrollContent, { paddingBottom: 24 }]}
-//           showsVerticalScrollIndicator={false}
-//         >
-//           {/* Title & subtitle */}
-//           <View style={styles.contentHeader}>
-//             <Text style={[styles.contentTitle, { color: colors.primary, textAlign: 'center' }]}>
-//               {thrown ? 'Casting the Shells' : 'Cowrie Shells Divination'}
-//             </Text>
-//             <Text style={[styles.contentSubtitle, { color: colors.white, textAlign: 'center' }]}>
-//               {thrown ? 'The spirits are being summoned…' : 'Unveil sacred wisdom through ancient African spiritual practice.'}
-//             </Text>
-//           </View>
-
-//           {/* ---- Decal + Circular Box ---- */}
-//           <View style={styles.centerImageWrap}>
-//             {/* Full-width decal image (background) */}
-//             <Image source={DECAL_IMG} style={styles.decalFull} resizeMode="contain" />
-
-//             {/* Circular gradient box (260x260) centered on top of decal */}
-//             <Animated.View
-//               style={[
-//                 styles.circleWrap,
-//                 { left: (CONTAINER_W - BOWL_SIZE) / 2, borderColor: colors.primary },
-//                 circleAnimStyle,
-//               ]}
-//             >
-//                 <GradientBox
-//                   colors={[colors.black, colors.bgBox]}
-//                   style={styles.circleGradient}
-//                 >
-//                   <View />
-//                 </GradientBox>
-
-//                 {/* Shells overlay inside the circle with inner padding */}
-//                 <View style={[styles.shellsOverlay, { padding: SHELL_PADDING }]} pointerEvents="none">
-//                   {shellConfigs.map((cfg, i) => (
-//                     <ShellSprite
-//                       key={`shell-${i}`}
-//                       size={cfg.size}
-//                       x={xSV[i]}
-//                       y={ySV[i]}
-//                       rot={rSV[i]}
-//                       opacity={oSV[i]}
-//                       scale={sSV[i]}
-//                       source={cfg.source}
-//                     />
-//                   ))}
-//                 </View>
-//             </Animated.View>
-//           </View>
-
-//           {/* Action button (not fixed; part of scroll content) */}
-//           <View style={styles.actionsRow}>
-//             <TouchableOpacity activeOpacity={0.7} style={styles.actionTouchable} onPress={onThrowPress}>
-//               <GradientBox
-//                 colors={[colors.black, colors.bgBox]}
-//                 style={[styles.actionButton, { borderColor: colors.primary }]}
-//               >
-//                 <Text style={[styles.actionLabel, { color: colors.white }]}>
-//                   {thrown ? 'Continue' : 'Throw the Shells'}
-//                 </Text>
-//               </GradientBox>
-//             </TouchableOpacity>
-//           </View>
-//         </ScrollView>
-//       </SafeAreaView>
-//     </ImageBackground>
-//   );
-// };
-
-// export default CaurisCardDetailScreen;
-
-// /* ----------------- STYLES ----------------- */
-// const styles = StyleSheet.create({
-//   bgImage: {
-//     flex: 1,
-//     width: SCREEN_WIDTH,
-//     backgroundColor: 'transparent',
-//   },
-//   container: {
-//     flex: 1,
-//     paddingHorizontal: 20,
-//     paddingTop: Platform.select({ ios: 0, android: 10 }),
-//     backgroundColor: 'transparent',
-//   },
-
-//   /* Header */
-//   header: {
-//     height: 56,
-//     justifyContent: 'center',
-//     alignItems: 'center',
-//     marginTop: 8,
-//   },
-//   backBtn: {
-//     position: 'absolute',
-//     left: 0,
-//     height: 40,
-//     width: 40,
-//     justifyContent: 'center',
-//     alignItems: 'center',
-//   },
-//   backIcon: { width: 22, height: 22 },
-//   headerTitleWrap: { maxWidth: '70%', alignItems: 'center', justifyContent: 'center' },
-//   headerTitle: {
-//     fontFamily: Fonts.cormorantSCBold,
-//     fontSize: 22,
-//     letterSpacing: 1,
-//     textTransform: 'capitalize',
-//   },
-
-//   scrollContent: {
-//     alignItems: 'center',
-//   },
-
-//   /* Titles */
-//   contentHeader: {
-//     marginTop: 16,
-//     width: '100%',
-//     alignItems: 'center',
-//   },
-//   contentTitle: {
-//     fontFamily: Fonts.aeonikRegular,
-//     fontSize: 18,
-//     letterSpacing: 0.5,
-//   },
-//   contentSubtitle: {
-//     marginTop: 6,
-//     fontFamily: Fonts.aeonikRegular,
-//     fontSize: 14,
-//     lineHeight: 18,
-//     opacity: 0.9,
-//   },
-
-//   centerImageWrap: {
-//     width: '100%',
-//     alignItems: 'center',
-//     marginTop: 24,
-//     marginBottom: 8,
-//     height: DECAL_SIZE,
-//   },
-//   decalFull: {
-//     width: '100%',
-//     height: DECAL_SIZE,
-//   },
-
-//   circleWrap: {
-//     position: 'absolute',
-//     top: (DECAL_SIZE - BOWL_SIZE) / 2,
-//     width: BOWL_SIZE,
-//     height: BOWL_SIZE,
-//     borderRadius: BOWL_SIZE / 2,
-//     borderWidth: 2,
-//     overflow: 'hidden',
-//     alignItems: 'center',
-//     justifyContent: 'center',
-//   },
-
-//   circleGradient: {
-//     position: 'absolute',
-//     left: 0, right: 0, top: 0, bottom: 0,
-//     borderRadius: BOWL_SIZE / 2,
-//     padding: 0,
-//   },
-
-//   shellsOverlay: {
-//     position: 'absolute',
-//     width: BOWL_SIZE,
-//     height: BOWL_SIZE,
-//     left: 0,
-//     top: 0,
-//   },
-
-//   /* Action Button (in flow, not fixed) */
-//   actionsRow: {
-//     width: '100%',
-//     marginTop: 24,
-//     marginBottom: 12,
-//   },
-//   actionTouchable: {
-//     flex: 1,
-//   },
-//   actionButton: {
-//     height: 57,
-//     borderRadius: 28.5,
-//     paddingHorizontal: 18,
-//     alignItems: 'center',
-//     justifyContent: 'center',
-//     flexDirection: 'row',
-//     borderWidth: 1.3,
-//     shadowOpacity: 0.2,
-//     shadowRadius: 12,
-//     shadowOffset: { width: 0, height: 6 },
-//     elevation: 3,
-//   },
-//   actionLabel: {
-//     fontFamily: Fonts.aeonikRegular,
-//     fontSize: 14,
-//   },
-// });
-
-// import React, { useMemo, useState } from 'react';
-// import {
-//   View, Text, StyleSheet, TouchableOpacity, StatusBar, Dimensions,
-//   ImageBackground, Image, Platform, ScrollView, ImageSourcePropType,
-// } from 'react-native';
-// import { SafeAreaView } from 'react-native-safe-area-context';
-// import { useNavigation } from '@react-navigation/native';
-// import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-// import Animated, { useSharedValue, useAnimatedStyle, withTiming, withSpring, withDelay } from 'react-native-reanimated';
-
-// import GradientBox from '../../../../components/GradientBox';
-// import { Fonts } from '../../../../constants/fonts';
-// import { useThemeStore } from '../../../../store/useThemeStore';
-// import { AppStackParamList } from '../../../../navigation/routeTypes';
-
-// const { width: SCREEN_WIDTH } = Dimensions.get('window');
-// const CONTAINER_W = SCREEN_WIDTH - 40;
-
-// /* Assets */
-// const BG_IMG = require('../../../../assets/images/backgroundImage.png');
-// const DECAL_IMG = require('../../../../assets/images/decalImage.png');
-// const SHELL_IMG_1 = require('../../../../assets/images/shell1.png');
-// const SHELL_IMG_2 = require('../../../../assets/images/shell2.png');
-
-// const PLAY_ICON = require('../../../../assets/icons/playIcon.png');
-// const SHARE_ICON = require('../../../../assets/icons/shareIcon.png');
-// const SAVE_ICON = require('../../../../assets/icons/saveIcon.png');
-
-// /* Sizes */
-// const DECAL_SIZE = 352;
-// const BOWL_SIZE = 260;
-// const SHELL_COUNT = 16;
-// const SHELL_MIN = 44;
-// const SHELL_MAX = 48;
-// const SHELL_PADDING = 16;
-
-// /* No-overlap controls */
-// const SHELL_GAP = 10;
-// const RADIUS_SCALE = 0.6;
-// const MAX_ATTEMPTS = 500;
-
-// /* helpers */
-// const rand = (min: number, max: number) => Math.random() * (max - min) + min;
-// const shuffle = <T,>(a: T[]) => {
-//   const b = [...a];
-//   for (let i = b.length - 1; i > 0; i--) {
-//     const j = Math.floor(Math.random() * (i + 1));
-//     [b[i], b[j]] = [b[j], b[i]];
-//   }
-//   return b;
-// };
-
-// type ShellConfig = {
-//   size: number;
-//   startX: number;
-//   startY: number;
-//   targetX: number;
-//   targetY: number;
-//   rot: number;
-//   delay: number;
-//   source: ImageSourcePropType;
-// };
-
-// function ShellSprite({
-//   size, x, y, rot, opacity, scale, source,
-// }: {
-//   size: number;
-//   x: Animated.SharedValue<number>;
-//   y: Animated.SharedValue<number>;
-//   rot: Animated.SharedValue<number>;
-//   opacity: Animated.SharedValue<number>;
-//   scale: Animated.SharedValue<number>;
-//   source: ImageSourcePropType;
-// }) {
-//   const style = useAnimatedStyle(() => ({
-//     position: 'absolute',
-//     left: x.value,
-//     top: y.value,
-//     width: size,
-//     height: size,
-//     opacity: opacity.value,
-//     transform: [{ rotate: `${rot.value}deg` }, { scale: scale.value }],
-//   }));
-//   return <Animated.Image source={source} style={style} resizeMode="contain" />;
-// }
-
-// const CaurisCardDetailScreen: React.FC = () => {
-//   const colors = useThemeStore(s => s.theme.colors);
-//   const navigation = useNavigation<NativeStackNavigationProp<AppStackParamList>>();
-
-//   // 0 = intro, 1 = casting, 2 = pattern reveal, 3 = divine message
-//   const [phase, setPhase] = useState<0 | 1 | 2 | 3>(0);
-
-//   const circleScale = useSharedValue(1);
-//   const circleAnimStyle = useAnimatedStyle(() => ({ transform: [{ scale: circleScale.value }] }));
-
-//   // pick 6 shells for second image
-//   const shell2Set = useMemo(() => {
-//     const idx = shuffle(Array.from({ length: SHELL_COUNT }, (_, i) => i)).slice(0, 6);
-//     return new Set(idx);
-//   }, []);
-
-//   // Non-overlapping placement
-//   const shellConfigs: ShellConfig[] = useMemo(() => {
-//     const effectiveSize = BOWL_SIZE - SHELL_PADDING * 2;
-//     const R = effectiveSize / 2;
-//     const center = { x: SHELL_PADDING + R, y: SHELL_PADDING + R };
-
-//     // sizes & place larger first
-//     const sizes = Array.from({ length: SHELL_COUNT }, () => rand(SHELL_MIN, SHELL_MAX));
-//     const order = Array.from({ length: SHELL_COUNT }, (_, i) => i).sort((a, b) => sizes[b] - sizes[a]);
-
-//     type P = { cx: number; cy: number; r: number };
-//     const placed: P[] = [];
-//     const targets: { tx: number; ty: number }[] = Array(SHELL_COUNT).fill(null as any);
-
-//     const insideCircle = (cx: number, cy: number, rEff: number) => {
-//       const dx = cx - center.x, dy = cy - center.y;
-//       return Math.hypot(dx, dy) <= (R - rEff);
-//     };
-
-//     for (const idx of order) {
-//       const size = sizes[idx];
-//       const rEff = (size / 2) * RADIUS_SCALE;
-//       let done = false;
-
-//       for (let k = 0; k < MAX_ATTEMPTS; k++) {
-//         const angle = rand(0, Math.PI * 2);
-//         const radius = Math.sqrt(Math.random()) * (R - rEff);
-//         const cx = center.x + radius * Math.cos(angle);
-//         const cy = center.y + radius * Math.sin(angle);
-//         if (!insideCircle(cx, cy, rEff)) continue;
-
-//         let ok = true;
-//         for (const p of placed) {
-//           const dx = cx - p.cx, dy = cy - p.cy;
-//           const minD = p.r + rEff + SHELL_GAP;
-//           if (dx * dx + dy * dy < minD * minD) { ok = false; break; }
-//         }
-//         if (ok) {
-//           placed.push({ cx, cy, r: rEff });
-//           targets[idx] = { tx: cx - size / 2, ty: cy - size / 2 };
-//           done = true;
-//           break;
-//         }
-//       }
-
-//       if (!done) {
-//         const cx = center.x;
-//         const cy = center.y;
-//         placed.push({ cx, cy, r: rEff });
-//         targets[idx] = { tx: cx - size / 2, ty: cy - size / 2 };
-//       }
-//     }
-
-//     // build final configs in original index order
-//     return Array.from({ length: SHELL_COUNT }).map((_, i) => {
-//       const size = sizes[i];
-//       const { tx, ty } = targets[i];
-//       const startX = center.x + rand(-25, 25) - size / 2;
-//       const startY = BOWL_SIZE + rand(40, 80);
-//       return {
-//         size,
-//         startX,
-//         startY,
-//         targetX: tx,
-//         targetY: ty,
-//         rot: rand(-150, 150),
-//         delay: i * 70 + rand(0, 120),
-//         source: shell2Set.has(i) ? SHELL_IMG_2 : SHELL_IMG_1,
-//       };
-//     });
-//   }, [shell2Set]);
-
-//   // animated SVs
-//   const xSV = shellConfigs.map(c => useSharedValue(c.startX));
-//   const ySV = shellConfigs.map(c => useSharedValue(c.startY));
-//   const rSV = shellConfigs.map(() => useSharedValue(0));
-//   const sSV = shellConfigs.map(() => useSharedValue(0.7));
-//   const oSV = shellConfigs.map(() => useSharedValue(0));
-
-//   const onActionPress = () => {
-//     if (phase === 0) {
-//       // throw -> go to phase 1 (Casting) with animation
-//       circleScale.value = withSpring(0.98, { damping: 20, stiffness: 240 }, () => {
-//         circleScale.value = withSpring(1);
-//       });
-//       shellConfigs.forEach((c, i) => {
-//         xSV[i].value = withDelay(c.delay, withSpring(c.targetX, { damping: 14, stiffness: 170 }));
-//         ySV[i].value = withDelay(c.delay, withSpring(c.targetY, { damping: 14, stiffness: 170 }));
-//         rSV[i].value = withDelay(c.delay, withTiming(c.rot, { duration: 650 }));
-//         sSV[i].value = withDelay(c.delay, withSpring(1, { damping: 14, stiffness: 200 }));
-//         oSV[i].value = withDelay(c.delay, withTiming(1, { duration: 260 }));
-//       });
-//       setPhase(1);
-//     } else if (phase === 1) {
-//       setPhase(2);
-//     } else if (phase === 2) {
-//       setPhase(3);
-//     } else {
-//       // CTA on phase 3 (hook premium flow)
-//       // navigation.navigate('Premium');
-//     }
-//   };
-
-//   // UI text per phase
-//   const titleTop =
-//     phase === 0 ? 'Cowrie Shells Divination'
-//       : phase === 1 ? 'Casting the Shells'
-//         : phase === 2 ? 'Your divine pattern is'
-//           : 'Your Divine Message';
-
-//   const subtitle =
-//     phase === 0 ? 'Unveil sacred wisdom through ancient African spiritual practice.'
-//       : phase === 1 ? 'The spirits are being summoned…'
-//         : undefined;
-
-//   const actionLabel =
-//     phase === 0 ? 'Throw the Shells'
-//       : phase === 1 ? 'Continue'
-//         : phase === 2 ? 'Reveal My Reading'
-//           : 'Get Premium For Full Reading';
-
-//   const showShells = phase >= 1;
-
-//   return (
-//     <ImageBackground source={BG_IMG} style={styles.bgImage} imageStyle={{ resizeMode: 'cover' }}>
-//       <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
-//         <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
-
-//         {/* Header */}
-//         <View style={styles.header}>
-//           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-//             <Image
-//               source={require('../../../../assets/icons/backIcon.png')}
-//               style={[styles.backIcon, { tintColor: colors.white }]}
-//               resizeMode="contain"
-//             />
-//           </TouchableOpacity>
-//           <View style={styles.headerTitleWrap} pointerEvents="none">
-//             <Text numberOfLines={1} ellipsizeMode="tail" style={[styles.headerTitle, { color: colors.white }]}>
-//               Cauris
-//             </Text>
-//           </View>
-//         </View>
-
-//         <ScrollView
-//           contentContainerStyle={[
-//             styles.scrollContent,
-//             { paddingBottom: phase === 3 ? 20 : 24 }, // full scroll in phase 3
-//           ]}
-//           showsVerticalScrollIndicator={false}
-//         >
-//           {/* Top Titles */}
-//           <View style={styles.contentHeader}>
-//             <Text style={[styles.contentTitle, { color: colors.primary, textAlign: 'center' }]}>{titleTop}</Text>
-
-//             {subtitle ? (
-//               <Text style={[styles.contentSubtitle, { color: colors.white, textAlign: 'center' }]}>{subtitle}</Text>
-//             ) : null}
-
-//             {/* Phase 2 big pattern name */}
-//             {phase === 2 && (
-//               <Text style={[styles.patternName, { color: colors.white }]}>Obara Meji</Text>
-//             )}
-
-//             {/* Phase 3 eyebrow + big title */}
-//             {phase === 3 && (
-//               <>
-
-//                 <Text style={[styles.patternName, { color: colors.white }]}>Obara Meji</Text>
-//               </>
-//             )}
-//           </View>
-
-//           {/* Decal + Bowl */}
-//           <View style={styles.centerImageWrap}>
-//             <Image source={DECAL_IMG} style={styles.decalFull} resizeMode="contain" />
-//             <Animated.View
-//               style={[
-//                 styles.circleWrap,
-//                 { left: (CONTAINER_W - BOWL_SIZE) / 2, borderColor: colors.primary },
-//                 circleAnimStyle,
-//               ]}
-//             >
-//               <GradientBox colors={[colors.black, colors.bgBox]} style={styles.circleGradient}>
-//                 <View />
-//               </GradientBox>
-
-//               {/* Shells visible in phase 1,2,3 */}
-//               {showShells && (
-//                 <View style={[styles.shellsOverlay, { padding: SHELL_PADDING }]} pointerEvents="none">
-//                   {shellConfigs.map((cfg, i) => (
-//                     <ShellSprite
-//                       key={`shell-${i}`}
-//                       size={cfg.size}
-//                       x={xSV[i]}
-//                       y={ySV[i]}
-//                       rot={rSV[i]}
-//                       opacity={oSV[i]}
-//                       scale={sSV[i]}
-//                       source={cfg.source}
-//                     />
-//                   ))}
-//                 </View>
-//               )}
-//             </Animated.View>
-//           </View>
-
-//           {/* Phase 3*/}
-//           {phase === 3 && (
-//             <>
-
-//                {/* Play icon centered, */}
-
-//               <View style={styles.playWrapper}>
-//                 <Image source={PLAY_ICON} style={styles.playIcon} resizeMode="contain" />
-//               </View>
-
-//               <Text style={[styles.messageText, { color: colors.white }]}>
-//                 “Obara Meji reveals growth, community, and learning through connection. You are guided
-//                 to seek wisdom through dialogue and remain open to spiritual instruction. This is a time to
-//                 trust the flow of energy around you and lean into shared experiences. The ancestors
-//                 remind you that clarity comes when you listen with your soul, not just your ears.”
-//               </Text>
-
-//               {/* Share / Save */}
-//               <View style={styles.shareRow}>
-//                 <GradientBox colors={[colors.black, colors.bgBox]} style={[styles.smallBtn, { borderColor: colors.primary }]}>
-//                   <Image source={SHARE_ICON} style={styles.smallIcon} resizeMode="contain" />
-//                   <Text style={[styles.smallBtnText, { color: colors.white }]}>Share</Text>
-//                 </GradientBox>
-
-//                 <GradientBox colors={[colors.black, colors.bgBox]} style={[styles.smallBtn, { borderColor: colors.primary }]}>
-//                   <Image source={SAVE_ICON} style={styles.smallIcon} resizeMode="contain" />
-//                   <Text style={[styles.smallBtnText, { color: colors.white }]}>Save</Text>
-//                 </GradientBox>
-//               </View>
-//             </>
-//           )}
-
-//           {/* Action Button (advances phases / CTA) */}
-//           <View style={styles.actionsRow}>
-//             <TouchableOpacity activeOpacity={0.7} style={styles.actionTouchable} onPress={onActionPress}>
-//               <GradientBox colors={[colors.black, colors.bgBox]} style={[styles.actionButton, { borderColor: colors.primary }]}>
-//                 <Text style={[styles.actionLabel, { color: colors.white }]}>{actionLabel}</Text>
-//               </GradientBox>
-//             </TouchableOpacity>
-//           </View>
-//         </ScrollView>
-//       </SafeAreaView>
-//     </ImageBackground>
-//   );
-// };
-
-// export default CaurisCardDetailScreen;
-
-// /* ----------------- STYLES ----------------- */
-// const styles = StyleSheet.create({
-//   bgImage:
-//   {
-//     flex: 1,
-//     width: SCREEN_WIDTH,
-//     backgroundColor: 'transparent'
-//   },
-//   container:
-//   {
-//     flex: 1,
-//     paddingHorizontal: 20,
-//     paddingTop: Platform.select({ ios: 0, android: 10 }), backgroundColor: 'transparent'
-//   },
-
-//   /* Header */
-//   header:
-//   {
-//     height: 56,
-//     justifyContent: 'center',
-//     alignItems: 'center',
-//     marginTop: 8
-//   },
-//   backBtn:
-//   {
-//     position: 'absolute',
-//     left: 0,
-//     height: 40,
-//     width: 40,
-//     justifyContent: 'center',
-//     alignItems: 'center'
-//   },
-//   backIcon:
-//   {
-//     width: 22,
-//     height: 22
-//   },
-//   headerTitleWrap:
-//   {
-//     maxWidth: '70%',
-//     alignItems: 'center',
-//     justifyContent: 'center'
-//   },
-//   headerTitle:
-//   {
-//     fontFamily: Fonts.cormorantSCBold,
-//     fontSize: 22,
-//     letterSpacing: 1,
-//     textTransform: 'capitalize'
-//   },
-
-//   scrollContent: { alignItems: 'center' },
-
-//   /* Titles */
-//   contentHeader:
-//   {
-//     marginTop: 16,
-//     width: '100%',
-//     alignItems: 'center'
-//   },
-//   contentTitle:
-//   {
-//     fontFamily: Fonts.aeonikRegular,
-//     fontSize: 18,
-//     letterSpacing: 0.5
-//   },
-
-//   contentSubtitle:
-//   {
-//     marginTop: 6,
-//     fontFamily: Fonts.aeonikRegular,
-//     fontSize: 14,
-//     lineHeight: 18,
-//     opacity: 0.9
-//   },
-
-//   eyebrow: {
-//     marginTop: 2,
-//     fontFamily: Fonts.aeonikRegular,
-//     fontSize: 14,
-//     opacity: 0.9,
-//   },
-//   patternName: {
-//     marginTop: 8,
-//     fontFamily: Fonts.cormorantSCBold,
-//     fontSize: 28,
-//     letterSpacing: 1,
-//     textTransform: 'capitalize',
-//     textAlign: 'center',
-//   },
-
-//   centerImageWrap:
-//   {
-//     width: '100%',
-//     alignItems: 'center',
-//     marginTop: 24,
-//     marginBottom: 8,
-//     height: DECAL_SIZE
-//   },
-//   decalFull:
-//   {
-//     width: '100%',
-//     height: DECAL_SIZE
-//   },
-
-//   circleWrap: {
-//     position: 'absolute',
-//     top: (DECAL_SIZE - BOWL_SIZE) / 2,
-//     width: BOWL_SIZE, height: BOWL_SIZE,
-//     borderRadius: BOWL_SIZE / 2, borderWidth: 2, overflow: 'hidden',
-//     alignItems: 'center', justifyContent: 'center',
-//   },
-//   circleGradient:
-//   {
-//     position: 'absolute',
-//     left: 0,
-//     right: 0,
-//     top: 0,
-//     bottom: 0,
-//     borderRadius: BOWL_SIZE / 2,
-//     padding: 0
-//   },
-
-//   shellsOverlay:
-//   {
-//     position: 'absolute',
-//     width: BOWL_SIZE,
-//     height: BOWL_SIZE,
-//     left: 0,
-//     top: 0
-//   },
-
-//   // Divine message paragraph
-//   messageText: {
-//     marginTop: 18,
-//     paddingHorizontal: 8,
-//     textAlign: 'center',
-//     fontFamily: Fonts.aeonikRegular,
-//     fontSize: 16,
-//     fontWeight: '400' as any,
-//     lineHeight: 24,
-//     opacity: 0.95,
-//   },
-
-//   // Play icon wrapper
-//   playWrapper: {
-
-//     width: '100%',
-//     alignItems: 'center',
-//     justifyContent: 'center',
-//   },
-//   playIcon: { width: 36, height: 36 },
-
-//   // Share / Save small buttons
-//   shareRow: {
-//     marginTop: 16,
-//     width: '100%',
-//     flexDirection: 'row',
-//     gap: 12,
-//     justifyContent: 'center',
-//   },
-//   smallBtn: {
-//     minWidth: 120,
-//     height: 46,
-//     borderRadius: 22,
-//     paddingHorizontal: 16,
-//     borderWidth: 1.1,
-//     flexDirection: 'row',
-
-//     justifyContent: 'center',
-//   },
-//   smallIcon:
-//   {
-//     width: 15,
-//     height: 15,
-//     marginRight: 8,
-//     resizeMode:'contain'
-//   },
-
-//   smallBtnText: {
-//     fontFamily: Fonts.aeonikRegular,
-//     fontSize: 14,
-
-//   },
-
-//   /* Action Button */
-//   actionsRow:
-//     { width: '100%', marginTop: 24, marginBottom: 12 },
-//   actionTouchable:
-//     { flex: 1 },
-//   actionButton:
-//   {
-//     height: 57,
-//     borderRadius: 28.5,
-//     paddingHorizontal: 18,
-//     alignItems: 'center',
-//     justifyContent: 'center',
-//     flexDirection: 'row',
-//     borderWidth: 1.3,
-//     shadowOpacity: 0.2,
-//     shadowRadius: 12,
-//     shadowOffset: { width: 0, height: 6 },
-//     elevation: 3,
-//   },
-//   actionLabel:
-//   {
-//     fontFamily: Fonts.aeonikRegular,
-//     fontSize: 14
-//   }
-//   ,
-// });
