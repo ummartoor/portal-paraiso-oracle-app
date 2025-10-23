@@ -542,7 +542,7 @@ const TarotCardDetailScreen: React.FC = () => {
                     </TouchableOpacity>
                   </View>
                   <TouchableOpacity
-                    style={{ marginTop: 40, alignItems: 'center' }}
+                    style={{ marginTop: 40, paddingHorizontal:20 }}
                     onPress={() => setShowSubscriptionModal(true)}
                   >
                     <View style={styles.buttonBorder}>
@@ -829,6 +829,7 @@ const styles = StyleSheet.create({
   },
   removeIcon: { width: 17, height: 17, tintColor: '#fff' },
   revealBtnWrap: {
+   
     paddingHorizontal: 20,
     paddingVertical: 15,
     marginTop: 'auto',
@@ -837,7 +838,7 @@ const styles = StyleSheet.create({
     height: 52,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 20,
+
     borderRadius: 60,
   },
   revealBtnText: { color: '#fff', fontSize: 16 },
@@ -882,8 +883,8 @@ const styles = StyleSheet.create({
     minWidth: 120,
     height: 46,
     borderRadius: 22,
-    paddingHorizontal: 16,
-    borderWidth: 1.1,
+    // paddingHorizontal: 16,
+
     borderColor: '#D9B699',
     flexDirection: 'row',
     justifyContent: 'center',
@@ -914,7 +915,7 @@ const styles = StyleSheet.create({
   },
   buttonBorder: {
     borderColor: '#D9B699',
-    borderWidth: 1.5,
+    borderWidth: 1,
     borderRadius: 60,
     overflow: 'hidden',
   },
