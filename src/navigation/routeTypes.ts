@@ -53,6 +53,7 @@ export type AuthStackParamsList = {
     OTPScreen:{ email: string };
   ConfirmPassword:{ email: string }; 
     SignUp: undefined;
+    VerifyEmailScreen:{ email: string }; 
     GenderScreen:undefined;
     GoalScreen:undefined;
     DateofBirth:undefined;

@@ -7,7 +7,7 @@ import {
   TextInput,
   TouchableOpacity,
   StatusBar,
-  ScrollView,
+  ScrollView, 
   ImageBackground,
   KeyboardAvoidingView,
   Platform,

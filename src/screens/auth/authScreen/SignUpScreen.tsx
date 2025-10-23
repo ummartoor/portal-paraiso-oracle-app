@@ -103,7 +103,8 @@ const SignUpScreen = () => {
                 };
                 const result = await register(payload);
                 if (result.success) {
-                  navigation.navigate('GenderScreen');
+                  // navigation.navigate('GenderScreen');
+                   navigation.navigate('VerifyEmailScreen',  { email: values.email });
                 }
                 setSubmitting(false);
               }}
