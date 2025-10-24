@@ -14,6 +14,7 @@ import {
   Platform,
   Dimensions,
   ActivityIndicator,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useThemeStore } from '../../../store/useThemeStore';
@@ -30,7 +31,7 @@ import { Fonts } from '../../../constants/fonts';
 import tickIcon from '../../../assets/icons/tickIcon.png';
 import { useTranslation } from 'react-i18next';
 import * as RNLocalize from 'react-native-localize';
-
+import { useAuthStore } from '../../../store/useAuthStore';
 const { height: SCREEN_HEIGHT, width: SCREEN_WIDTH } = Dimensions.get('screen');
 
 const SignUpScreen = () => {
@@ -39,6 +40,8 @@ const SignUpScreen = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const { register, isRegistering } = useRegisterStore();
+
+  const { sendVerificationOtp } = useAuthStore();
   const navigation =
     useNavigation<NativeStackNavigationProp<AuthStackParamsList>>();
   const { t, i18n } = useTranslation();
@@ -101,11 +104,24 @@ const SignUpScreen = () => {
                   timezone: timezone,
                   app_language: app_language,
                 };
-                const result = await register(payload);
-                if (result.success) {
-                  // navigation.navigate('GenderScreen');
-                   navigation.navigate('VerifyEmailScreen',  { email: values.email });
+               const registerResult = await register(payload);
+
+                // 2. If registration is successful, send OTP
+                if (registerResult.success) {
+                  const otpSent = await sendVerificationOtp(values.email);
+
+                  // 3. If OTP sent successfully, navigate
+                  if (otpSent) {
+                    navigation.navigate('VerifyEmailScreen', { email: values.email });
+                    // No need to setSubmitting(false) because we are navigating away
+                    return; // Exit onSubmit early
+                  } else {
+                    // Show error if OTP sending failed
+               Alert.alert("OTP Error", "Could not send verification email. Please try again or contact support.");
+                  }
                 }
+
+                // If registration failed OR OTP sending failed, re-enable the form
                 setSubmitting(false);
               }}
             >

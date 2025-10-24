@@ -49,6 +49,7 @@ export type AuthStackParamsList = {
   OnBoarding: undefined;
   WelcomeScreen:undefined;
   Login: undefined;
+VerifyLoginOtpScreen: { email: string };
   ForgotPasswordScreen:undefined;
     OTPScreen:{ email: string };
   ConfirmPassword:{ email: string }; 

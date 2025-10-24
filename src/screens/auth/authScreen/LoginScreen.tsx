@@ -104,34 +104,78 @@ const validationSchema = Yup.object().shape({
               initialValues={{ email: '', password: '' }}
               validationSchema={validationSchema}
               // --- THE FIX IS HERE ---
+              // onSubmit={async (values, { setSubmitting }) => {
+              //   let fcmToken = 'no-token-found'; // Default value
+              //   try {
+              //     // Step 1: Get the device token from Firebase first
+              //     const token = await messaging().getToken();
+              //     if (token) {
+              //       fcmToken = token;
+              //       console.log('Obtained FCM Token:', fcmToken);
+              //     } else {
+              //       console.log('Could not get FCM token.');
+              //     }
+              //   } catch (error) {
+              //     console.error('Error getting FCM token:', error);
+              //   }
+
+              //   // Step 2: Attempt to log in the user with the token
+              //   const loginSuccess = await login(values.email, values.password, fcmToken);
+
+              //   // Step 3: If login is successful, also register the FCM token with the notification API
+              //   if (loginSuccess) {
+              //     // This call ensures the token is registered against the user ID in your DB
+              //     await registerFcmToken(fcmToken);
+              //     // The app will navigate away, so no need to setSubmitting(false)
+              //   } else {
+              //     // If login fails, re-enable the form
+              //     setSubmitting(false);
+              //   }
+              // }}
+
               onSubmit={async (values, { setSubmitting }) => {
-                let fcmToken = 'no-token-found'; // Default value
-                try {
-                  // Step 1: Get the device token from Firebase first
-                  const token = await messaging().getToken();
-                  if (token) {
-                    fcmToken = token;
-                    console.log('Obtained FCM Token:', fcmToken);
-                  } else {
-                    console.log('Could not get FCM token.');
-                  }
-                } catch (error) {
-                  console.error('Error getting FCM token:', error);
-                }
+    Vibration.vibrate([0, 35, 40, 35]); // Vibration add kar dein agar yahan bhi chahiye
+    let fcmToken = 'no-token-found';
+    try {
+      const token = await messaging().getToken();
+      if (token) {
+        fcmToken = token;
+        console.log('Obtained FCM Token:', fcmToken);
+      } else {
+        console.log('Could not get FCM token.');
+      }
+    } catch (error) {
+      console.error('Error getting FCM token:', error);
+    }
 
-                // Step 2: Attempt to log in the user with the token
-                const loginSuccess = await login(values.email, values.password, fcmToken);
+    // Attempt login
+    const loginSuccess = await login(values.email, values.password, fcmToken);
 
-                // Step 3: If login is successful, also register the FCM token with the notification API
-                if (loginSuccess) {
-                  // This call ensures the token is registered against the user ID in your DB
-                  await registerFcmToken(fcmToken);
-                  // The app will navigate away, so no need to setSubmitting(false)
-                } else {
-                  // If login fails, re-enable the form
-                  setSubmitting(false);
-                }
-              }}
+    // --- YEH HISSAY MEIN CHANGE HAI ---
+    if (loginSuccess) {
+      // Login successful AND email was already verified
+      await registerFcmToken(fcmToken);
+      // Navigation to AppStack (Home) will happen automatically
+      // because useAuthStore's isLoggedIn state is now true.
+      // We don't need to explicitly navigate here or call setSubmitting(false).
+    } else {
+      // Login failed. Check if it was due to verification needed.
+      // Since our login function returns 'false' and shows an alert
+      // specifically for 'Email Not Verified', we can assume 'false' means
+      // we need to navigate to the verification screen.
+
+      // **Important:** This assumes `login` *only* returns `false` for verification needed.
+      // If it can return `false` for wrong password too, you'll need to adjust
+      // the `login` function in `useAuthStore` to return different values/codes.
+      
+      // Navigate to the OTP screen for login verification
+      navigation.navigate('VerifyLoginOtpScreen', { email: values.email });
+      
+      // We are navigating away, so no need to call setSubmitting(false) here.
+      // The form submission process effectively ends with navigation.
+    }
+    // --- CHANGE KHATAM ---
+}}
             >
               {({
                 handleChange,

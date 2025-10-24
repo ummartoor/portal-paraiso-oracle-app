@@ -17,6 +17,7 @@ import PlaceofBirthScreen_5 from '../screens/auth/authScreen/PlaceofBirthScreen_
 import RelationshipScreen_6 from '../screens/auth/authScreen/RelationshipScreen_6';
 import ZodiacSymbolScreen_7 from '../screens/auth/authScreen/ZodiacSymbolScreen_7';
 import VerifyEmailScreen from '../screens/auth/authScreen/VerifyEmailScreen';
+import VerifyLoginOtpScreen from '../screens/auth/authScreen/VerifyLoginOtpScreen';
 
 
 
@@ -37,6 +38,7 @@ const AuthNavigator = () => {
       <Stack.Screen name='WelcomeScreen' component={WelcomeScreen} />
 
       <Stack.Screen name='Login' component={LoginScreen} />
+      <Stack.Screen name='VerifyLoginOtpScreen' component={VerifyLoginOtpScreen} />
       <Stack.Screen name='ForgotPasswordScreen' component={ForgotPasswordScreen} />
       <Stack.Screen name='OTPScreen' component={OTPScreen} />
       <Stack.Screen name='ConfirmPassword' component={ConfirmPasswordScreen} />

@@ -30,20 +30,24 @@ import { useTranslation } from 'react-i18next';
 
 const { height: SCREEN_HEIGHT, width: SCREEN_WIDTH } = Dimensions.get('screen');
 
-type VerifyEmailScreenRouteProp = RouteProp<
+// --- **CHANGE 3: Update RouteProp type name** ---
+type VerifyLoginOtpScreenRouteProp = RouteProp<
   AuthStackParamsList,
-  'VerifyEmailScreen'
+  // Make sure this name exists in your AuthStackParamsList
+  'VerifyLoginOtpScreen'
 >;
 
-const VerifyEmailScreen = () => {
+// --- **CHANGE 2: Rename Component** ---
+const VerifyLoginOtpScreen = () => {
   const theme = useThemeStore(state => state.theme);
   const colors = theme.colors;
   const navigation =
     useNavigation<NativeStackNavigationProp<AuthStackParamsList>>();
   const { t } = useTranslation();
 
-  const route = useRoute<VerifyEmailScreenRouteProp>();
-  const { email } = route.params;
+  // --- **CHANGE 3: Use updated RouteProp type** ---
+  const route = useRoute<VerifyLoginOtpScreenRouteProp>();
+  const { email } = route.params; // Get email passed from LoginScreen
 
   const { verifyEmailOtp, sendVerificationOtp } = useAuthStore();
 
@@ -96,13 +100,15 @@ const VerifyEmailScreen = () => {
     setIsVerifying(true);
     try {
       const success = await verifyEmailOtp(email, otpString);
-      if (success) {
-        navigation.navigate('GenderScreen');
-      }
+    //   if (success) {
+    //   navigation.reset({
+    //       index: 0,
+    //       routes: [{ name: 'MainTabs' }], // Navigate to the main App Stack (e.g., Home)
+    //     });
+    //   }
       // Error alert is handled by the store
     } catch (error) {
       console.error("Verification failed unexpectedly:", error);
-      // --- FIX 1: Use hardcoded English string ---
       Alert.alert('Error', 'An unexpected error occurred. Please try again.');
     } finally {
       setIsVerifying(false);
@@ -124,7 +130,6 @@ const VerifyEmailScreen = () => {
       // Success/Error alert is handled by the store
     } catch (error) {
        console.error("Resend OTP failed unexpectedly:", error);
-       // --- FIX 2: Use hardcoded English string ---
        Alert.alert('Error', 'Failed to resend OTP. Please try again.');
     } finally {
       setIsResending(false);
@@ -152,8 +157,9 @@ const VerifyEmailScreen = () => {
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
           >
+            {/* UI remains exactly the same as VerifyEmailScreen */}
             <Text style={[styles.heading, { color: colors.white }]}>
-              {t('otp_header')}
+              {t('otp_header')} {/* Use same translation key or a new one */}
             </Text>
             <Text style={[styles.subheading, { color: colors.primary }]}>
               {t('otp_subheader')} {email}
@@ -215,7 +221,7 @@ const VerifyEmailScreen = () => {
                 style={[
                   styles.continueBtn,
                   { borderWidth: 1, borderColor: colors.primary },
-          
+                //   isVerifying ? { opacity: 0.7 } : null
                 ]}
               >
                 {isVerifying ? (
@@ -231,7 +237,7 @@ const VerifyEmailScreen = () => {
               <TouchableOpacity
                 onPress={() => {
                   Vibration.vibrate([0, 35, 40, 35]);
-                  navigation.navigate('Login');
+                  navigation.navigate('Login'); // Go back to Login
                 }}
               >
                 <Text style={[styles.signupLink, { color: colors.primary }]}>
@@ -247,7 +253,8 @@ const VerifyEmailScreen = () => {
   );
 };
 
-export default VerifyEmailScreen;
+// --- **CHANGE 5: Update export name** ---
+export default VerifyLoginOtpScreen;
 
 // --- Styles remain the same ---
 const styles = StyleSheet.create({
@@ -340,7 +347,7 @@ const styles = StyleSheet.create({
   signupLink: {
     fontSize: 14,
     lineHeight: 18,
-    fontFamily: Fonts.aeonikRegular,
+    fontFamily: Fonts.aeonikBold,
     textDecorationLine: 'underline',
   },
 });

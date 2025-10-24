@@ -58,7 +58,7 @@ export const useRegisterStore = create<RegisterState>((set, get) => ({
   isRegistering: false,
   isUpdating: false,
   token: null,
-  userData: null, // <-- ADDED initial state
+  userData: null, 
 
   // --- REGISTER ---
   register: async data => {
@@ -67,8 +67,8 @@ export const useRegisterStore = create<RegisterState>((set, get) => ({
       const response = await axios.post(`${API_BASEURL}/auth/register-user`, data, {
         headers: { 'Content-Type': 'application/json' },
       });
-      const token = response.data?.token; 
-      const user = response.data?.user as User; 
+      const token = response.data?.data?.token; 
+      const user = response.data?.data?.user as User; 
       console.log(response.data)
       if (token && user) {
         await AsyncStorage.setItem('x-auth-token', token);
