@@ -38,7 +38,7 @@ import { useBuziosStore } from '../../../../../store/useBuziousStore';
 import { useTranslation } from 'react-i18next';
 import { useOpenAiStore } from '../../../../../store/useOpenAiStore';
 import SoundPlayer from 'react-native-sound-player';
-
+import { useInterstitialAd } from '../../../../../hooks/useInterstitialAd';
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const CONTAINER_W = SCREEN_WIDTH - 40;
 
@@ -135,7 +135,7 @@ const CaurisCardDetailScreen: React.FC = () => {
   } = useBuziosStore();
 
   const { preloadSpeech } = useOpenAiStore();
-
+const { showAd } = useInterstitialAd();
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
   // --- UPDATED: Added phase 4 for the final reading screen ---
   const [phase, setPhase] = useState<0 | 1 | 2 | 3 | 4>(0);
@@ -295,17 +295,42 @@ const CaurisCardDetailScreen: React.FC = () => {
     };
   }, []);
 
-  const handleSave = () => {
-    Vibration.vibrate([0, 35, 40, 35]); 
+  // const handleSave = () => {
+  //   Vibration.vibrate([0, 35, 40, 35]); 
+  //   if (reading && !isSaving) {
+  //     saveBuziosReading(reading).then(success => {
+  //       if (success) {
+  //         navigation.navigate('MainTabs');
+  //       }
+  //     });
+  //   }
+  // };
+  
+// --- ADD THIS NEW FUNCTION ---
+  // This contains the actual logic we want to run AFTER the ad.
+  const performSaveAndNavigate = async () => {
     if (reading && !isSaving) {
-      saveBuziosReading(reading).then(success => {
-        if (success) {
-          navigation.navigate('MainTabs');
-        }
-      });
+      // We run the save logic here
+      const success = await saveBuziosReading(reading);
+      if (success) {
+        navigation.navigate('MainTabs');
+      }
     }
   };
-  
+
+  // --- UPDATE THIS FUNCTION ---
+  // This is what the "Save" button presses.
+  // It now shows the ad and passes our save function as the callback.
+  const handleSave = () => {
+    Vibration.vibrate([0, 35, 40, 35]); 
+    if (isSaving) return; // Check if already saving
+
+    // Show the ad.
+    // The `performSaveAndNavigate` function will ONLY run
+    // after the user closes the ad.
+    showAd(performSaveAndNavigate);
+  };
+
   const onPressPlayToggle = () => {
     if (isPlayingAudio) {
       SoundPlayer.stop();
@@ -500,7 +525,7 @@ const CaurisCardDetailScreen: React.FC = () => {
               </Text>
 
               <View style={styles.shareRow}>
-                <GradientBox
+                {/* <GradientBox
                   colors={[colors.black, colors.bgBox]}
                   style={[styles.smallBtn, { borderColor: colors.primary }]}
                 >
@@ -508,7 +533,7 @@ const CaurisCardDetailScreen: React.FC = () => {
                   <Text style={[styles.smallBtnText, { color: colors.white }]}>
                     {t('share_button')}
                   </Text>
-                </GradientBox>
+                </GradientBox> */}
                 <TouchableOpacity onPress={handleSave} disabled={isSaving}>
                   <GradientBox
                     colors={[colors.black, colors.bgBox]}

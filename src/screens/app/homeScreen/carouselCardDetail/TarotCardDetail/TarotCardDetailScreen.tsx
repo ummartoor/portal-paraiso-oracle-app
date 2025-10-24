@@ -41,7 +41,7 @@ import SoundPlayer from 'react-native-sound-player';
 
 // --- UPDATED: Import preloadSpeech as well ---
 import { useOpenAiStore } from '../../../../../store/useOpenAiStore';
-
+import { useInterstitialAd } from '../../../../../hooks/useInterstitialAd';
 
 const { height: SCREEN_HEIGHT, width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -134,15 +134,34 @@ const TarotCardDetailScreen: React.FC = () => {
   const [preloadedAudioPath, setPreloadedAudioPath] = useState<string | null>(null);
   const [isPreloadingAudio, setIsPreloadingAudio] = useState(false);
 
-
+const { showAd } = useInterstitialAd();
   const selectedCardsScrollViewRef = useRef<ScrollView>(null);
 
-  const handleSaveReading = async () => {
-    Vibration.vibrate([0, 35, 40, 35]);
-    if (isSavingLoading) return;
+  // const handleSaveReading = async () => {
+  //   Vibration.vibrate([0, 35, 40, 35]);
+  //   if (isSavingLoading) return;
+  //   await saveReading();
+  //   navigation.navigate('MainTabs');
+  // };
+const performSaveAndNavigate = async () => {
+    if (isSavingLoading) return; // Check again in case
     await saveReading();
     navigation.navigate('MainTabs');
   };
+
+  // --- UPDATE THIS FUNCTION ---
+  // This is what the "Save" button presses.
+  // It now shows the ad and passes our save function as the callback.
+  const handleSaveReading = () => {
+    Vibration.vibrate([0, 35, 40, 35]);
+    if (isSavingLoading) return;
+
+    // Show the ad.
+    // The `performSaveAndNavigate` function will ONLY run
+    // after the user closes the ad (or immediately if the ad fails to load).
+    showAd(performSaveAndNavigate);
+  };
+
   const availableDeck = useMemo(() => {
     const selectedIds = new Set(selectedCards.map(c => c._id));
     return fullDeck.filter(card => !selectedIds.has(card._id));
@@ -502,7 +521,7 @@ const TarotCardDetailScreen: React.FC = () => {
                   </View>
                   
                   <View style={styles.shareRow}>
-                    <GradientBox
+                    {/* <GradientBox
                       colors={[colors.black, colors.bgBox]}
                       style={styles.smallBtn}
                     >
@@ -514,7 +533,7 @@ const TarotCardDetailScreen: React.FC = () => {
                       <Text style={styles.smallBtnText}>
                         {t('share_button')}
                       </Text>
-                    </GradientBox>
+                    </GradientBox> */}
                     <TouchableOpacity
                       activeOpacity={0.7}
                       onPress={handleSaveReading}

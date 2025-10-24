@@ -26,7 +26,7 @@ import { AppStackParamList } from '../../../../../navigation/routeTypes';
 import InsightTabs from './InsightTabs';
 import { useTranslation } from 'react-i18next';
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
-
+import { useInterstitialAd } from '../../../../../hooks/useInterstitialAd';
 const DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 type ZodiacKey =
@@ -62,6 +62,9 @@ const AstrologyCardDetailScreen: React.FC = () => {
   const { user, fetchCurrentUser } = useAuthStore();
   const { horoscope, isLoading, createHoroscope, saveHoroscope, isSaving } =
     useAstrologyStore();
+
+
+    const { showAd } = useInterstitialAd();
 
       const ZODIACS: Zodiac[] = [
     { key: "aries", name: t('zodiac_aries'), icon: require('../../../../../assets/icons/AriesIcon.png') },
@@ -126,8 +129,25 @@ const wrapIndex = (i: number) => (i + ZODIACS.length) % ZODIACS.length;
   const goPrev = () => setZIndex(i => wrapIndex(i - 1));
   const goNext = () => setZIndex(i => wrapIndex(i + 1));
 
-  const handleSave = async () => {
-       Vibration.vibrate([0, 35, 40, 35]); 
+  // const handleSave = async () => {
+  //      Vibration.vibrate([0, 35, 40, 35]); 
+  //   if (!horoscope || isSaving || !userQuestion) return;
+
+  //   const selectedSign = ZODIACS[zIndex]?.key;
+  //   const selectedDate = days[selectedIdx]?.date;
+
+  //   if (selectedSign && selectedDate) {
+  //     const dateISO = selectedDate.toISOString();
+
+   
+  //     await saveHoroscope(selectedSign, dateISO, horoscope, userQuestion);
+  //     navigation.navigate('MainTabs');
+  //   }
+  // };
+
+// --- ADD THIS NEW FUNCTION (for the ad callback) ---
+  const performSaveAndNavigate = async () => {
+    // Check conditions again, just in case
     if (!horoscope || isSaving || !userQuestion) return;
 
     const selectedSign = ZODIACS[zIndex]?.key;
@@ -135,12 +155,21 @@ const wrapIndex = (i: number) => (i + ZODIACS.length) % ZODIACS.length;
 
     if (selectedSign && selectedDate) {
       const dateISO = selectedDate.toISOString();
-
-   
       await saveHoroscope(selectedSign, dateISO, horoscope, userQuestion);
       navigation.navigate('MainTabs');
     }
   };
+
+  // --- UPDATE THIS FUNCTION (for the button press) ---
+  const handleSave = () => {
+    Vibration.vibrate([0, 35, 40, 35]); 
+    if (isSaving) return; // Don't show ad if already saving
+
+    // Show the ad.
+    // The `performSaveAndNavigate` function will run after the ad is closed.
+    showAd(performSaveAndNavigate);
+  };
+
   return (
     <ImageBackground
       source={require('../../../../../assets/images/backgroundImage.png')}
@@ -293,7 +322,7 @@ const wrapIndex = (i: number) => (i + ZODIACS.length) % ZODIACS.length;
 
           {/* Actions */}
           <View style={styles.actionsRow}>
-            <TouchableOpacity
+            {/* <TouchableOpacity
               activeOpacity={0.7}
               style={styles.actionTouchable}
               onPress={() => {}}
@@ -309,14 +338,10 @@ const wrapIndex = (i: number) => (i + ZODIACS.length) % ZODIACS.length;
                 />
                <Text style={[styles.actionLabel, { color: colors.white }]}>{t('share_button')}</Text>
               </GradientBox>
-            </TouchableOpacity>
-            {/* <TouchableOpacity activeOpacity={0.7} style={styles.actionTouchable} onPress={() => {}}>
-              <GradientBox colors={[colors.black, colors.bgBox]} style={styles.actionButton}>
-                <Image source={require('../../../../../assets/icons/saveIcon.png')} style={[styles.actionIcon, { tintColor: colors.white }]} resizeMode="contain" />
-                <Text style={[styles.actionLabel, { color: colors.white }]}>Save</Text>
-              </GradientBox>
-              
             </TouchableOpacity> */}
+
+
+        
 
             <TouchableOpacity
               activeOpacity={0.7}

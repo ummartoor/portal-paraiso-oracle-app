@@ -10,6 +10,7 @@ import {
   ImageBackground,
   ScrollView,
   Vibration,
+  Button,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Fonts } from '../../../constants/fonts';
@@ -21,6 +22,8 @@ import CarouselCard, { CardItem } from './CarouselCards';
 import { useAuthStore } from '../../../store/useAuthStore';
 import { useTranslation } from 'react-i18next';
 import { useGetNotificationsStore } from '../../../store/useGetNotificationsStore'; 
+
+import { useInterstitialAd } from '../../../hooks/useInterstitialAd';
 const { height: SCREEN_HEIGHT, width: SCREEN_WIDTH } = Dimensions.get('screen');
 
 type CardBoxProps = {
@@ -67,6 +70,13 @@ const HomeScreen: React.FC = () => {
       fetchCurrentUser();
     }, []),
   );
+  const { showAd } = useInterstitialAd();
+
+  const handleButtonPress = () => {
+    // 2. Call showAd() when you want to display the ad
+    console.log('Showing Ad...');
+    showAd();
+  };
   const navigation =
     useNavigation<NativeStackNavigationProp<AppStackParamList>>();
   const { t } = useTranslation();
@@ -190,6 +200,10 @@ const HomeScreen: React.FC = () => {
                 navigation.navigate('RitualTipScreen')}}
             />
           </View>
+
+          {/* <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+      <Button title="Show Interstitial Ad" onPress={handleButtonPress} />
+    </View> */}
         </ScrollView>
       </SafeAreaView>
     </ImageBackground>

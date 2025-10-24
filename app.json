@@ -1,4 +1,8 @@
 {
   "name": "portal_paraiso_oracle_app",
-  "displayName": "portal_paraiso_oracle_app"
+  "displayName": "portal_paraiso_oracle_app",
+  "react-native-google-mobile-ads": {
+    "android_app_id": "ca-app-pub-5848037568204765~5705361668",
+    "ios_app_id": "ca-app-pub-5848037568204765~9172967418"
+  }
 }
