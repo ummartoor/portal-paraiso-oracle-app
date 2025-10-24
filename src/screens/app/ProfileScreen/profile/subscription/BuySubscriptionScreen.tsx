@@ -38,21 +38,20 @@
 //   const { t } = useTranslation();
 //   const { initPaymentSheet, presentPaymentSheet } = useStripe();
 
-
 //   const {
 //     packages,
 //     isLoading,
 //     fetchStripePackages,
 //     createPaymentIntent,
 //     confirmPayment,
- 
+
 //   } = useStripeStore(
 //     useShallow(state => ({
 //       packages: state.packages,
 //       isLoading: state.isLoading,
 //       fetchStripePackages: state.fetchStripePackages,
 //       createPaymentIntent: state.createPaymentIntent,
-//       confirmPayment: state.confirmPayment, 
+//       confirmPayment: state.confirmPayment,
 
 //     })),
 //   );
@@ -149,7 +148,7 @@
 //         const wasConfirmed = await confirmPayment(paymentIntentId);
 
 //         if (wasConfirmed) {
-        
+
 //           setActivatedPackageId(item.id);
 //           // navigation.goBack();
 //         }
@@ -443,13 +442,12 @@
 //     opacity: 0.9,
 //   },
 
-
 // gradientWrapper: {
 //   width: '100%',
 //   height: '100%',
 //   justifyContent: 'center',
 //   alignItems: 'center',
-//   borderRadius: 26, 
+//   borderRadius: 26,
 // },
 //   actionBtn: {
 //     height: 52,
@@ -467,7 +465,7 @@
 //     fontFamily: Fonts.aeonikRegular,
 //   },
 //   activatedButton: {
-//     backgroundColor: '#4CAF50', 
+//     backgroundColor: '#4CAF50',
 //     height: 52,
 //     width: '100%',
 //     borderRadius: 26,
@@ -484,46 +482,10 @@
 //   seeMoreText: {
 //     fontFamily: Fonts.aeonikBold,
 //     fontSize: 13,
-//     color: '#D9B699', 
+//     color: '#D9B699',
 //     marginTop: 8,
 //   },
 // });
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import {
@@ -620,7 +582,7 @@ const BuySubscriptionScreen = () => {
       ?.filter(p => p.type !== 'free')
       .sort((a, b) => a.sort_order - b.sort_order) || [];
 
-  // --- CHANGE: Updated handleChoosePlan to call `confirmPayment` ---
+  // --- Updated handleChoosePlan to work with new backend API ---
   const handleChoosePlan = async (item: StripePackage) => {
     if (activatedPackageId) {
       Alert.alert(
@@ -640,12 +602,12 @@ const BuySubscriptionScreen = () => {
 
     try {
       // Step 1: Create a payment intent on your server
-      const clientSecret = await createPaymentIntent(
+      const paymentData = await createPaymentIntent(
         item.id,
         defaultPrice.stripe_price_id,
       );
 
-      if (!clientSecret) {
+      if (!paymentData) {
         setProcessingPackageId(null);
         return; // Error is already shown by the store
       }
@@ -653,7 +615,17 @@ const BuySubscriptionScreen = () => {
       // Step 2: Initialize the Stripe payment sheet
       const { error: initError } = await initPaymentSheet({
         merchantDisplayName: 'Portal Paraiso, Inc.',
-        paymentIntentClientSecret: clientSecret,
+        paymentIntentClientSecret: paymentData.clientSecret,
+        // For recurring subscriptions, we need to save the payment method
+        allowsDelayedPaymentMethods: true,
+        defaultBillingDetails: {
+          name: 'Customer',
+        },
+        appearance: {
+          colors: {
+            primary: '#D9B699',
+          },
+        },
       });
 
       if (initError) {
@@ -667,6 +639,7 @@ const BuySubscriptionScreen = () => {
 
       if (paymentError) {
         // Handle payment error (e.g., user canceled)
+        console.log('Payment Sheet Error:', paymentError);
         if (paymentError.code !== 'Canceled') {
           Alert.alert(
             `Payment Error: ${paymentError.code}`,
@@ -674,24 +647,27 @@ const BuySubscriptionScreen = () => {
           );
         }
       } else {
-        // Step 4: (NEW) If payment is successful,
-        const paymentIntentId = clientSecret.split('_secret_')[0];
-        if (!paymentIntentId) {
-          throw new Error(
-            'Critical error: Could not extract Payment Intent ID.',
+        console.log('Payment Sheet completed successfully');
+        // Step 4: If payment is successful, confirm it with backend
+        const confirmationResult = await confirmPayment(
+          paymentData.paymentIntentId,
+        );
+
+        if (confirmationResult.success) {
+          Alert.alert(
+            'Success!',
+            'Your subscription has been activated successfully!',
+          );
+          setActivatedPackageId(item.id);
+          // Refresh subscription data
+          fetchCurrentSubscription();
+          navigation.goBack();
+        } else {
+          Alert.alert(
+            'Payment Verification Failed',
+            'There was an issue verifying your payment. Please contact support.',
           );
         }
-
-      
-        const wasConfirmed = await confirmPayment(paymentIntentId);
-
-        if (wasConfirmed) {
-         
-          setActivatedPackageId(item.id);
-          navigation.goBack();
-        }
-        // If 'wasConfirmed' is false, the store has already shown an error alert.
-        // The user stays on the screen to try again.
       }
     } catch (error: any) {
       console.error('Payment processing failed:', error);
@@ -715,10 +691,7 @@ const BuySubscriptionScreen = () => {
     const displayedFeatures = isExpanded ? features : features.slice(0, 8);
     return (
       <View style={[styles.cardContainer, { width: CARD_WIDTH }]}>
-        <View
-          
-          style={[styles.card ,{ backgroundColor:colors.bgBox}]}
-        >
+        <View style={[styles.card, { backgroundColor: colors.bgBox }]}>
           <>
             {/* {item.is_popular && !isActivated && (
               <View style={[styles.badge, { backgroundColor: colors.primary }]}>
@@ -1024,16 +997,3 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
 });
-
-
-
-
-
-
-
-
-
-
-
-
-

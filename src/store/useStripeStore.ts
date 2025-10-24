@@ -479,12 +479,18 @@ interface StripeState {
   createPaymentIntent: (
     packageId: string,
     priceId: string,
-  ) => Promise<string | null>;
+  ) => Promise<{
+    clientSecret: string;
+    paymentIntentId: string;
+    subscriptionId?: string;
+  } | null>;
 
   // States for confirming a payment
   isConfirmingPayment: boolean;
   confirmationError: string | null;
-  confirmPayment: (paymentIntentId: string) => Promise<boolean>;
+  confirmPayment: (
+    paymentIntentId: string,
+  ) => Promise<{ success: boolean; subscription?: any }>;
 
   // States for fetching purchase history
   purchaseHistory: Purchase[] | null;
@@ -560,7 +566,11 @@ export const useStripeStore = create<StripeState>((set, get) => ({
   createPaymentIntent: async (
     packageId: string,
     priceId: string,
-  ): Promise<string | null> => {
+  ): Promise<{
+    clientSecret: string;
+    paymentIntentId: string;
+    subscriptionId?: string;
+  } | null> => {
     set({ isCreatingIntent: true, intentError: null });
     try {
       const token = await AsyncStorage.getItem('x-auth-token');
@@ -577,7 +587,11 @@ export const useStripeStore = create<StripeState>((set, get) => ({
 
       if (response.data?.success && response.data.clientSecret) {
         set({ isCreatingIntent: false });
-        return response.data.clientSecret;
+        return {
+          clientSecret: response.data.clientSecret,
+          paymentIntentId: response.data.paymentIntentId,
+          subscriptionId: response.data.subscriptionId,
+        };
       } else {
         throw new Error(
           response.data.message ||
@@ -597,7 +611,9 @@ export const useStripeStore = create<StripeState>((set, get) => ({
     }
   },
 
-  confirmPayment: async (paymentIntentId: string): Promise<boolean> => {
+  confirmPayment: async (
+    paymentIntentId: string,
+  ): Promise<{ success: boolean; subscription?: any }> => {
     set({ isConfirmingPayment: true, confirmationError: null });
     try {
       const token = await AsyncStorage.getItem('x-auth-token');
@@ -611,27 +627,33 @@ export const useStripeStore = create<StripeState>((set, get) => ({
         payload,
         { headers },
       );
-      console.log('Ccnfirm Payment ', response.data);
+      console.log('Confirm Payment Response:', response.data);
 
       if (response.data?.success) {
         set({ isConfirmingPayment: false });
-        Alert.alert(
-          'Success',
-          response.data.message || 'Payment confirmed successfully!',
-        );
-        return true;
+        return {
+          success: true,
+          subscription: response.data.subscription,
+        };
       } else {
-        throw new Error(response.data.message || 'Failed to confirm payment.');
+        // Handle specific payment method errors
+        const errorMessage =
+          response.data.message || 'Failed to confirm payment.';
+        console.error('Payment confirmation failed:', {
+          message: errorMessage,
+          status: response.data.status,
+          details: response.data.details,
+        });
+        throw new Error(errorMessage);
       }
     } catch (error: any) {
       const errorMessage =
         error.response?.data?.message ||
         error.message ||
         'An unknown error occurred.';
-      console.log(errorMessage);
+      console.log('Payment confirmation error:', errorMessage);
       set({ confirmationError: errorMessage, isConfirmingPayment: false });
-      Alert.alert('Payment Confirmation Failed', errorMessage);
-      return false;
+      return { success: false };
     }
   },
 
