@@ -492,6 +492,10 @@ interface StripeState {
     paymentIntentId: string,
   ) => Promise<{ success: boolean; subscription?: any }>;
 
+  isVerifyingPayment: boolean;
+  verificationError: string | null;
+  debugVerifyPayment: (paymentIntentId: string) => Promise<boolean>;
+
   // States for fetching purchase history
   purchaseHistory: Purchase[] | null;
   isFetchingHistory: boolean;
@@ -528,6 +532,8 @@ export const useStripeStore = create<StripeState>((set, get) => ({
   isCancelling: false,
   cancelError: null,
 
+  isVerifyingPayment: false,
+  verificationError: null,
   // =================================================================
   // ACTIONS
   // =================================================================
@@ -759,4 +765,45 @@ export const useStripeStore = create<StripeState>((set, get) => ({
       set({ isCancelling: false });
     }
   },
+debugVerifyPayment: async (paymentIntentId: string) => {
+    set({ isVerifyingPayment: true, verificationError: null });
+    try {
+      const token = await AsyncStorage.getItem('x-auth-token');
+      if (!token) throw new Error('Authentication token not found.');
+
+      const headers = { 'x-auth-token': token };
+      const payload = { paymentIntentId }; // Payload mein paymentIntentId pass karein
+
+      const response = await axios.post(
+        `${API_BASEURL}/stripe/debug-verify-payment`, // API endpoint
+        payload,
+        { headers },
+      );
+
+      console.log('Debug Verify Response:', response.data);
+
+      if (response.data?.success) {
+        Alert.alert(
+          'Debug Success',
+          response.data.message || 'Payment verified successfully.',
+        );
+        return true;
+      } else {
+        throw new Error(
+          response.data.message || 'Failed to verify payment.',
+        );
+      }
+    } catch (error: any) {
+      const errorMessage =
+        error.response?.data?.message ||
+        error.message ||
+        'An unknown error occurred.';
+      set({ verificationError: errorMessage });
+      Alert.alert('Debug Verification Failed', errorMessage);
+      return false;
+    } finally {
+      set({ isVerifyingPayment: false });
+    }
+  },
+  
 }));
