@@ -512,6 +512,15 @@ interface StripeState {
   isCancelling: boolean;
   cancelError: string | null;
   cancelSubscription: () => Promise<boolean>;
+
+  // States for upgrading a subscription  <-- YEH ADD KAREIN
+  isUpgrading: boolean;
+  upgradeError: string | null;
+  upgradeSubscription: (
+    newPackageId: string,
+    priceId: string,
+  ) => Promise<boolean>;
+
 }
 
 export const useStripeStore = create<StripeState>((set, get) => ({
@@ -531,7 +540,8 @@ export const useStripeStore = create<StripeState>((set, get) => ({
   subscriptionError: null,
   isCancelling: false,
   cancelError: null,
-
+isUpgrading: false, // <-- YEH ADD KAREIN
+  upgradeError: null,
   isVerifyingPayment: false,
   verificationError: null,
   // =================================================================
@@ -763,6 +773,47 @@ export const useStripeStore = create<StripeState>((set, get) => ({
       return false;
     } finally {
       set({ isCancelling: false });
+    }
+  },
+  upgradeSubscription: async (newPackageId: string, priceId: string) => {
+    set({ isUpgrading: true, upgradeError: null });
+    try {
+      const token = await AsyncStorage.getItem('x-auth-token');
+      if (!token) throw new Error('Authentication token not found.');
+
+      const headers = { 'x-auth-token': token };
+      // Payload jo aapki Postman image se match karta hai
+      const payload = { newPackageId, priceId };
+
+      const response = await axios.post(
+        `${API_BASEURL}/stripe/upgrade-subscription`, // API endpoint from Postman
+        payload,
+        { headers },
+      );
+
+      console.log('Upgrade Response', response.data);
+      if (response.data?.success) {
+        Alert.alert(
+          'Success',
+          response.data.message || 'Subscription upgraded successfully.',
+        );
+        get().fetchCurrentSubscription(); // Naya subscription details refresh karein
+        return true;
+      } else {
+        throw new Error(
+          response.data.message || 'Failed to upgrade subscription.',
+        );
+      }
+    } catch (error: any) {
+      const errorMessage =
+        error.response?.data?.message ||
+        error.message ||
+        'An unknown error occurred.';
+      set({ upgradeError: errorMessage });
+      Alert.alert('Upgrade Failed', errorMessage);
+      return false;
+    } finally {
+      set({ isUpgrading: false });
     }
   },
 debugVerifyPayment: async (paymentIntentId: string) => {
