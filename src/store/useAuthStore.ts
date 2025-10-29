@@ -60,7 +60,7 @@ type UpdateProfileData = {
   relationship_status?: string;
   sign_in_zodiac?: string;
 };
-
+type LoginResult = 'SUCCESS' | 'NOT_VERIFIED' | 'WRONG_CREDENTIALS' | 'ERROR';
 interface AuthState {
   isLoggedIn: boolean;
   token: string | null;
@@ -69,7 +69,7 @@ interface AuthState {
     email: string,
     password: string,
     deviceToken: string,
-  ) => Promise<boolean>;
+  ) => Promise<LoginResult>;
 
   googleLogin: (accessToken: string, deviceToken: string) => Promise<boolean>;
   logout: () => Promise<void>;
@@ -172,7 +172,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
 
 // --- LOGIN ---
-  login: async (email, password, deviceToken) => {
+ login: async (email, password, deviceToken): Promise<LoginResult> => { // <-- YAHAN CHANGE KIYA GAYA HAI
     try {
       const response = await axios.post(
         `${API_BASEURL}/auth/login`,
@@ -191,66 +191,70 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       console.log('LOGIN RESPONSE:', response.data);
 
       const token = response.data?.token;
-      const user = response.data?.user as User; // Add User type if not already done
+      const user = response.data?.user as User; 
       
-      // --- YEH CHECK WAPAS ADD KIYA GAYA HAI ---
-      const requiresVerification = response.data?.requiresEmailVerification; // API se yeh value check karein
+      const requiresVerification = response.data?.requiresEmailVerification; 
 
       if (token && user) {
-        // Check karein API se ke verification zaroori hai YA user object mein isEmailVerified false hai
         if (requiresVerification === true || user.isEmailVerified === false) {
           
-          set({ isLoggedIn: false, token: null, user: null }); // Login state set na karein
+          set({ isLoggedIn: false, token: null, user: null }); 
           
-          // API ne kaha hai ke code bhej diya gaya hai, toh hum dobara nahi bhejte
-          // Sirf Alert dikhate hain
           Alert.alert(
             'Email Not Verified',
             response.data.message || 'Please verify your email first. Check your inbox for the code.' 
           );
           
-          // Login fail return karein taake UI navigate kar sake
-          return false; 
+          return 'NOT_VERIFIED'; // <-- YAHAN CHANGE KIYA GAYA HAI
         }
-        // --- CHECK KHATAM ---
 
-        // Agar verification zaroori nahi thi (ya email pehle se verified tha)
         await AsyncStorage.setItem('x-auth-token', token);
         await AsyncStorage.setItem('isLoggedIn', 'true');
         await AsyncStorage.setItem('user', JSON.stringify(user));
 
         set({ isLoggedIn: true, token, user });
-        return true; // Login successful
+        return 'SUCCESS'; // <-- YAHAN CHANGE KIYA GAYA HAI
       } else {
         Alert.alert('Login Failed', 'Token or user not found in response.');
-        return false;
+        return 'ERROR'; // <-- YAHAN CHANGE KIYA GAYA HAI
       }
     } catch (error: any) {
-      // ... (Error handling waisa hi rahega) ...
       if (axios.isAxiosError(error)) {
         const apiError = error.response?.data;
         console.log('LOGIN ERROR RESPONSE:', apiError);
         const message = Array.isArray(apiError?.message)
           ? apiError.message.join('\n')
           : apiError?.message || 'Login failed';
-        // Specific check for "Email not verified" error from backend (optional but good)
+
+        // Specific check for "Email not verified"
         if (apiError?.message === 'Email not verified. Please verify your email first.') {
              Alert.alert(
                'Email Not Verified',
-               'Please verify your email first.' // You might not need to resend OTP here if backend doesn't allow login at all
+               'Please verify your email first.'
              );
-             // Decide if you want to attempt sending OTP again here or just inform the user
-             // await get().sendVerificationOtp(email); // Uncomment if needed
-             return false; // Indicate login failure for navigation
-        } else {
-             Alert.alert('Error', message); // Handle other errors like wrong password
+             return 'NOT_VERIFIED'; // <-- YAHAN CHANGE KIYA GAYA HAI
+        } 
+        
+        // Specific check for wrong credentials
+        const lowerCaseMessage = message.toLowerCase();
+        if (lowerCaseMessage.includes('invalid credentials') || 
+            lowerCaseMessage.includes('wrong password') || 
+            lowerCaseMessage.includes('user not found')) 
+        {
+            Alert.alert('Error', message); // Show the specific error
+            return 'WRONG_CREDENTIALS'; // <-- YAHAN CHANGE KIYA GAYA HAI
         }
 
+        // Other API errors
+        Alert.alert('Error', message); 
+        return 'ERROR'; // <-- YAHAN CHANGE KIYA GAYA HAI
+
       } else {
+        // Non-API errors
         console.log('Unexpected Error:', error);
         Alert.alert('Error', 'Something went wrong. Please try again.');
       }
-      return false; // Return false for all errors
+      return 'ERROR'; // <-- YAHAN CHANGE KIYA GAYA HAI
     }
   },
   // --- NEW: SEND VERIFICATION OTP ---

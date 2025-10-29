@@ -133,50 +133,88 @@ const validationSchema = Yup.object().shape({
               //   }
               // }}
 
-              onSubmit={async (values, { setSubmitting }) => {
-    Vibration.vibrate([0, 35, 40, 35]); // Vibration add kar dein agar yahan bhi chahiye
-    let fcmToken = 'no-token-found';
-    try {
-      const token = await messaging().getToken();
-      if (token) {
-        fcmToken = token;
-        console.log('Obtained FCM Token:', fcmToken);
-      } else {
-        console.log('Could not get FCM token.');
-      }
-    } catch (error) {
-      console.error('Error getting FCM token:', error);
-    }
+//               onSubmit={async (values, { setSubmitting }) => {
+//     Vibration.vibrate([0, 35, 40, 35]); // Vibration add kar dein agar yahan bhi chahiye
+//     let fcmToken = 'no-token-found';
+//     try {
+//       const token = await messaging().getToken();
+//       if (token) {
+//         fcmToken = token;
+//         console.log('Obtained FCM Token:', fcmToken);
+//       } else {
+//         console.log('Could not get FCM token.');
+//       }
+//     } catch (error) {
+//       console.error('Error getting FCM token:', error);
+//     }
 
-    // Attempt login
-    const loginSuccess = await login(values.email, values.password, fcmToken);
+//     // Attempt login
+//     const loginSuccess = await login(values.email, values.password, fcmToken);
 
-    // --- YEH HISSAY MEIN CHANGE HAI ---
-    if (loginSuccess) {
-      // Login successful AND email was already verified
-      await registerFcmToken(fcmToken);
-      // Navigation to AppStack (Home) will happen automatically
-      // because useAuthStore's isLoggedIn state is now true.
-      // We don't need to explicitly navigate here or call setSubmitting(false).
-    } else {
-      // Login failed. Check if it was due to verification needed.
-      // Since our login function returns 'false' and shows an alert
-      // specifically for 'Email Not Verified', we can assume 'false' means
-      // we need to navigate to the verification screen.
+//     // --- YEH HISSAY MEIN CHANGE HAI ---
+//     if (loginSuccess) {
+//       // Login successful AND email was already verified
+//       await registerFcmToken(fcmToken);
+//       // Navigation to AppStack (Home) will happen automatically
+//       // because useAuthStore's isLoggedIn state is now true.
+//       // We don't need to explicitly navigate here or call setSubmitting(false).
+//     } else {
+//       // Login failed. Check if it was due to verification needed.
+//       // Since our login function returns 'false' and shows an alert
+//       // specifically for 'Email Not Verified', we can assume 'false' means
+//       // we need to navigate to the verification screen.
 
-      // **Important:** This assumes `login` *only* returns `false` for verification needed.
-      // If it can return `false` for wrong password too, you'll need to adjust
-      // the `login` function in `useAuthStore` to return different values/codes.
+//       // **Important:** This assumes `login` *only* returns `false` for verification needed.
+//       // If it can return `false` for wrong password too, you'll need to adjust
+//       // the `login` function in `useAuthStore` to return different values/codes.
       
-      // Navigate to the OTP screen for login verification
-      navigation.navigate('VerifyLoginOtpScreen', { email: values.email });
+//       // Navigate to the OTP screen for login verification
+//       navigation.navigate('VerifyLoginOtpScreen', { email: values.email });
       
-      // We are navigating away, so no need to call setSubmitting(false) here.
-      // The form submission process effectively ends with navigation.
-    }
-    // --- CHANGE KHATAM ---
-}}
+//       // We are navigating away, so no need to call setSubmitting(false) here.
+//       // The form submission process effectively ends with navigation.
+//     }
+//     // --- CHANGE KHATAM ---
+// }}
+
+// LoginScreen.tsx ke andar onSubmit
+
+     onSubmit={async (values, { setSubmitting, setFieldError }) => {
+                  Vibration.vibrate([0, 35, 40, 35]);
+                  let fcmToken = 'no-token-found';
+                  try {
+                    const token = await messaging().getToken();
+                    if (token) fcmToken = token;
+                  } catch (error) {
+                    console.error('Error getting FCM token:', error);
+                  }
+
+                  // Attempt login and get the result
+                  // --- IMPORTANT: Assume 'login' is updated to return strings ---
+                  const loginResult: string | boolean = await login(values.email, values.password, fcmToken);
+                  // Using 'string | boolean' temporarily to satisfy TS until login is fixed
+
+                  // --- WARNING: This logic WILL NOT WORK correctly until ---
+                  // --- useAuthStore's login function returns strings ---
+                  if (loginResult === 'SUCCESS') {
+                    await registerFcmToken(fcmToken);
+                    // Automatic navigation
+                  } else if (loginResult === 'NOT_VERIFIED') {
+                    navigation.navigate('VerifyLoginOtpScreen', { email: values.email });
+                    // Automatic navigation
+                  } else if (loginResult === 'WRONG_CREDENTIALS') {
+                    // --- Use simple strings for errors ---
+                    setFieldError('email', '');
+                    setFieldError('password', 'Invalid email or password'); 
+                    setSubmitting(false); // Re-enable form
+                  } else {
+                    // --- Use simple strings for errors ---
+                    setFieldError('email', 'An unexpected error occurred. Please try again.'); // Show generic error
+                    setSubmitting(false); // Re-enable form
+                  }
+              }}
             >
+            
               {({
                 handleChange,
                 handleBlur,
