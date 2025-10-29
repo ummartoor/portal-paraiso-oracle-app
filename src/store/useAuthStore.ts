@@ -110,6 +110,8 @@ interface AuthState {
     email: string,
     message: string,
   ) => Promise<boolean>;
+
+   completeLogin: () => void; 
 }
 
 // --- Auth Store ---
@@ -279,7 +281,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     }
   },
 
-  // --- NEW: VERIFY EMAIL OTP ---
+
+// --- NEW: VERIFY EMAIL OTP (FIXED) ---
   verifyEmailOtp: async (email: string, otp: string) => {
     try {
       const response = await axios.post(
@@ -291,18 +294,21 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       console.log('VERIFY EMAIL OTP RESPONSE:', response.data);
 
       if (response.data?.success) {
-        // --- Yeh API login ki tarha token aur user return karti hai ---
         const token = response.data?.data?.token;
         const user = response.data?.data?.user;
 
         if (token && user) {
+          // Token aur user save karein taake agli screens API call kar sakein
           await AsyncStorage.setItem('x-auth-token', token);
-          await AsyncStorage.setItem('isLoggedIn', 'true');
           await AsyncStorage.setItem('user', JSON.stringify(user));
 
-          set({ isLoggedIn: true, token, user });
+          // --- YEH HAI FIX ---
+          // Hum isLoggedIn: false hi rakhenge taake user AuthNavigator mein rahe
+          set({ isLoggedIn: false, token, user }); 
+          // --- YEH HAI FIX ---
+
           Alert.alert('Success', 'Email verified successfully!');
-          return true;
+          return true; // Ab navigation.navigate('GenderScreen') kaam karega
         } else {
           throw new Error('Token or user not found in verification response.');
         }
@@ -314,6 +320,23 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       console.log('VERIFY EMAIL OTP ERROR:', msg);
       Alert.alert('Error', msg);
       return false;
+    }
+  },
+ 
+  completeLogin: () => {
+
+    const { token, user } = get();
+    if (token && user) {
+      set({ isLoggedIn: true });
+  
+    } else {
+      console.error(
+        'completeLogin was called, but token/user were missing in the store.',
+      );
+      Alert.alert(
+        'Error',
+        'Login failed after verification. Please try logging in again.',
+      );
     }
   },
 

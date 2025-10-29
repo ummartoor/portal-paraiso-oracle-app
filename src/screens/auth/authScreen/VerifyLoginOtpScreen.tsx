@@ -49,7 +49,7 @@ const VerifyLoginOtpScreen = () => {
   const route = useRoute<VerifyLoginOtpScreenRouteProp>();
   const { email } = route.params; // Get email passed from LoginScreen
 
-  const { verifyEmailOtp, sendVerificationOtp } = useAuthStore();
+ const { verifyEmailOtp, sendVerificationOtp, completeLogin } = useAuthStore();
 
   const [otp, setOtp] = useState<string[]>(Array(6).fill(''));
   const [timer, setTimer] = useState(120);
@@ -100,6 +100,10 @@ const VerifyLoginOtpScreen = () => {
     setIsVerifying(true);
     try {
       const success = await verifyEmailOtp(email, otpString);
+            if (success) {
+
+        completeLogin();
+      }
     //   if (success) {
     //   navigation.reset({
     //       index: 0,
