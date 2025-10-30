@@ -233,14 +233,14 @@ const AstrologyHistoryDetail: React.FC = () => {
 
 
           {/* Actions */}
-          <View style={styles.actionsRow}>
-            <TouchableOpacity activeOpacity={0.7} style={styles.actionTouchable} onPress={() => { /* Share logic here */ }}>
+          {/* <View style={styles.actionsRow}>
+            <TouchableOpacity activeOpacity={0.7} style={styles.actionTouchable} onPress={() => {  }}>
               <GradientBox colors={[colors.black, colors.bgBox]} style={styles.actionButton}>
                 <Image source={require('../../../assets/icons/shareIcon.png')} style={[styles.actionIcon, { tintColor: colors.white }]} resizeMode="contain" />
                 <Text style={[styles.actionLabel, { color: colors.white }]}>Share</Text>
               </GradientBox>
             </TouchableOpacity>
-          </View>
+          </View> */}
         </ScrollView>
       </SafeAreaView>
     </ImageBackground>

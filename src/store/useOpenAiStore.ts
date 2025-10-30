@@ -1,4 +1,3 @@
-
 import { create } from 'zustand';
 import axios from 'axios';
 import { Alert } from 'react-native';
@@ -6,28 +5,25 @@ import RNFS from 'react-native-fs';
 import SoundPlayer from 'react-native-sound-player';
 import { Buffer } from 'buffer';
 import { OPENAI_API_KEY, OPENAI_API_URL } from '@env';
+import MD5 from 'crypto-js/md5'; 
 
 interface OpenAiState {
   isLoading: boolean;
   error: string | null;
   generateAndPlaySpeech: (text: string) => Promise<boolean>;
-  preloadSpeech: (text: string, id: string) => Promise<string | null>; 
+  preloadSpeech: (text: string, id: string) => Promise<string | null>;
 }
-
-
 
 export const useOpenAiStore = create<OpenAiState>((set) => ({
   isLoading: false,
   error: null,
 
- 
   generateAndPlaySpeech: async (text: string) => {
- 
     set({ isLoading: true, error: null });
     try {
       const response = await axios.post(
-       OPENAI_API_URL,
-        { model: 'tts-1-hd', input: text,    voice: 'alloy',  },
+        OPENAI_API_URL,
+        { model: 'tts-1-hd', input: text, voice: 'alloy' },
         {
           headers: { Authorization: `Bearer ${OPENAI_API_KEY}`, 'Content-Type': 'application/json' },
           responseType: 'arraybuffer',
@@ -47,13 +43,10 @@ export const useOpenAiStore = create<OpenAiState>((set) => ({
     }
   },
 
-  /**
-   * --- NEW FUNCTION ---
-   * Preloads speech audio by fetching and saving it to a local file.
-   * Returns the local file path on success.
-   */
   preloadSpeech: async (text: string, id: string) => {
-    const audioPath = `${RNFS.CachesDirectoryPath}/speech_${id}.mp3`;
+    // --- 2. LAMBE ID KO HASH KAREIN TAA_KE FILENAME CHOTA HO ---
+    const hashedId = MD5(id).toString();
+    const audioPath = `${RNFS.CachesDirectoryPath}/speech_${hashedId}.mp3`;
 
     // Check if the file already exists to avoid re-downloading
     const fileExists = await RNFS.exists(audioPath);
@@ -75,11 +68,99 @@ export const useOpenAiStore = create<OpenAiState>((set) => ({
       console.log('Audio preloaded successfully at:', audioPath);
       return audioPath;
     } catch (error: any) {
-      console.error('Failed to preload speech:', error.message);
+      console.error(`Failed to preload speech for ID ${id}:`, error.message);
       return null;
     }
   },
 }));
+
+
+
+
+
+
+
+// import { create } from 'zustand';
+// import axios from 'axios';
+// import { Alert } from 'react-native';
+// import RNFS from 'react-native-fs';
+// import SoundPlayer from 'react-native-sound-player';
+// import { Buffer } from 'buffer';
+// import { OPENAI_API_KEY, OPENAI_API_URL } from '@env';
+
+// interface OpenAiState {
+//   isLoading: boolean;
+//   error: string | null;
+//   generateAndPlaySpeech: (text: string) => Promise<boolean>;
+//   preloadSpeech: (text: string, id: string) => Promise<string | null>; 
+// }
+
+
+
+// export const useOpenAiStore = create<OpenAiState>((set) => ({
+//   isLoading: false,
+//   error: null,
+
+ 
+//   generateAndPlaySpeech: async (text: string) => {
+ 
+//     set({ isLoading: true, error: null });
+//     try {
+//       const response = await axios.post(
+//        OPENAI_API_URL,
+//         { model: 'tts-1-hd', input: text,    voice: 'alloy',  },
+//         {
+//           headers: { Authorization: `Bearer ${OPENAI_API_KEY}`, 'Content-Type': 'application/json' },
+//           responseType: 'arraybuffer',
+//         }
+//       );
+//       const base64Audio = Buffer.from(response.data, 'binary').toString('base64');
+//       const audioPath = `${RNFS.CachesDirectoryPath}/temp_speech_${Date.now()}.mp3`;
+//       await RNFS.writeFile(audioPath, base64Audio, 'base64');
+//       SoundPlayer.playUrl(`file://${audioPath}`);
+//       set({ isLoading: false });
+//       return true;
+//     } catch (error: any) {
+//       const errorMessage = error.response?.data?.error?.message || error.message || 'Failed to generate speech.';
+//       set({ error: errorMessage, isLoading: false });
+//       Alert.alert('Audio Error', errorMessage);
+//       return false;
+//     }
+//   },
+
+//   /**
+//    * --- NEW FUNCTION ---
+//    * Preloads speech audio by fetching and saving it to a local file.
+//    * Returns the local file path on success.
+//    */
+//   preloadSpeech: async (text: string, id: string) => {
+//     const audioPath = `${RNFS.CachesDirectoryPath}/speech_${id}.mp3`;
+
+//     // Check if the file already exists to avoid re-downloading
+//     const fileExists = await RNFS.exists(audioPath);
+//     if (fileExists) {
+//       return audioPath;
+//     }
+
+//     try {
+//       const response = await axios.post(
+//         OPENAI_API_URL,
+//         { model: 'tts-1-hd', input: text, voice: 'fable' },
+//         {
+//           headers: { Authorization: `Bearer ${OPENAI_API_KEY}`, 'Content-Type': 'application/json' },
+//           responseType: 'arraybuffer',
+//         }
+//       );
+//       const base64Audio = Buffer.from(response.data, 'binary').toString('base64');
+//       await RNFS.writeFile(audioPath, base64Audio, 'base64');
+//       console.log('Audio preloaded successfully at:', audioPath);
+//       return audioPath;
+//     } catch (error: any) {
+//       console.error('Failed to preload speech:', error.message);
+//       return null;
+//     }
+//   },
+// }));
 
 
 

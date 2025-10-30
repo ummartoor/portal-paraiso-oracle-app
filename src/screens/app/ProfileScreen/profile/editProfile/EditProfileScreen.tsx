@@ -130,6 +130,51 @@ const EditProfileScreen = () => {
     return labels.join(', ');
   };
 
+  // ... (formatDate aur formatGoalsForDisplay ke baad)
+
+  const formatGenderForDisplay = (genderKey: string | null) => {
+    if (!genderKey) return t('edit_profile_gender_placeholder');
+
+    // Key ko translation 
+    switch (genderKey) {
+      case 'male':
+        return t('gender_male'); 
+      case 'female':
+        return t('gender_female'); 
+      case 'other':
+        return t('gender_non_binary'); 
+      default:
+        return genderKey; 
+    }
+  };
+
+
+  // ... (formatGenderForDisplay function ke baad)
+
+  const formatRelationshipStatusForDisplay = (statusKey: string | null) => {
+    if (!statusKey || statusKey === '') {
+      return t('edit_profile_relationship_placeholder');
+    }
+
+    // Key ko translation key se map karein
+    switch (statusKey) {
+      case 'single':
+        return t('status_single');
+      case 'relationship':
+        return t('status_relationship');
+      case 'married':
+        return t('status_married');
+      case 'engaged':
+        return t('status_engaged');
+      case 'complicated':
+        return t('status_complicated');
+      case 'divorced':
+        return t('status_divorced');
+      default:
+    
+        return statusKey.charAt(0).toUpperCase() + statusKey.slice(1);
+    }
+  };
   return (
     <ImageBackground
       source={require('../../../../../assets/images/backgroundImage.png')}
@@ -231,7 +276,8 @@ const EditProfileScreen = () => {
               onPress={() => setGenderModalVisible(true)}
               style={styles.input}
             >
-  <Text style={styles.inputText}>{gender || t('edit_profile_gender_placeholder')}</Text>
+              <Text style={styles.inputText}>{formatGenderForDisplay(gender)}</Text>
+  {/* <Text style={styles.inputText}>{gender || t('edit_profile_gender_placeholder')}</Text> */}
             </TouchableOpacity>
 
         <Text style={styles.label}>{t('edit_profile_goals_label')}</Text>
@@ -276,7 +322,8 @@ const EditProfileScreen = () => {
               onPress={() => setRelationshipModalVisible(true)}
               style={styles.input}
             >
-           <Text style={styles.inputText}>{relationshipStatus  || t('edit_profile_relationship_placeholder')}</Text>
+           {/* <Text style={styles.inputText}>{relationshipStatus  || t('edit_profile_relationship_placeholder')}</Text> */}
+           <Text style={styles.inputText}>{formatRelationshipStatusForDisplay(relationshipStatus)}</Text>
             </TouchableOpacity>
 
                       <Text style={styles.label}>{t('edit_profile_zodiac_label')}</Text>

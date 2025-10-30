@@ -24,6 +24,7 @@ import { AppStackParamList } from '../../../navigation/routeTypes';
 // --- NEW: Import OpenAI Store and SoundPlayer ---
 import { useOpenAiStore } from '../../../store/useOpenAiStore';
 import SoundPlayer from 'react-native-sound-player';
+import { t } from 'i18next';
 
 // --- Import Icons ---
 const BackIcon = require('../../../assets/icons/backIcon.png');
@@ -192,7 +193,7 @@ const DailyWisdomHistoryDetail: React.FC = () => {
               {historyItem.reading}
             </Text>
 
-            <View style={styles.shareRow}>
+            {/* <View style={styles.shareRow}>
               <GradientBox
                 colors={[colors.black, colors.bgBox]}
                 style={styles.smallBtn}
@@ -200,23 +201,23 @@ const DailyWisdomHistoryDetail: React.FC = () => {
                 <Image source={ShareIcon} style={styles.smallIcon} />
                 <Text style={styles.smallBtnText}>Share</Text>
               </GradientBox>
-            </View>
+            </View> */}
 
             <TouchableOpacity
-              onPress={() => setShowSubscriptionModal(true)}
-              style={{ marginTop: 30 }}
-            >
-              <View style={styles.buttonBorder}>
-                <GradientBox
-                  colors={[colors.black, colors.bgBox]}
-                  style={styles.mainButton}
-                >
-                  <Text style={styles.buttonText}>
-                    Get Premium For Full Reading
-                  </Text>
-                </GradientBox>
-              </View>
-            </TouchableOpacity>
+                    style={{ marginTop: 40, paddingHorizontal:20 }}
+                    onPress={() => setShowSubscriptionModal(true)}
+                  >
+                    <View style={styles.buttonBorder}>
+                      <GradientBox
+                        colors={[colors.black, colors.bgBox]}
+                        style={[styles.revealBtnGrad, { borderRadius: 60 }]}
+                      >
+                        <Text style={styles.revealBtnText}>
+                          {t('get_premium_button')}
+                        </Text>
+                      </GradientBox>
+                    </View>
+                  </TouchableOpacity>
           </View>
         </ScrollView>
 
@@ -270,10 +271,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingBottom: 50,
   },
-  contentWrapper: { width: '100%', alignItems: 'center', marginTop: 20 },
+  contentWrapper: { width: '100%', marginTop: 20 },
   cardName: {
     fontFamily: Fonts.cormorantSCBold,
     fontSize: 28,
+    textAlign:'center',
     textTransform: 'uppercase',
     marginBottom: 15,
   },
@@ -283,8 +285,8 @@ const styles = StyleSheet.create({
     resizeMode: 'contain',
     borderRadius: 12,
   },
-  cardFrame: {},
-  playButton: { marginTop: 20, height: 44, width: 44, justifyContent: 'center', alignItems: 'center' },
+  cardFrame: { alignItems: 'center'},
+  playButton: { marginTop: 20,justifyContent: 'center', alignItems: 'center' },
   playIcon: { width: 40, height: 40 },
   description: {
     fontFamily: Fonts.aeonikRegular,
@@ -324,19 +326,20 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#fff',
   },
-  buttonBorder: {
-    borderColor: '#D9B699',
-    borderWidth: 1.5,
-    borderRadius: 60,
-    overflow: 'hidden',
-  },
-  mainButton: {
+
+ 
+    revealBtnGrad: {
     height: 52,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 20,
+
     borderRadius: 60,
   },
-  buttonText: { color: '#fff', fontSize: 16, fontFamily: Fonts.aeonikRegular },
+  revealBtnText: { color: '#fff', fontSize: 16 },  buttonBorder: {
+     borderColor: '#D9B699',
+    borderWidth: 1,
+    borderRadius: 60,
+    overflow: 'hidden',
+  },
 });
 

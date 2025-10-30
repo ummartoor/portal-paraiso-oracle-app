@@ -121,10 +121,14 @@ const NotificationToggleModal: React.FC<NotificationToggleModalProps> = ({
       <View style={[StyleSheet.absoluteFill, styles(colors).overlayBackground]}>
         <View style={styles(colors).overlay}>
           <View style={styles(colors).modal}>
-            <Text style={styles(colors).heading}>Notification Settings</Text>
+         <Text style={styles(colors).heading}>
+              {t('notification_settings_header')}
+            </Text>
 
             <View style={styles(colors).headerRow}>
-              <Text style={styles(colors).label}>Email Notifications</Text>
+            <Text style={styles(colors).label}>
+                {t('email_notifications')}
+              </Text>
               <CustomToggleSwitch
                 value={emailNotifications}
                 onValueChange={setEmailNotifications}
@@ -133,7 +137,7 @@ const NotificationToggleModal: React.FC<NotificationToggleModalProps> = ({
             </View>
 
             <View style={styles(colors).headerRow}>
-              <Text style={styles(colors).label}>Push Notifications</Text>
+              <Text style={styles(colors).label}>{t('push_notifications')}</Text>
               <CustomToggleSwitch
                 value={allNotifications}
                 onValueChange={setAllNotifications}
@@ -142,7 +146,7 @@ const NotificationToggleModal: React.FC<NotificationToggleModalProps> = ({
             </View>
 
             <View style={styles(colors).headerRow}>
-              <Text style={styles(colors).label}>Daily Wisdom Card</Text>
+              <Text style={styles(colors).label}>{t('daily_wisdom_card')}</Text>
               <CustomToggleSwitch
                 value={dailyWisdom}
                 onValueChange={setDailyWisdom}
@@ -151,7 +155,7 @@ const NotificationToggleModal: React.FC<NotificationToggleModalProps> = ({
             </View>
 
             <View style={styles(colors).headerRow}>
-              <Text style={styles(colors).label}>Ritual Tip</Text>
+              <Text style={styles(colors).label}>{t('ritual_tip')}</Text>
               <CustomToggleSwitch
                 value={ritual}
                 onValueChange={setRitual}

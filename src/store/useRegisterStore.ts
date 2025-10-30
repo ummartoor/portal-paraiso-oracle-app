@@ -90,7 +90,8 @@ export const useRegisterStore = create<RegisterState>((set, get) => ({
         : apiError?.message || 'Registration failed due to a network error.';
       
       // --- CHANGE: Replaced Alert with toast ---
-      showErrorToast('Registration Error', message);
+       Alert.alert('Registration Error', message);
+      // showErrorToast('Registration Error', message);
       set({ isRegistering: false });
       return { success: false };
     }

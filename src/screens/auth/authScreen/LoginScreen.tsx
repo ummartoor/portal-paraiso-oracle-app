@@ -40,7 +40,7 @@ const LoginScreen = () => {
   const [showPassword, setShowPassword] = useState(false);
   const login = useAuthStore(state => state.login); // Your login function from store
     const { registerFcmToken } = useNotificationStore();
-const { t } = useTranslation();
+const { t ,i18n} = useTranslation();
   const navigation =
     useNavigation<NativeStackNavigationProp<AuthStackParamsList>>();
 
@@ -188,10 +188,10 @@ const validationSchema = Yup.object().shape({
                   } catch (error) {
                     console.error('Error getting FCM token:', error);
                   }
-
+const currentLanguage = i18n.language;
                   // Attempt login and get the result
                   // --- IMPORTANT: Assume 'login' is updated to return strings ---
-                  const loginResult: string | boolean = await login(values.email, values.password, fcmToken);
+                  const loginResult: string | boolean = await login(values.email, values.password, fcmToken,currentLanguage);
                   // Using 'string | boolean' temporarily to satisfy TS until login is fixed
 
                   // --- WARNING: This logic WILL NOT WORK correctly until ---

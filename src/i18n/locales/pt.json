@@ -217,9 +217,12 @@
   "profile_user_name_fallback": "Nome de Usuário",
   "profile_zodiac_sign_label": "Signo do Zodíaco",
   "profile_notification_title": "Notificação",
+  "profile_notification_status_enabled": "Ativado",
   "profile_notification_status_disabled": "Desativado",
   "profile_subscription_header": "Assinatura",
   "profile_buy_subscription_button": "Comprar Assinatura",
+  "profile_purchase_history_button": "Histórico de Compras",
+  "profile_subscription_details_button": "Detalhes da Assinatura",
   "profile_document_header": "Documento",
   "profile_terms_of_service_button": "Termos de Serviço",
   "profile_subscription_terms_button": "Termos e Condições",
@@ -252,6 +255,12 @@
   "edit_profile_zodiac_placeholder": "Selecione o Signo",
   "edit_profile_goals_more": "... e mais {{count}}",
 
+
+"notification_settings_header": "Configurações de Notificação",
+  "email_notifications": "Notificações por Email",
+  "push_notifications": "Notificações Push",
+  "daily_wisdom_card": "Cartão de Sabedoria Diário",
+  "ritual_tip": "Dica de Ritual",
 
   "name_modal_header": "Nome",
   "name_modal_label": "Digite seu nome completo",
@@ -419,7 +428,11 @@
   "insight_tabs_health": "Saúde & Bem-estar",
   "insight_tabs_divine": "Orientação Divina",
 
-
+  "ritual_tip_header": "Dica de Ritual",
+  "ritual_tip_error_loading": "Não foi possível carregar a dica de ritual de hoje.",
+  "ritual_tip_title": "Ritual de Hoje",
+  "ritual_tip_subtitle": "Práticas simples para ancorar, curar e fortalecer sua energia",
+  "alert_audio_play_error": "Não foi possível reproduzir o arquivo de áudio.",
 
 
   "notifications_screen_header": "Notificações",
@@ -428,7 +441,129 @@
   "time_ago_seconds": "há {{count}}s",
   "time_ago_minutes": "há {{count}}m",
   "time_ago_hours": "há {{count}}h",
-  "time_ago_days": "há {{count}}d"
+  "time_ago_days": "há {{count}}d",
+
+
+
+
+
+  "privacy_policy_header": "Política de Privacidade",
+  "privacy_policy_last_updated": "Última atualização: Outubro 2025",
+  "privacy_policy_intro_1": "O Portal Paraíso (“nós”, “nosso”) respeita a sua privacidade e está empenhado em proteger os seus dados pessoais.",
+  "privacy_policy_intro_2": "Esta Política de Privacidade explica como recolhemos, usamos e protegemos as informações quando visita o nosso site, usa a nossa aplicação ou interage com os nossos serviços.",
+  "privacy_policy_intro_3": "Ao aceder ou usar o Portal Paraíso, concorda com esta Política de Privacidade. Se não concordar, por favor, interrompa o uso dos nossos serviços.",
+  "privacy_policy_s1_title": "1. Informações que Recolhemos",
+  "privacy_policy_s1_intro": "Podemos recolher os seguintes tipos de informações quando interage com a aplicação ou site do Portal Paraíso:",
+  "privacy_policy_s1_a_title": "a) Informações Pessoais",
+  "privacy_policy_s1_a_li1": "Nome, endereço de email e detalhes da conta",
+  "privacy_policy_s1_a_li2": "Informações de pagamento (processadas de forma segura através de fornecedores terceiros)",
+  "privacy_policy_s1_a_li3": "Dados de dispositivo e uso (endereço IP, configurações de idioma, versão da app)",
+  "privacy_policy_s1_b_title": "b) Dados Espirituais e de Interação",
+  "privacy_policy_s1_b_li1": "Perguntas, leituras e preferências inseridas nos oráculos ou ferramentas espirituais",
+  "privacy_policy_s1_b_li2": "Dados de interação gerados durante consultas de IA e recomendações personalizadas",
+  "privacy_policy_s1_c_title": "c) Cookies e Analytics",
+  "privacy_policy_s1_c_p1": "Usamos cookies e ferramentas de análise para entender como os utilizadores interagem com o nosso site e app. Pode gerir as preferências de cookies através das configurações do seu navegador.",
+  "privacy_policy_s2_title": "2. Como Usamos as Suas Informações",
+  "privacy_policy_s2_intro": "As suas informações são usadas para:",
+  "privacy_policy_s2_li1": "Fornecer e personalizar serviços e experiências espirituais",
+  "privacy_policy_s2_li2": "Processar pagamentos e gerir assinaturas",
+  "privacy_policy_s2_li3": "Melhorar o desempenho e o conteúdo da nossa app e site",
+  "privacy_policy_s2_li4": "Comunicar atualizações, promoções e suporte ao utilizador",
+  "privacy_policy_s2_li5": "Garantir o cumprimento dos requisitos legais e de segurança",
+  "privacy_policy_s2_p1": "O Portal Paraíso também pode usar sistemas de IA (o Oráculo) para analisar as entradas do utilizador e fornecer respostas espirituais automatizadas e sugestões de produtos.",
+  "privacy_policy_s3_title": "3. Base Legal para o Processamento",
+  "privacy_policy_s3_intro": "Ao abrigo do Regulamento Geral de Proteção de Dados (RGPD) da UE, as nossas bases legais para o processamento de dados pessoais incluem:",
+  "privacy_policy_s3_li1": "<0>Execução de um contrato:</0> Para entregar serviços ou produtos adquiridos.",
+  "privacy_policy_s3_li2": "<0>Consentimento:</0> Quando opta por receber comunicações de marketing ou cookies não essenciais.",
+  "privacy_policy_s3_li3": "<0>Interesse legítimo:</0> Para manter e melhorar os nossos serviços de forma segura.",
+  "privacy_policy_s3_li4": "<0>Obrigação legal:</0> Para cumprir os requisitos legais portugueses ou da UE.",
+  "privacy_policy_s4_title": "4. Armazenamento e Segurança de Dados",
+  "privacy_policy_s4_p1": "Todos os dados recolhidos são armazenados de forma segura em servidores europeus em conformidade com as normas do RGPD. Implementamos medidas técnicas e organizacionais para proteger contra o acesso não autorizado, alteração, divulgação ou destruição de dados pessoais. Os detalhes de pagamento são processados exclusivamente por terceiros certificados (ex: Stripe, PayPal, App Store, Google Play). O Portal Paraíso não armazena nem tem acesso direto às informações completas de pagamento.",
+  "privacy_policy_s5_title": "5. Retenção de Dados",
+  "privacy_policy_s5_p1": "Retemos os dados pessoais apenas pelo tempo necessário para cumprir os fins descritos nesta política, ou conforme exigido por lei. Os utilizadores podem solicitar a eliminação ou anonimização dos seus dados a qualquer momento (ver secção 7 abaixo).",
+  "privacy_policy_s6_title": "6. IA e Tomada de Decisão Automatizada",
+  "privacy_policy_s6_p1": "O Portal Paraíso usa inteligência artificial (“o Oráculo”) para fornecer leituras e experiências personalizadas. O conteúdo gerado por IA é automatizado e baseado na entrada do utilizador — não toma decisões vinculativas nem oferece aconselhamento profissional. Reconhece que as respostas da IA são apenas para fins espirituais e de entretenimento.",
+  "privacy_policy_s7_title": "7. Direitos do Utilizador (RGPD)",
+  "privacy_policy_s7_intro": "Como utilizador dentro da União Europeia, tem o direito de:",
+  "privacy_policy_s7_li1": "Aceder e obter uma cópia dos seus dados",
+  "privacy_policy_s7_li2": "Solicitar a correção de dados incorretos",
+  "privacy_policy_s7_li3": "Solicitar a eliminação (“direito a ser esquecido”)",
+  "privacy_policy_s7_li4": "Restringir ou opor-se ao processamento",
+  "privacy_policy_s7_li5": "Solicitar a portabilidade dos dados",
+  "privacy_policy_s7_p1": "Para exercer estes direitos, contacte-nos em: <1>portalparaiso25@gmail.com</1>",
+  "privacy_policy_s7_p2": "Responderemos no prazo de 30 dias após a receção do seu pedido.",
+  "privacy_policy_s8_title": "8. Partilha de Dados",
+  "privacy_policy_s8_intro": "Podemos partilhar dados limitados com:",
+  "privacy_policy_s8_li1": "<0>Processadores de pagamento</0> (ex: Stripe, PayPal, App Store, Google Play)",
+  "privacy_policy_s8_li2": "<0>Fornecedores de alojamento e cloud</0> (baseados na UE, conformes com o RGPD)",
+  "privacy_policy_s8_li3": "<0>Ferramentas de análise e marketing</0> (para melhoria do serviço)",
+  "privacy_policy_s8_p1": "Não vendemos, alugamos ou trocamos dados de utilizadores com terceiros.",
+  "privacy_policy_s9_title": "9. Consultas Futuras e Processamento de Dados",
+  "privacy_policy_s9_p1": "Quando as consultas presenciais estiverem disponíveis, as informações pessoais e espirituais partilhadas durante as sessões poderão ser processadas para agendar consultas, fornecer o serviço e melhorar a qualidade. Todos os consultores operarão sob confidencialidade e conformidade com o RGPD. Será solicitado aos utilizadores que aceitem termos específicos antes de participarem em consultas ao vivo.",
+  "privacy_policy_s10_title": "10. Privacidade Infantil",
+  "privacy_policy_s10_p1": "O Portal Paraíso destina-se a utilizadores com 18 anos ou mais. Não recolhemos intencionalmente informações pessoais de menores. Se acredita que um menor nos forneceu dados pessoais, por favor contacte-nos imediatamente.",
+  "privacy_policy_s11_title": "11. Alterações a esta Política de Privacidade",
+  "privacy_policy_s11_p1": "O Portal Paraíso reserva-se o direito de modificar ou atualizar esta Política de Privacidade a qualquer momento. As atualizações serão publicadas no nosso site e na app. O uso continuado dos nossos serviços após as alterações constitui aceitação da política revista.",
+  "privacy_policy_s12_title": "12. Contacto",
+  "privacy_policy_s12_p1": "Para questões ou preocupações relativas a esta Política de Privacidade, por favor contacte: <1>Portalparaiso25@gmail.com.</1>",
+
+
+
+
+
+
+    "terms_header": "Termos e Condições",
+  "terms_last_updated": "Última atualização: Outubro 2025",
+  "terms_intro_1": "Bem-vindo ao Portal Paraíso, uma plataforma espiritual e digital que combina sabedoria antiga com inteligência artificial moderna.",
+  "terms_intro_2": "Estes Termos e Condições (“Termos”) regem o seu uso do nosso website, aplicação móvel e todos os serviços relacionados fornecidos pelo Portal Paraíso.",
+  "terms_intro_3": "Ao aceder ou usar o website ou app Portal Paraíso, concorda em ficar vinculado por estes Termos. Se não concordar, por favor, não use os nossos serviços.",
+  "terms_s1_title": "1. Descrição dos Serviços",
+  "terms_s1_intro": "O Portal Paraíso oferece uma experiência espiritual híbrida através de:",
+  "terms_s1_li1": "<0>Loja Online –</0> Venda de produtos espirituais e esotéricos, como imagens de Orixás e Católicas, velas rituais, incensos e acessórios.",
+  "terms_s1_li2": "<0>Oráculos da App –</0> Ferramentas de adivinhação digital, incluindo Ifá, Tarot Lenormand e Astrologia, parcialmente alimentadas por inteligência artificial (IA).",
+  "terms_s1_li3": "<0>Oráculo IA –</0> Uma entidade espiritual virtual que apresenta os oráculos aos utilizadores e auxilia na navegação.",
+  "terms_s1_li4": "<0>Consultas Online Futuras –</0> Consultas guiadas por humanos poderão ser oferecidas posteriormente através da app.",
+  "terms_s1_p1": "Todos os produtos e leituras digitais são concebidos apenas para fins espirituais e de entretenimento e não devem substituir aconselhamento profissional, médico, psicológico ou financeiro.",
+  "terms_s2_title": "2. Elegibilidade do Utilizador",
+  "terms_s2_p1": "Deve ter pelo menos 18 anos de idade para usar o Portal Paraíso ou fazer compras. Ao usar a app ou o site, declara que todas as informações fornecidas são precisas e que não usará a plataforma para fins ilegais.",
+  "terms_s3_title": "3. Pagamentos e Assinaturas",
+  "terms_s3_intro": "O Portal Paraíso oferece:",
+  "terms_s3_li1": "Compras únicas através da loja online.",
+  "terms_s3_li2": "Consultas pagas e planos de assinatura (como o Portal Paraíso VIP) para acesso alargado a oráculos e funcionalidades.",
+  "terms_s3_p1": "Os pagamentos são processados de forma segura através de plataformas de terceiros (ex: Stripe, PayPal, App Store, Google Play). Ao comprar, concorda com os respetivos termos e políticas de reembolso. Os preços são exibidos em euros (EUR) e, quando aplicável, em reais brasileiros (BRL). O Portal Paraíso reserva-se o direito de modificar preços e planos a qualquer momento, com aviso prévio no website ou na app.",
+  "terms_s4_title": "4. Propriedade Intelectual",
+  "terms_s4_p1": "Todo o conteúdo, gráficos, texto, vídeos, designs e software relacionados com o Portal Paraíso são propriedade intelectual do Portal Paraíso © 2025. Não pode copiar, modificar ou distribuir qualquer material sem permissão por escrito.",
+  "terms_s5_title": "5. Aviso de Fins Espirituais e de Entretenimento",
+  "terms_s5_p1": "As leituras, oráculos e consultas do Portal Paraíso destinam-se a insight espiritual, inspiração e entretenimento. Não substituem aconselhamento médico, psicológico, financeiro ou legal. Os utilizadores são responsáveis pelas suas próprias interpretações e decisões derivadas das leituras ou orientações recebidas na app ou loja.",
+  "terms_s6_title": "6. Uso de Inteligência Artificial",
+  "terms_s6_p1": "O Portal Paraíso utiliza sistemas de IA (incluindo o Oráculo) para fornecer respostas personalizadas e recomendações de produtos. Todo o conteúdo gerado por IA é produzido automaticamente e pode nem sempre ser preciso ou adequado para todos os contextos. Ao usar a plataforma, reconhece que as interações com a IA são apenas para fins informativos e de entretenimento.",
+  "terms_s7_title": "7. Consultas Online Futuras",
+  "terms_s7_p1": "Em atualizações futuras, o Portal Paraíso poderá introduzir consultas guiadas por humanos. Estes serviços serão oferecidos apenas por praticantes espirituais autorizados e selecionados pela empresa. Os utilizadores deverão aceitar termos adicionais antes de aceder a consultas ao vivo, incluindo o processamento de dados para agendamento e comunicação.",
+  "terms_s8_title": "8. Responsabilidades do Utilizador",
+  "terms_s8_intro": "Concorda em:",
+  "terms_s8_li1": "Usar a app e o website de forma ética e respeitosa.",
+  "terms_s8_li2": "Não carregar ou transmitir conteúdo ofensivo ou ilegal.",
+  "terms_s8_li3": "Não interferir com a operação técnica ou tentar aceder aos dados de outros utilizadores.",
+  "terms_s8_p1": "O Portal Paraíso reserva-se o direito de suspender ou encerrar contas que violem estes Termos.",
+  "terms_s9_title": "9. Limitação de Responsabilidade",
+  "terms_s9_p1": "O Portal Paraíso não se responsabiliza por quaisquer danos diretos, indiretos ou consequenciais resultantes do uso ou incapacidade de usar os nossos serviços. Não garantimos a precisão, integridade ou fiabilidade do conteúdo divinatório ou gerado por IA.",
+  "terms_s10_title": "10. Modificações aos Termos",
+  "terms_s10_p1": "O Portal Paraíso reserva-se o direito de modificar ou atualizar estes Termos a qualquer momento. Os utilizadores serão notificados de alterações significativas através da app ou website. O uso continuado da plataforma após tais atualizações constitui aceitação dos Termos revistos.",
+  "terms_s11_title": "11. Lei Aplicável e Jurisdição",
+  "terms_s11_p1": "Estes Termos serão regidos e interpretados de acordo com as leis de Portugal. Quaisquer litígios decorrentes ou relacionados com estes Termos estarão sujeitos à jurisdição exclusiva dos tribunais portugueses.",
+  "terms_s12_title": "Contacto",
+  "terms_s12_p1": "Para quaisquer questões relativas a estes Termos, por favor contacte-nos em: <1>portalparaiso25@gmail.com</1>"
+
+
+
+
+
+
+
+
+
+  
+
 
 
 

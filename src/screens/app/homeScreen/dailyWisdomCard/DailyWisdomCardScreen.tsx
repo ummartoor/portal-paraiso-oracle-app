@@ -1,25 +1,27 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
+  Image,
   StatusBar,
   Dimensions,
   ImageBackground,
-  Image,
+  Platform,
   ScrollView,
   ActivityIndicator,
   Vibration,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import SoundPlayer from 'react-native-sound-player'; // --- 1. SoundPlayer import kiya gaya ---
 import { useTranslation } from 'react-i18next';
-import SoundPlayer from 'react-native-sound-player'; // 1. Import SoundPlayer
 
 import { useDailyWisdomStore } from '../../../../store/useDailyWisdomStore';
-import { useOpenAiStore } from '../../../../store/useOpenAiStore'; // 2. Import OpenAI Store
+import { useOpenAiStore } from '../../../../store/useOpenAiStore'; // --- 2. OpenAI Store import kiya gaya ---
 import SubscriptionPlanModal from '../../../../components/SubscriptionPlanModal';
 import GradientBox from '../../../../components/GradientBox';
 import { Fonts } from '../../../../constants/fonts';
@@ -49,35 +51,47 @@ const DailyWisdomCardScreen: React.FC = () => {
     getDailyWisdomCard,
     markCardAsUsed,
   } = useDailyWisdomStore();
-  const {
-    isLoading: isAudioLoading,
-    generateAndPlaySpeech,
-    preloadSpeech,
-  } = useOpenAiStore();
+  
+  // --- 3. OpenAI store se `preloadSpeech` function liya gaya ---
+  const { preloadSpeech } = useOpenAiStore();
 
   const [isRevealed, setIsRevealed] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
+  
+  // --- 4. Audio preloading ke liye states ---
   const [audioFilePath, setAudioFilePath] = useState<string | null>(null);
+  const [isPreloadingAudio, setIsPreloadingAudio] = useState(false);
 
   useEffect(() => {
     getDailyWisdomCard();
   }, []);
 
-  // --- Preload audio when wisdom card data is available ---
+  // --- 5. Audio Preload logic bilkul Tarot screen jaisa ---
   useEffect(() => {
-    if (wisdomCard) {
+    // Jaise hi wisdomCard ka data aaye, audio preload karein
+    if (wisdomCard && wisdomCard.reading) {
       if (wisdomCard.is_used) {
-        setIsRevealed(true); // If already used, show revealed state immediately
+        setIsRevealed(true); 
       }
-      // Preload the speech in the background
-      preloadSpeech(wisdomCard.reading, wisdomCard.card.card_uid).then(path => {
-        setAudioFilePath(path); // Save the local file path
-      });
-    }
-  }, [wisdomCard]);
+      
+      const preload = async () => {
+        setIsPreloadingAudio(true);
+        // Card ki unique ID ko audio file ke naam ke liye istemal karein
+        const audioPath = await preloadSpeech(wisdomCard.reading, wisdomCard.card.card_uid);
+        if (audioPath) {
+          setAudioFilePath(audioPath);
+        } else {
+          console.log('Failed to preload daily wisdom audio.');
+        }
+        setIsPreloadingAudio(false);
+      };
 
-  // --- Sound Player Setup ---
+      preload();
+    }
+  }, [wisdomCard, preloadSpeech]);
+
+  // --- 6. Sound Player Setup (TTS ki jagah) ---
   useEffect(() => {
     const onFinishedPlaying = SoundPlayer.addEventListener(
       'FinishedPlaying',
@@ -91,20 +105,24 @@ const DailyWisdomCardScreen: React.FC = () => {
     };
   }, []);
 
-  // --- Play/Stop Handler ---
-  const onPressPlayToggle = async () => {
+  // --- 7. Play/Stop Handler (TTS ki jagah SoundPlayer istemal kar raha hai) ---
+  const onPressPlayToggle = () => {
     if (isPlaying) {
       SoundPlayer.stop();
       setIsPlaying(false);
     } else {
       if (audioFilePath) {
-        SoundPlayer.playUrl(`file://${audioFilePath}`);
-        setIsPlaying(true);
-      } else if (wisdomCard?.reading) {
-        // Fallback if preloading isn't finished
-        setIsPlaying(true);
-        const success = await generateAndPlaySpeech(wisdomCard.reading);
-        if (!success) setIsPlaying(false);
+        // Agar audio file preload ho chuki hai, to usay play karein
+        try {
+          SoundPlayer.playUrl(`file://${audioFilePath}`);
+          setIsPlaying(true);
+        } catch (e) {
+          console.error('Could not play preloaded audio', e);
+          Alert.alert(t('alert_error_title'), 'Could not play audio file.');
+        }
+      } else {
+        // Agar audio preload nahi hua (ya fail ho gaya), to user ko batayein
+        console.warn('Audio is not ready yet or failed to preload.');
       }
     }
   };
@@ -134,6 +152,7 @@ const DailyWisdomCardScreen: React.FC = () => {
           ellipsizeMode="tail"
           style={[styles.headerTitle, { color: colors.white }]}
         >
+          {/* --- TRANSLATED --- */}
           {t('daily_wisdom_header')}
         </Text>
       </View>
@@ -183,17 +202,21 @@ const DailyWisdomCardScreen: React.FC = () => {
                 )}
               </View>
 
+              {/* --- 8. Updated Play Button Logic --- */}
               <TouchableOpacity
                 onPress={onPressPlayToggle}
                 style={styles.playButton}
-                disabled={isAudioLoading && !audioFilePath}
+                disabled={isPreloadingAudio || !audioFilePath}
               >
-                {isAudioLoading && !audioFilePath ? (
+                {isPreloadingAudio ? (
                   <ActivityIndicator color="#FFFFFF" />
                 ) : (
                   <Image
                     source={isPlaying ? PauseIcon : PlayIcon}
-                    style={styles.playIcon}
+                    style={[
+                      styles.playIcon,
+                      { tintColor: (isPreloadingAudio || !audioFilePath) ? '#999' : colors.primary }
+                    ]}
                     resizeMode="contain"
                   />
                 )}
@@ -203,49 +226,16 @@ const DailyWisdomCardScreen: React.FC = () => {
                 {wisdomCard?.reading}
               </Text>
 
-              <View style={styles.shareRow}>
-                <GradientBox
-                  colors={[colors.black, colors.bgBox]}
-                  style={styles.smallBtn}
-                >
-                  <Image source={ShareIcon} style={styles.smallIcon} />
-                  <Text style={styles.smallBtnText}>
-                    {t('daily_wisdom_share')}
-                  </Text>
-                </GradientBox>
-                <GradientBox
-                  colors={[colors.black, colors.bgBox]}
-                  style={styles.smallBtn}
-                >
-                  <Image source={SaveIcon} style={styles.smallIcon} />
-                  <Text style={styles.smallBtnText}>
-                    {t('daily_wisdom_save')}
-                  </Text>
-                </GradientBox>
-              </View>
-
-              {/* <TouchableOpacity
-                onPress={() => setShowSubscriptionModal(true)}
-                style={{ marginTop: 30 }}
-              >
-                <View style={styles.buttonBorder}>
-                  <GradientBox
-                    colors={[colors.black, colors.bgBox]}
-                    style={styles.mainButton}
-                  >
-                    <Text style={styles.buttonText}>
-                      {t('daily_wisdom_premium_button')}
-                    </Text>
-                  </GradientBox>
-                </View>
-              </TouchableOpacity> */}
+         
             </View>
           ) : (
             // --- PHASE 1: INITIAL STATE ---
             <View style={styles.contentWrapper}>
+              {/* --- TRANSLATED --- */}
               <Text style={[styles.title, { color: colors.primary }]}>
                 {t('daily_wisdom_guidance_title')}
               </Text>
+              {/* --- TRANSLATED --- */}
               <Text style={[styles.subtitle, { color: colors.white }]}>
                 {t('daily_wisdom_guidance_subtitle')}
               </Text>
@@ -264,6 +254,7 @@ const DailyWisdomCardScreen: React.FC = () => {
                   style={styles.mainButton}
                 >
                   <Text style={styles.buttonText}>
+                    {/* --- TRANSLATED --- */}
                     {t('daily_wisdom_reveal_button')}
                   </Text>
                 </GradientBox>
@@ -365,7 +356,7 @@ const styles = StyleSheet.create({
     minWidth: 120,
     height: 46,
     borderRadius: 23,
-
+    paddingHorizontal: 16, // Added padding for better spacing
     borderWidth: 0.7,
     borderColor: '#D9B699',
     flexDirection: 'row',
@@ -393,14 +384,22 @@ const styles = StyleSheet.create({
   },
   mainButton: {
     height: 52,
-    width:'100%',
+    width: '100%',
     justifyContent: 'center',
     alignItems: 'center',
-    // paddingHorizontal: 20,
-  
   },
   buttonText: { color: '#fff', fontSize: 16, fontFamily: Fonts.aeonikRegular },
 });
+
+
+
+
+
+
+
+
+
+
 
 // import React, { useState, useEffect } from 'react';
 // import {
@@ -419,20 +418,25 @@ const styles = StyleSheet.create({
 // import { SafeAreaView } from 'react-native-safe-area-context';
 // import { useNavigation } from '@react-navigation/native';
 // import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-// import Tts from 'react-native-tts';
-// import SoundPlayer from 'react-native-sound-player';
+// import { useTranslation } from 'react-i18next';
+// import SoundPlayer from 'react-native-sound-player'; // 1. Import SoundPlayer
+
 // import { useDailyWisdomStore } from '../../../../store/useDailyWisdomStore';
-// import { useOpenAiStore } from '../../../../store/useOpenAiStore';
+// import { useOpenAiStore } from '../../../../store/useOpenAiStore'; // 2. Import OpenAI Store
 // import SubscriptionPlanModal from '../../../../components/SubscriptionPlanModal';
 // import GradientBox from '../../../../components/GradientBox';
 // import { Fonts } from '../../../../constants/fonts';
 // import { useThemeStore } from '../../../../store/useThemeStore';
 // import { AppStackParamList } from '../../../../navigation/routeTypes';
-// import { useTranslation } from 'react-i18next';
 
-// const { height: SCREEN_HEIGHT, width: SCREEN_WIDTH } = Dimensions.get('window');
+// // --- Import Icons ---
+// const BackIcon = require('../../../../assets/icons/backIcon.png');
+// const PlayIcon = require('../../../../assets/icons/playIcon.png');
+// const PauseIcon = require('../../../../assets/icons/pauseIcon.png');
+// const ShareIcon = require('../../../../assets/icons/shareIcon.png');
+// const SaveIcon = require('../../../../assets/icons/saveIcon.png');
 
-// // Static image for the back of the card
+// const { width: SCREEN_WIDTH } = Dimensions.get('window');
 // const cardBackImage = require('../../../../assets/images/deskCard.png');
 
 // const DailyWisdomCardScreen: React.FC = () => {
@@ -441,57 +445,80 @@ const styles = StyleSheet.create({
 //     useNavigation<NativeStackNavigationProp<AppStackParamList>>();
 //   const { t } = useTranslation();
 
-//   // --- API State from Zustand Store ---
-//   const { wisdomCard, isLoading, getDailyWisdomCard, markCardAsUsed } =
-//     useDailyWisdomStore();
+//   // --- API State from Zustand Stores ---
+//   const {
+//     wisdomCard,
+//     isLoading: isCardLoading,
+//     getDailyWisdomCard,
+//     markCardAsUsed,
+//   } = useDailyWisdomStore();
+//   const {
+//     isLoading: isAudioLoading,
+//     generateAndPlaySpeech,
+//     preloadSpeech,
+//   } = useOpenAiStore();
 
 //   const [isRevealed, setIsRevealed] = useState(false);
-//   const [isSpeaking, setIsSpeaking] = useState(false);
+//   const [isPlaying, setIsPlaying] = useState(false);
 //   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
+//   const [audioFilePath, setAudioFilePath] = useState<string | null>(null);
 
-//   // --- Fetch Card on Screen Load ---
 //   useEffect(() => {
 //     getDailyWisdomCard();
 //   }, []);
 
-//   // --- TTS (Text-to-Speech) Setup ---
+//   // --- Preload audio when wisdom card data is available ---
 //   useEffect(() => {
-//     Tts.setDefaultLanguage('en-US').catch(() => {});
-//     Tts.setDefaultRate(0.45, true);
-//     const subs = [
-//       Tts.addEventListener('tts-start', () => setIsSpeaking(true)),
-//       Tts.addEventListener('tts-finish', () => setIsSpeaking(false)),
-//       Tts.addEventListener('tts-cancel', () => setIsSpeaking(false)),
-//     ];
+//     if (wisdomCard) {
+//       if (wisdomCard.is_used) {
+//         setIsRevealed(true); // If already used, show revealed state immediately
+//       }
+//       // Preload the speech in the background
+//       preloadSpeech(wisdomCard.reading, wisdomCard.card.card_uid).then(path => {
+//         setAudioFilePath(path); // Save the local file path
+//       });
+//     }
+//   }, [wisdomCard]);
+
+//   // --- Sound Player Setup ---
+//   useEffect(() => {
+//     const onFinishedPlaying = SoundPlayer.addEventListener(
+//       'FinishedPlaying',
+//       () => {
+//         setIsPlaying(false);
+//       },
+//     );
 //     return () => {
-//       subs.forEach(sub => (sub as any)?.remove?.());
-//       Tts.stop();
+//       onFinishedPlaying.remove();
+//       SoundPlayer.stop();
 //     };
 //   }, []);
 
-//   // --- TTS Play/Stop Handler ---
+//   // --- Play/Stop Handler ---
 //   const onPressPlayToggle = async () => {
-//     if (!wisdomCard?.reading) return;
-
-//     if (isSpeaking) {
-//       await Tts.stop();
+//     if (isPlaying) {
+//       SoundPlayer.stop();
+//       setIsPlaying(false);
 //     } else {
-//       await Tts.stop();
-//       Tts.speak(wisdomCard.reading);
+//       if (audioFilePath) {
+//         SoundPlayer.playUrl(`file://${audioFilePath}`);
+//         setIsPlaying(true);
+//       } else if (wisdomCard?.reading) {
+//         // Fallback if preloading isn't finished
+//         setIsPlaying(true);
+//         const success = await generateAndPlaySpeech(wisdomCard.reading);
+//         if (!success) setIsPlaying(false);
+//       }
 //     }
 //   };
 
-//   // --- Reveal Card Handler (Calls mark-used API) ---
 //   const handleRevealCard = () => {
-//     // Only mark as used if the card exists and is not already used
-//            Vibration.vibrate([0, 35, 40, 35]);
+//     Vibration.vibrate([0, 35, 40, 35]);
 //     if (wisdomCard && !wisdomCard.is_used) {
 //       markCardAsUsed();
 //     }
 //     setIsRevealed(true);
 //   };
-
-//   // --- RENDER FUNCTIONS ---
 
 //   const renderHeader = () => (
 //     <View style={styles.header}>
@@ -500,12 +527,12 @@ const styles = StyleSheet.create({
 //         style={styles.backBtn}
 //       >
 //         <Image
-//           source={require('../../../../assets/icons/backIcon.png')}
+//           source={BackIcon}
 //           style={[styles.backIcon, { tintColor: colors.white }]}
 //           resizeMode="contain"
 //         />
 //       </TouchableOpacity>
-//       <View style={styles.headerTitleWrap} pointerEvents="none">
+//       <View style={styles.headerTitleWrap}>
 //         <Text
 //           ellipsizeMode="tail"
 //           style={[styles.headerTitle, { color: colors.white }]}
@@ -516,13 +543,11 @@ const styles = StyleSheet.create({
 //     </View>
 //   );
 
-//   // Full screen loader while fetching the card initially
-//   if (isLoading) {
+//   if (isCardLoading) {
 //     return (
 //       <ImageBackground
 //         source={require('../../../../assets/images/backgroundImage.png')}
 //         style={styles.bgImage}
-//         resizeMode="cover"
 //       >
 //         <SafeAreaView style={[styles.container, styles.centered]}>
 //           <ActivityIndicator size="large" color={colors.primary} />
@@ -546,8 +571,8 @@ const styles = StyleSheet.create({
 //         {renderHeader()}
 
 //         <ScrollView contentContainerStyle={styles.scrollContent}>
-//           {isRevealed || wisdomCard?.is_used ? (
-//             // --- PHASE 2: REVEALED CARD (Dynamic Data) ---
+//           {isRevealed ? (
+//             // --- PHASE 2: REVEALED CARD ---
 //             <View style={styles.contentWrapper}>
 //               <Text style={[styles.title, { color: colors.primary }]}>
 //                 {wisdomCard?.card.card_name}
@@ -564,16 +589,17 @@ const styles = StyleSheet.create({
 //               <TouchableOpacity
 //                 onPress={onPressPlayToggle}
 //                 style={styles.playButton}
+//                 disabled={isAudioLoading && !audioFilePath}
 //               >
-//                 <Image
-//                   source={
-//                     isSpeaking
-//                       ? require('../../../../assets/icons/pauseIcon.png')
-//                       : require('../../../../assets/icons/playIcon.png')
-//                   }
-//                   style={styles.playIcon}
-//                   resizeMode="contain"
-//                 />
+//                 {isAudioLoading && !audioFilePath ? (
+//                   <ActivityIndicator color="#FFFFFF" />
+//                 ) : (
+//                   <Image
+//                     source={isPlaying ? PauseIcon : PlayIcon}
+//                     style={styles.playIcon}
+//                     resizeMode="contain"
+//                   />
+//                 )}
 //               </TouchableOpacity>
 
 //               <Text style={[styles.description, { color: colors.white }]}>
@@ -585,25 +611,23 @@ const styles = StyleSheet.create({
 //                   colors={[colors.black, colors.bgBox]}
 //                   style={styles.smallBtn}
 //                 >
-//                   <Image
-//                     source={require('../../../../assets/icons/shareIcon.png')}
-//                     style={styles.smallIcon}
-//                   />
-//                   <Text style={styles.smallBtnText}>{t('daily_wisdom_share')}</Text>
+//                   <Image source={ShareIcon} style={styles.smallIcon} />
+//                   <Text style={styles.smallBtnText}>
+//                     {t('daily_wisdom_share')}
+//                   </Text>
 //                 </GradientBox>
 //                 <GradientBox
 //                   colors={[colors.black, colors.bgBox]}
 //                   style={styles.smallBtn}
 //                 >
-//                   <Image
-//                     source={require('../../../../assets/icons/saveIcon.png')}
-//                     style={styles.smallIcon}
-//                   />
-//                   <Text style={styles.smallBtnText}>{t('daily_wisdom_save')}</Text>
+//                   <Image source={SaveIcon} style={styles.smallIcon} />
+//                   <Text style={styles.smallBtnText}>
+//                     {t('daily_wisdom_save')}
+//                   </Text>
 //                 </GradientBox>
 //               </View>
 
-//               <TouchableOpacity
+//               {/* <TouchableOpacity
 //                 onPress={() => setShowSubscriptionModal(true)}
 //                 style={{ marginTop: 30 }}
 //               >
@@ -617,10 +641,10 @@ const styles = StyleSheet.create({
 //                     </Text>
 //                   </GradientBox>
 //                 </View>
-//               </TouchableOpacity>
+//               </TouchableOpacity> */}
 //             </View>
 //           ) : (
-//             // --- PHASE 1: INITIAL STATE (Static Image) ---
+//             // --- PHASE 1: INITIAL STATE ---
 //             <View style={styles.contentWrapper}>
 //               <Text style={[styles.title, { color: colors.primary }]}>
 //                 {t('daily_wisdom_guidance_title')}
@@ -633,8 +657,8 @@ const styles = StyleSheet.create({
 //           )}
 //         </ScrollView>
 
-//         {/* --- FOOTER BUTTON (ONLY SHOWS IN INITIAL STATE) --- */}
-//         {!(isRevealed || wisdomCard?.is_used) && (
+//         {/* --- FOOTER BUTTON --- */}
+//         {!isRevealed && (
 //           <View style={styles.footer}>
 //             <TouchableOpacity onPress={handleRevealCard} disabled={!wisdomCard}>
 //               <View style={styles.buttonBorder}>
@@ -642,7 +666,9 @@ const styles = StyleSheet.create({
 //                   colors={[colors.black, colors.bgBox]}
 //                   style={styles.mainButton}
 //                 >
-//                   <Text style={styles.buttonText}>{t('daily_wisdom_reveal_button')}</Text>
+//                   <Text style={styles.buttonText}>
+//                     {t('daily_wisdom_reveal_button')}
+//                   </Text>
 //                 </GradientBox>
 //               </View>
 //             </TouchableOpacity>
@@ -697,7 +723,7 @@ const styles = StyleSheet.create({
 //     alignItems: 'center',
 //     paddingHorizontal: 20,
 //     paddingBottom: 120,
-//   }, // Increased bottom padding
+//   },
 //   contentWrapper: { width: '100%', alignItems: 'center', marginTop: 20 },
 //   title: { fontFamily: Fonts.aeonikRegular, fontSize: 18, marginBottom: 5 },
 //   subtitle: {
@@ -714,14 +740,14 @@ const styles = StyleSheet.create({
 //     resizeMode: 'contain',
 //     borderRadius: 12,
 //   },
-//   cardName: {
-//     fontFamily: Fonts.cormorantSCBold,
-//     fontSize: 24,
-//     textTransform: 'uppercase',
-//     marginBottom: 20,
-//   },
 //   cardFrame: {},
-//   playButton: { marginTop: 20 },
+//   playButton: {
+//     marginVertical: 20,
+//     height: 48,
+//     width: 48,
+//     justifyContent: 'center',
+//     alignItems: 'center',
+//   },
 //   playIcon: { width: 35, height: 35 },
 //   description: {
 //     fontFamily: Fonts.aeonikRegular,
@@ -742,8 +768,8 @@ const styles = StyleSheet.create({
 //     minWidth: 120,
 //     height: 46,
 //     borderRadius: 23,
-//     paddingHorizontal: 16,
-//     borderWidth: 1.1,
+
+//     borderWidth: 0.7,
 //     borderColor: '#D9B699',
 //     flexDirection: 'row',
 //     justifyContent: 'center',
@@ -770,10 +796,11 @@ const styles = StyleSheet.create({
 //   },
 //   mainButton: {
 //     height: 52,
+//     width:'100%',
 //     justifyContent: 'center',
 //     alignItems: 'center',
-//     paddingHorizontal: 20,
-//     borderRadius: 60,
+//     // paddingHorizontal: 20,
+  
 //   },
 //   buttonText: { color: '#fff', fontSize: 16, fontFamily: Fonts.aeonikRegular },
 // });

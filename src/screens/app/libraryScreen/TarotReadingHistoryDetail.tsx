@@ -222,7 +222,7 @@ const TarotReadingHistoryDetail: React.FC = () => {
               </>
             )}
           </View>
-
+{/* 
           <View style={styles.shareRow}>
             <GradientBox colors={[colors.black, colors.bgBox]} style={styles.smallBtn}>
               <Image
@@ -232,10 +232,10 @@ const TarotReadingHistoryDetail: React.FC = () => {
               />
               <Text style={styles.smallBtnText}>{t('library_share')}</Text>
             </GradientBox>
-          </View>
+          </View> */}
 
           <TouchableOpacity
-            style={{ marginTop: 40, alignItems: 'center' }}
+            style={{ marginTop: 40, paddingHorizontal:20}}
             onPress={() => setShowSubscriptionModal(true)}
           >
             <View style={styles.buttonBorder}>
@@ -339,7 +339,7 @@ const styles = StyleSheet.create({
     height: 52,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 20,
+
     borderRadius: 60,
   },
   revealBtnText: { color: '#fff', fontSize: 16 },

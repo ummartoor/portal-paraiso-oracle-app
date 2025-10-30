@@ -69,6 +69,7 @@ interface AuthState {
     email: string,
     password: string,
     deviceToken: string,
+    app_language: string,
   ) => Promise<LoginResult>;
 
   googleLogin: (accessToken: string, deviceToken: string) => Promise<boolean>;
@@ -111,6 +112,7 @@ interface AuthState {
     message: string,
   ) => Promise<boolean>;
 
+   updateAppLanguage: (app_language: string) => Promise<boolean>;
    completeLogin: () => void; 
 }
 
@@ -172,7 +174,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
 
 // --- LOGIN ---
- login: async (email, password, deviceToken): Promise<LoginResult> => { // <-- YAHAN CHANGE KIYA GAYA HAI
+ login: async (email, password, deviceToken,app_language): Promise<LoginResult> => { // <-- YAHAN CHANGE KIYA GAYA HAI
     try {
       const response = await axios.post(
         `${API_BASEURL}/auth/login`,
@@ -180,6 +182,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           email,
           password,
           deviceToken,
+          app_language
         },
         {
           headers: {
@@ -204,8 +207,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
             'Email Not Verified',
             response.data.message || 'Please verify your email first. Check your inbox for the code.' 
           );
-          
-          return 'NOT_VERIFIED'; // <-- YAHAN CHANGE KIYA GAYA HAI
+          console.log(response.data.message)
+          return 'NOT_VERIFIED'; 
         }
 
         await AsyncStorage.setItem('x-auth-token', token);
@@ -213,10 +216,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         await AsyncStorage.setItem('user', JSON.stringify(user));
 
         set({ isLoggedIn: true, token, user });
-        return 'SUCCESS'; // <-- YAHAN CHANGE KIYA GAYA HAI
+        return 'SUCCESS'; 
       } else {
         Alert.alert('Login Failed', 'Token or user not found in response.');
-        return 'ERROR'; // <-- YAHAN CHANGE KIYA GAYA HAI
+        return 'ERROR'; 
       }
     } catch (error: any) {
       if (axios.isAxiosError(error)) {
@@ -232,7 +235,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
                'Email Not Verified',
                'Please verify your email first.'
              );
-             return 'NOT_VERIFIED'; // <-- YAHAN CHANGE KIYA GAYA HAI
+             return 'NOT_VERIFIED'; 
         } 
         
         // Specific check for wrong credentials
@@ -242,19 +245,19 @@ export const useAuthStore = create<AuthState>((set, get) => ({
             lowerCaseMessage.includes('user not found')) 
         {
             Alert.alert('Error', message); // Show the specific error
-            return 'WRONG_CREDENTIALS'; // <-- YAHAN CHANGE KIYA GAYA HAI
+            return 'WRONG_CREDENTIALS'; 
         }
 
         // Other API errors
         Alert.alert('Error', message); 
-        return 'ERROR'; // <-- YAHAN CHANGE KIYA GAYA HAI
+        return 'ERROR'; 
 
       } else {
         // Non-API errors
         console.log('Unexpected Error:', error);
         Alert.alert('Error', 'Something went wrong. Please try again.');
       }
-      return 'ERROR'; // <-- YAHAN CHANGE KIYA GAYA HAI
+      return 'ERROR'; 
     }
   },
   // --- NEW: SEND VERIFICATION OTP ---
@@ -270,7 +273,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
       if (response.data?.success) {
         Alert.alert(
-          'Check Your Email',
+          'Check Your Spam Email',
           response.data?.data?.message || 'Verification OTP sent to your email',
         );
         return true;
@@ -362,7 +365,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
         set({ user: updatedUser, isLoggedIn: true, token });
         await AsyncStorage.setItem('user', JSON.stringify(updatedUser));
-
+console.log('Current User' , response.data)
         if (updatedUser.preferences?.notifications) {
           useGetNotificationsStore.setState({
             notificationSettings: updatedUser.preferences.notifications,
@@ -672,7 +675,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         const updatedUser = response.data.user as User;
         set({ user: updatedUser, isUpdating: false }); // <-- MODIFIED
         await AsyncStorage.setItem('user', JSON.stringify(updatedUser));
-        Alert.alert('Success', 'Profile updated successfully!');
+                Alert.alert(response.data.message);
+                  // console.log(response.data);
+        // Alert.alert('Success', 'Profile updated successfully!');
         return true;
       } else {
         throw new Error(response.data.message || 'Failed to update profile.');
@@ -786,6 +791,46 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         error?.response?.data?.message ||
         'Failed to submit your request. Please try again.';
       Alert.alert('Error', msg);
+      return false;
+    }
+  },
+
+  updateAppLanguage: async (app_language: string) => {
+    set({ isUpdating: true });
+    try {
+      const token = get().token || (await AsyncStorage.getItem('x-auth-token'));
+      if (!token) {
+        console.warn('updateAppLanguage: No auth token found.');
+        set({ isUpdating: false });
+        return false;
+      }
+
+      const response = await axios.put(
+        `${API_BASEURL}/user/app-language`,
+        { app_language: app_language }, 
+        {
+          headers: {
+            'x-auth-token': token,
+            'Content-Type': 'application/json',
+          },
+        },
+      );
+
+      if (response.data && response.data.success) {
+        const updatedUser = response.data.user as User;
+        
+  
+        set({ user: updatedUser, isUpdating: false });
+        await AsyncStorage.setItem('user', JSON.stringify(updatedUser));
+        console.log('App language updated successfully in store.');
+        return true;
+      } else {
+        throw new Error(response.data.message || 'Failed to update app language.');
+      }
+    } catch (error: any) {
+      const msg = error.response?.data?.message || 'An unknown error occurred while updating language.';
+      console.error('updateAppLanguage ERROR:', msg);
+      set({ isUpdating: false });
       return false;
     }
   },

@@ -391,7 +391,7 @@ const BuziosHistoryDetail: React.FC = () => {
             {divineMessage}
           </Text>
 
-          <View style={styles.shareRow}>
+          {/* <View style={styles.shareRow}>
             <GradientBox
               colors={[colors.black, colors.bgBox]}
               style={[styles.smallBtn, { borderColor: colors.primary }]}
@@ -405,7 +405,7 @@ const BuziosHistoryDetail: React.FC = () => {
                 Share
               </Text>
             </GradientBox>
-          </View>
+          </View> */}
         </ScrollView>
       </SafeAreaView>
     </ImageBackground>
