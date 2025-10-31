@@ -366,7 +366,6 @@
 //   },
 // });
 
-
 import React, { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import {
   View,
@@ -381,7 +380,6 @@ import {
   FlatList,
   ActivityIndicator,
   Alert,
-  
   ScrollView,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
@@ -405,20 +403,66 @@ type PlanKey = 'yearly' | 'monthly' | 'weekly';
 interface SubscriptionPlanModalProps {
   isVisible: boolean;
   onClose: () => void;
- 
-  onConfirm: (plan: PlanKey) => void;
+  onConfirm: (plan: PlanKey) => void; // This prop is not used by the new logic but kept for type safety
 }
+
+// --- CardContent Component (No Changes) ---
+const CardContent = ({
+  p,
+  isActive,
+  colors,
+  t,
+}: {
+  p: { title: string; sub: string; strike?: string; perWeek: string; badge?: string };
+  isActive: boolean;
+  colors: any;
+  t: (key: string) => string;
+}) => (
+  <>
+    <View style={{ flex: 1 }}>
+      <View style={styles.cardTitleRow}>
+        <Text style={[styles.cardTitle, { color: isActive ? colors.black : colors.white }]}>
+          {p.title}
+        </Text>
+        {p.badge ? (
+          <View style={[styles.badge, { backgroundColor: colors.primary + '22', borderColor: colors.primary }]}>
+            <Text style={[styles.badgeText, { color: colors.primary }]}>{p.badge}</Text>
+          </View>
+        ) : null}
+      </View>
+      <View style={styles.subRow}>
+        <Text style={[styles.subText, { color: isActive ? colors.black : colors.white, opacity: 0.9 }]}>
+          {p.sub}
+        </Text>
+        {p.strike ? (
+          <Text style={[styles.strike, { color: isActive ? colors.black : colors.white, opacity: 0.6 }]}>
+            {p.strike}
+          </Text>
+        ) : null}
+      </View>
+    </View>
+    <View style={styles.priceCol}>
+      <Text style={[styles.price, { color: isActive ? colors.black : colors.white }]}>
+        {p.perWeek}
+      </Text>
+      <Text style={[styles.perWeek, { color: isActive ? colors.black : colors.white, opacity: 0.7 }]}>
+        {t('subscription_per_week')}
+      </Text>
+    </View>
+  </>
+);
+
 
 const SubscriptionPlanModal: React.FC<SubscriptionPlanModalProps> = ({
   isVisible,
   onClose,
   onConfirm,
 }) => {
-   const { colors } = useThemeStore(state => state.theme);
+  const { colors } = useThemeStore(state => state.theme);
   const { t } = useTranslation();
   const { initPaymentSheet, presentPaymentSheet } = useStripe();
 
-
+  // --- CHANGED: `upgradeSubscription` store se remove kar diya gaya hai ---
   const {
     packages,
     isLoading,
@@ -428,7 +472,6 @@ const SubscriptionPlanModal: React.FC<SubscriptionPlanModalProps> = ({
     currentSubscription,
     fetchCurrentSubscription,
     debugVerifyPayment,
-    upgradeSubscription,
   } = useStripeStore(
     useShallow(state => ({
       packages: state.packages,
@@ -439,17 +482,14 @@ const SubscriptionPlanModal: React.FC<SubscriptionPlanModalProps> = ({
       currentSubscription: state.currentSubscription,
       fetchCurrentSubscription: state.fetchCurrentSubscription,
       debugVerifyPayment: state.debugVerifyPayment,
-      upgradeSubscription: state.upgradeSubscription,
+      // upgradeSubscription has been removed
     })),
   );
 
-  const [activeIndex, setActiveIndex] = useState(0);
   const [processingPackageId, setProcessingPackageId] = useState<string | null>(null);
   const [activatedPackageId, setActivatedPackageId] = useState<string | null>(null);
   const flatListRef = useRef<FlatList>(null);
 
-  // --- Data Fetching (BuySubscriptionScreen se copy kiya gaya) ---
-  // useFocusEffect modal me reliable nahi hai, is liye isay useEffect se badal diya hai
   useEffect(() => {
     if (isVisible) {
       fetchStripePackages();
@@ -467,14 +507,26 @@ const SubscriptionPlanModal: React.FC<SubscriptionPlanModalProps> = ({
     }
   }, [currentSubscription]);
 
-
+  const plans: Record<
+    PlanKey,
+    { title: string; sub: string; strike?: string; perWeek: string; badge?: string }
+  > = {
+    yearly: {
+      title: t('subscription_yearly'),
+      sub: t('subscription_12_mo'),
+      strike: '$39.99',
+      perWeek: '$3.34',
+      badge: t('subscription_save_55'),
+    },
+    monthly: { title: t('subscription_monthly'), sub: t('subscription_1_mo'), strike: '$3.99', perWeek: '$1.34' },
+    weekly: { title: t('subscription_weekly'), sub: t('subscription_4_week'), strike: '$1.99', perWeek: '$1.34' },
+  };
 
   const paidPackages =
     packages
       ?.filter(p => p.type !== 'free')
       .sort((a, b) => a.sort_order - b.sort_order) || [];
   
-  // --- Payment Logic (BuySubscriptionScreen se copy kiya gaya) ---
   const handleChoosePlan = async (item: StripePackage) => {
     const defaultPrice = item.prices.find(p => p.is_default);
     if (!defaultPrice) {
@@ -520,12 +572,11 @@ const SubscriptionPlanModal: React.FC<SubscriptionPlanModalProps> = ({
           Alert.alert('Success!', 'Your subscription has been activated successfully!');
           setActivatedPackageId(item.id);
           fetchCurrentSubscription();
-          onClose(); // --- CHANGED: navigation.goBack() ki jagah onClose() call kiya ---
+          onClose();
         } else {
           Alert.alert(
             'Payment Verification Failed',
             'There was an issue verifying your payment. Please contact support.',
-            // Debug button yahan se hata diya hai, production modal ke liye behtar hai
           );
         }
       }
@@ -537,37 +588,14 @@ const SubscriptionPlanModal: React.FC<SubscriptionPlanModalProps> = ({
     }
   };
 
-  // --- Upgrade Logic (BuySubscriptionScreen se copy kiya gaya) ---
-  const handleUpgradePlan = async (item: StripePackage) => {
-    const defaultPrice = item.prices.find(p => p.is_default);
-    if (!defaultPrice) {
-      Alert.alert('Error', 'This package is not configured correctly.');
-      return;
-    }
-
-    setProcessingPackageId(item.id);
-
-    try {
-      const success = await upgradeSubscription(item.id, defaultPrice.stripe_price_id);
-      if (success) {
-        fetchCurrentSubscription();
-        onClose(); // --- CHANGED: navigation.goBack() ki jagah onClose() call kiya ---
-      }
-    } catch (error: any) {
-      console.error('Upgrade processing failed:', error);
-      Alert.alert('An Unexpected Error Occurred', error.message || 'Please try again later.');
-    } finally {
-      setProcessingPackageId(null);
-    }
-  };
-
-  // --- Card Component (BuySubscriptionScreen se copy kiya gaya) ---
+  // --- CHANGED: `handleUpgradePlan` function remove kar diya gaya hai ---
+  
   const Card = ({ item }: { item: StripePackage }) => {
     const defaultPrice = item.prices.find(p => p.is_default);
     const isProcessing = processingPackageId === item.id;
     const isActivated = activatedPackageId === item.id;
     const hasActiveSubscription = activatedPackageId !== null;
-    const isUpgradeOption = hasActiveSubscription && !isActivated;
+    
     const [isExpanded, setIsExpanded] = useState(false);
     const features = item.feature_list_for_ui;
     const hasMoreFeatures = features.length > 8;
@@ -592,20 +620,21 @@ const SubscriptionPlanModal: React.FC<SubscriptionPlanModalProps> = ({
             )}
           </View>
 
+          {/* --- CHANGED: Button logic update kiya gaya hai --- */}
           {isActivated ? (
             <TouchableOpacity style={[styles.actionBtn, styles.activatedButton]} disabled={true}>
               <Text style={styles.activatedText}>Activated</Text>
             </TouchableOpacity>
-          ) : isUpgradeOption ? (
-            <TouchableOpacity style={styles.actionBtn} onPress={() => handleUpgradePlan(item)} disabled={isProcessing}>
-              <GradientBox colors={[colors.black, colors.bgBox]} style={styles.gradientWrapper}>
-                {isProcessing ? <ActivityIndicator color="#D9B699" /> : <Text style={styles.actionText}>Upgrade</Text>}
-              </GradientBox>
-            </TouchableOpacity>
           ) : (
             <TouchableOpacity style={styles.actionBtn} onPress={() => handleChoosePlan(item)} disabled={isProcessing}>
               <GradientBox colors={[colors.black, colors.bgBox]} style={styles.gradientWrapper}>
-                {isProcessing ? <ActivityIndicator color="#D9B699" /> : <Text style={styles.actionText}>Start Now</Text>}
+                {isProcessing ? (
+                  <ActivityIndicator color="#D9B699" />
+                ) : (
+                  <Text style={styles.actionText}>
+                    {hasActiveSubscription ? 'Change Plan' : 'Start Now'}
+                  </Text>
+                )}
               </GradientBox>
             </TouchableOpacity>
           )}
@@ -616,34 +645,27 @@ const SubscriptionPlanModal: React.FC<SubscriptionPlanModalProps> = ({
   
   return (
     <Modal visible={isVisible} animationType="slide" transparent>
-      {/* --- CHANGED: Layout ab neeche se upar aayega --- */}
       <View style={[StyleSheet.absoluteFill, styles.overlayBackground]}>
         <TouchableOpacity style={{ flex: 1 }} onPress={onClose} />
         <View style={[styles.modal, { backgroundColor: colors.bgBox }]}>
           
-          {/* --- CHANGED: ScrollView add kiya gaya hai --- */}
           <ScrollView showsVerticalScrollIndicator={false}>
-          <View style={styles.headerContainer}>
-            {/* Yeh khali View title ko center me rakhne ke liye zaroori hai */}
-            <View style={styles.headerIconPlaceholder} />
+            <View style={styles.headerContainer}>
+              <View style={styles.headerIconPlaceholder} />
+              <Text style={[styles.heading, { color: colors.primary }]}>
+                {t('subscription_plan_title')}
+              </Text>
+              <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
+                <Image
+                  source={require('../assets/icons/closeIcon.png')}
+                  style={styles.closeIcon}
+                />
+              </TouchableOpacity>
+            </View>
 
-            <Text style={[styles.heading, { color: colors.primary }]}>
-              {t('subscription_plan_title')}
-            </Text>
-
-            {/* Naya Close Button */}
-            <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
-              <Image
-                source={require('../assets/icons/closeIcon.png')} // Yahan close icon ka path dein
-                style={styles.closeIcon}
-              />
-            </TouchableOpacity>
-          </View>
-
-            {/* Hero Section */}
             <ImageBackground
               source={require('../assets/images/heroImage.png')}
-              style={[styles.hero, { width: SCREEN_WIDTH - 40 }]} // Full width minus padding
+              style={[styles.hero, { width: SCREEN_WIDTH - 40 }]}
               resizeMode="cover"
             >
               <View style={styles.heroOverlay}>
@@ -653,7 +675,6 @@ const SubscriptionPlanModal: React.FC<SubscriptionPlanModalProps> = ({
               </View>
             </ImageBackground>
 
-         
             {isLoading ? (
               <ActivityIndicator size="large" color={colors.primary} style={{ height: 400 }} />
             ) : (
@@ -664,15 +685,14 @@ const SubscriptionPlanModal: React.FC<SubscriptionPlanModalProps> = ({
                   keyExtractor={item => item.id}
                   horizontal
                   showsHorizontalScrollIndicator={false}
-                  contentContainerStyle={{ paddingHorizontal: 0 }} 
+                  contentContainerStyle={{ paddingHorizontal: 0 }}
                   ItemSeparatorComponent={() => <View style={{ width: CARD_SPACING }} />}
                 />
               </View>
             )}
             
-  
-     
-
+            {/* Cancel Button ko yahan se hata diya gaya hai (header me close button hai) */}
+            
           </ScrollView>
         </View>
       </View>
@@ -682,43 +702,40 @@ const SubscriptionPlanModal: React.FC<SubscriptionPlanModalProps> = ({
 
 export default SubscriptionPlanModal;
 
-
 const styles = StyleSheet.create({
   overlayBackground: {
     backgroundColor: 'rgba(0, 0, 0, 0.6)',
-    justifyContent: 'flex-end', // --- CHANGED: Modal ko neeche rakha gaya hai
+    justifyContent: 'flex-end',
   },
   overlay: {
     flex: 1,
     justifyContent: 'flex-end',
-    // paddingHorizontal: 20, // Modal content me padding hai
   },
   modal: {
-    maxHeight: SCREEN_HEIGHT * 0.9, 
+    maxHeight: SCREEN_HEIGHT * 0.9,
     paddingTop: 20,
-
     overflow: 'hidden',
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
   },
-    headerContainer: {
+  headerContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 20, 
+    paddingHorizontal: 20,
     marginBottom: 10,
     width: '100%',
   },
   closeBtn: {
-    width: 30, 
+    width: 30,
     height: 30,
     justifyContent: 'center',
     alignItems: 'center',
   },
   closeIcon: {
-    width: 30,
-    height: 30,
-    tintColor: '#FFFFFF', 
+    width: 16, // Icon chota kar diya hai
+    height: 16,
+    tintColor: '#FFFFFF',
   },
   headerIconPlaceholder: {
     width: 30,
@@ -727,16 +744,17 @@ const styles = StyleSheet.create({
   heading: {
     fontFamily: Fonts.cormorantSCBold,
     fontSize: 22,
-    marginBottom: 10,
+    flex: 1, // Take up remaining space
+    textAlign: 'center', // Center the title
   },
-hero: {
-  height: 200,
-  borderRadius: 16,
-  overflow: 'hidden',
-  marginTop: 10,
-  width: SCREEN_WIDTH - 40, 
-  alignSelf: 'center', 
-},
+  hero: {
+    height: 200,
+    borderRadius: 16,
+    overflow: 'hidden',
+    marginTop: 10,
+    width: SCREEN_WIDTH - 40,
+    alignSelf: 'center',
+  },
   heroOverlay: {
     flex: 1,
     alignItems: 'center',
@@ -751,7 +769,7 @@ hero: {
   },
   carouselSection: {
     marginTop: 20,
-    // height: 480, 
+    height: 480,
   },
   cardContainer: {
     paddingVertical: 20,
@@ -856,14 +874,13 @@ hero: {
   priceCol: {},
   price: {},
   perWeek: {},
-  buttonRow: {},
+  buttonRow: {}, // This style is not used anymore
   cancelButton: {
-    // Style for the new Cancel button
     height: 50,
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: 200,
-    width: '90%', // Match content width
+    width: '90%',
     alignSelf: 'center',
     marginTop: 10,
     marginBottom: 20,
@@ -873,7 +890,6 @@ hero: {
     fontSize: 14,
     lineHeight: 24,
   },
-
   gradientTouchable: {},
   gradientFill: {},
   startText: {},

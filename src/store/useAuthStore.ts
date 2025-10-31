@@ -174,7 +174,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
 
 // --- LOGIN ---
- login: async (email, password, deviceToken,app_language): Promise<LoginResult> => { // <-- YAHAN CHANGE KIYA GAYA HAI
+ login: async (email, password, deviceToken,app_language): Promise<LoginResult> => { 
     try {
       const response = await axios.post(
         `${API_BASEURL}/auth/login`,
@@ -305,17 +305,16 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         const user = response.data?.data?.user;
 
         if (token && user) {
-          // Token aur user save karein taake agli screens API call kar sakein
+
           await AsyncStorage.setItem('x-auth-token', token);
           await AsyncStorage.setItem('user', JSON.stringify(user));
 
-          // --- YEH HAI FIX ---
-          // Hum isLoggedIn: false hi rakhenge taake user AuthNavigator mein rahe
+ 
           set({ isLoggedIn: false, token, user }); 
           // --- YEH HAI FIX ---
 
           Alert.alert('Success', 'Email verified successfully!');
-          return true; // Ab navigation.navigate('GenderScreen') kaam karega
+          return true; 
         } else {
           throw new Error('Token or user not found in verification response.');
         }

@@ -13,13 +13,16 @@ import {
   ActivityIndicator,
   StatusBar,
 } from 'react-native';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { useChatStore, ChatMessage } from '../../../store/useChatStore';
 import { Fonts } from '../../../constants/fonts';
 import { useThemeStore } from '../../../store/useThemeStore';
 import { useAuthStore } from '../../../store/useAuthStore';
-import TypingIndicator from '../../../components/TypingIndicator'; 
+import TypingIndicator from '../../../components/TypingIndicator';
 import { useTranslation } from 'react-i18next';
 // Assets
 const sendIcon = require('../../../assets/icons/sendIcon.png');
@@ -35,14 +38,12 @@ const ChatDetailScreen: React.FC<ChatDetailScreenProps> = ({ route }) => {
   const { sessionId } = route.params || {};
   const { colors } = useThemeStore(s => s.theme);
   const navigation = useNavigation<any>();
-    const { t } = useTranslation(); 
+  const { t } = useTranslation();
   const [inputText, setInputText] = useState('');
   const scrollViewRef = useRef<ScrollView>(null);
   const insets = useSafeAreaInsets(); // Hook to get safe area dimensions
 
-
-
-    // --- 2. Get user data from Auth Store ---
+  // --- 2. Get user data from Auth Store ---
   const { user } = useAuthStore();
   const {
     activeSession,
@@ -72,7 +73,7 @@ const ChatDetailScreen: React.FC<ChatDetailScreenProps> = ({ route }) => {
       );
     }
   }, [displayMessages]);
-console.log(user)
+  console.log(user);
   const handleSend = () => {
     if (inputText.trim() && !isSendingMessage) {
       const trimmedText = inputText.trim();
@@ -91,7 +92,7 @@ console.log(user)
         session_id: activeSession?.session?.session_id || null,
         preferences: {
           response_style: 'mystical',
-   focus_areas: [
+          focus_areas: [
             'love',
             'career',
             'health',
@@ -99,7 +100,7 @@ console.log(user)
             'spirituality',
             'relationships',
             'personal_growth',
-            'future_planning'
+            'future_planning',
           ],
         },
       };
@@ -120,7 +121,9 @@ console.log(user)
         ]}
       >
         {!isUserMessage && (
-          <Image source={aiAvatar} style={styles.messageAvatar} />
+      <View style={styles.aiAvatar}>
+            <Image source={aiAvatar} style={styles.avatarImage} />
+          </View>
         )}
         <View style={styles.messageContent}>
           <View
@@ -133,14 +136,16 @@ console.log(user)
           </View>
         </View>
         {isUserMessage && (
-           <Image
-            source={
-              user?.profile_image?.url
-                ? { uri: user.profile_image.url }
-                : userAvatar
-            }
-            style={styles.messageAvatar}
-          />
+        <View style={styles.messageAvatar}>
+            <Image
+              source={
+                user?.profile_image?.url
+                  ? { uri: user.profile_image.url }
+                  : userAvatar
+              }
+              style={styles.avatarImage}
+            />
+          </View>
         )}
       </View>
     );
@@ -178,7 +183,7 @@ console.log(user)
               ellipsizeMode="tail"
               style={[styles.headerTitle, { color: colors.white }]}
             >
-             {activeSession?.session?.title || t('chat_screen_title')}
+              {activeSession?.session?.title || t('chat_screen_title')}
             </Text>
           </View>
         </View>
@@ -186,7 +191,6 @@ console.log(user)
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           style={{ flex: 1 }}
-     
         >
           {/* Messages Area */}
           <ScrollView
@@ -202,28 +206,32 @@ console.log(user)
             ) : displayMessages.length > 0 ? (
               <>
                 {displayMessages.map(renderMessage)}
-             {isSendingMessage && (
-  <View style={styles.aiMessageRow}>
-    <Image source={aiAvatar} style={styles.messageAvatar} />
-    <View style={styles.typingIndicator}>
-      <TypingIndicator />
-    </View>
-  </View>
-)}
+                {isSendingMessage && (
+                  <View style={styles.aiMessageRow}>
+                      <View style={styles.aiAvatar}>
+            <Image source={aiAvatar} style={styles.avatarImage} />
+          </View>
+                    <View style={styles.typingIndicator}>
+                      <TypingIndicator />
+                    </View>
+                  </View>
+                )}
               </>
             ) : (
               <View style={styles.centeredContent}>
-                <Image source={aiAvatar} style={styles.mainAvatar} />
-                 <Text style={styles.emptyTitle}>{t('chat_detail_how_can_i_help')}</Text>
+                <Image source={aiAvatar} style={styles.aiAvatar} />
+                <Text style={styles.emptyTitle}>
+                  {t('chat_detail_how_can_i_help')}
+                </Text>
               </View>
             )}
           </ScrollView>
-          
+
           {/* Input Area */}
           <View style={styles.inputContainer}>
             <TextInput
               style={styles.textInput}
-      placeholder={t('chat_detail_placeholder')}
+              placeholder={t('chat_detail_placeholder')}
               placeholderTextColor="#8A8A8D"
               value={inputText}
               onChangeText={setInputText}
@@ -279,11 +287,11 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.cormorantSCBold,
   },
   // --- FIX for Keyboard Gap ---
-  // The ScrollView now takes up all available space, and the input is a sibling.
+
   messagesContainer: {
-    flexGrow: 1, // Important: Allows the content to grow and push the container
-    justifyContent: 'flex-end', // Pushes messages to the bottom initially
-    paddingHorizontal: 10,
+    flexGrow: 1,
+    justifyContent: 'flex-end', 
+    // paddingHorizontal: 10,
   },
   messageRow: {
     flexDirection: 'row',
@@ -292,11 +300,18 @@ const styles = StyleSheet.create({
   },
   aiMessageRow: { justifyContent: 'flex-start' },
   userMessageRow: { justifyContent: 'flex-end' },
-  messageAvatar: {
+messageAvatar: {
     width: 32,
     height: 32,
-    borderRadius: 16,
+    borderRadius: 16, 
     marginHorizontal: 8,
+    overflow: 'hidden', 
+  },
+  aiAvatar: { width: 45, height: 45, },
+  avatarImage: {
+    width: '100%',
+    height: '100%',
+    resizeMode: 'cover', 
   },
   messageContent: { maxWidth: '75%' },
   messageBubble: {
@@ -320,10 +335,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 15,
     paddingVertical: Platform.OS === 'ios' ? 12 : 5,
     marginHorizontal: 15,
-    marginTop: 10, 
-    borderWidth:1,
-    borderColor:'#D9B699',
-    marginBottom:20
+    marginTop: 10,
+    borderWidth: 1,
+    borderColor: '#D9B699',
+    marginBottom: 12,
   },
   textInput: {
     flex: 1,
@@ -333,13 +348,13 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.aeonikRegular,
   },
   sendIcon: { width: 32, height: 32 },
-typingIndicator: {
-  backgroundColor: '#2F2B3B',
-  borderRadius: 20,
-  paddingVertical: 10,
-  paddingHorizontal: 12,
-  alignSelf: 'flex-start',
-  borderBottomLeftRadius: 4, // bubble jaisa look dene ke liye
-},
+  typingIndicator: {
+    marginLeft:6,
+    backgroundColor: '#2F2B3B',
+    borderRadius: 20,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    alignSelf: 'flex-start',
+    borderBottomLeftRadius: 4, 
+  },
 });
-

@@ -125,8 +125,8 @@ const DeleteAccountScreen = () => {
                                 { backgroundColor: colors.bgBox },
                                 // --- FIX: Apply border style only to the last item ---
                                 isLastItem && {
-                                    borderColor: colors.primary,
-                                    borderWidth: 1.5,
+                                    // borderColor: colors.primary,
+                                    // borderWidth: 1.5,
                                 },
                             ]}>
                             {/* --- FIX: Removed conditional text styling --- */}

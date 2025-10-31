@@ -205,7 +205,7 @@ const ProfileScreen: React.FC = () => {
           </View>
 
           {/* --- CHANGED: Animated menu position updated --- */}
-          <Animated.View style={[styles.dropdownMenu, { backgroundColor: colors.bgBox, borderColor: 'rgba(255, 255, 255, 0.94)', top: insets.top + 1 }, dropdownAnimatedStyle]}>
+          <Animated.View style={[styles.dropdownMenu, { backgroundColor: colors.bgBox, borderColor: 'rgba(255, 255, 255, 0.94)', top: insets.top + 20 }, dropdownAnimatedStyle]}>
             {LANGUAGES.map(lang => (
               <TouchableOpacity
                 key={lang.key}
