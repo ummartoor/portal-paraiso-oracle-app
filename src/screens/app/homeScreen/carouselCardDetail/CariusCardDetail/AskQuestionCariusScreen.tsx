@@ -121,15 +121,13 @@ const AskQuestionCariusScreen = () => {
                   {touched.question && errors.question && (
                     <Text style={styles.errorText}>{errors.question}</Text>
                   )}
-                </ScrollView>
 
-                {/* --- FIX: Footer is now outside the ScrollView but inside Formik --- */}
-                <View style={styles.footer}>
+                    <View style={styles.footer}>
                   <TouchableOpacity
                     activeOpacity={0.8}
                     onPress={() => handleSubmit()}
                     style={{ width: '100%' }}
-                    // --- 2. THE FIX IS HERE: Button is disabled if form is not valid OR if it hasn't been touched ---
+                 
                     disabled={!isValid || !dirty} 
                   >
                     <GradientBox
@@ -149,6 +147,10 @@ const AskQuestionCariusScreen = () => {
                     </GradientBox>
                   </TouchableOpacity>
                 </View>
+                </ScrollView>
+
+          
+              
               </>
             )}
           </Formik>
@@ -215,7 +217,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
   },
   inputField: {
-  height: 70,
+  height: 120,
     borderRadius: 20,
     backgroundColor: 'rgba(74, 63, 80, 0.5)',
     paddingHorizontal: 20,
@@ -237,8 +239,8 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   footer: {
-    paddingHorizontal: 20, 
-    paddingBottom: 20,
+
+marginTop:30,
     paddingTop: 10,
     backgroundColor: 'transparent', 
   },

@@ -104,9 +104,8 @@ const handleNext = () => {
                 multiline={true}
               />
             </View>
-          </ScrollView>
 
-          {/* Footer with button */}
+                    {/* Footer with button */}
      <View style={styles.footer}>
             <TouchableOpacity
               activeOpacity={0.8}
@@ -132,6 +131,9 @@ const handleNext = () => {
               </GradientBox>
             </TouchableOpacity>
           </View>
+          </ScrollView>
+
+  
         </KeyboardAvoidingView>
       </SafeAreaView>
     </ImageBackground>
@@ -178,7 +180,7 @@ const styles = StyleSheet.create({
  
     justifyContent: 'center', // Center vertically
     alignItems: 'center',
-    paddingBottom: 100, // space for button
+
   },
   heading: {
     fontSize: 32,
@@ -195,7 +197,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
   },
   inputField: {
-   height: 70,
+   height: 120,
     borderRadius: 20,
     backgroundColor: 'rgba(74, 63, 80, 0.5)',
     paddingHorizontal: 20,
@@ -209,7 +211,7 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   footer: {
-    paddingBottom: 20,
+  marginTop:30,
     paddingTop: 10,
   },
   nextBtn: {
