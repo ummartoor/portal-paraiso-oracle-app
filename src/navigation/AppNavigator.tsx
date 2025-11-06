@@ -36,6 +36,9 @@ import NotificationScreen from '../screens/app/homeScreen/notification/Notificat
 import RitualTipHistoryDetail from '../screens/app/libraryScreen/RitualTipHistoryDetail';
 import PurchaseHistoryScreen from '../screens/app/ProfileScreen/profile/subscription/PurchaseHistoryScreen';
 import SubscriptionDetailsScreen from '../screens/app/ProfileScreen/profile/subscription/SubscriptionDetailsScreen';
+import TheSunScreen from '../screens/app/homeScreen/HightlightsCarouselCardsDetail/TheSunScreen';
+import TheHoroscopeScreen from '../screens/app/homeScreen/HightlightsCarouselCardsDetail/TheHoroscopeScreen';
+import TheRitualScreen from '../screens/app/homeScreen/HightlightsCarouselCardsDetail/TheRitualScreen';
 
 
 
@@ -51,7 +54,13 @@ const AppNavigator = () => {
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name='MainTabs' component={MainTabs} />
       {/* <Stack.Screen name='CarouselCardDetail' component={CarouselCardDetailScreen} /> */}
+
+      
+
          <Stack.Screen name='Notification' component={NotificationScreen} />
+         <Stack.Screen name='TheSunScreen' component={TheSunScreen} />
+                  <Stack.Screen name='TheHoroscopeScreen' component={TheHoroscopeScreen} />
+                  <Stack.Screen name='TheRitualScreen' component={TheRitualScreen} />
    <Stack.Screen name='AskQuestionTarotScreen' component={AskQuestionTarotScreen} />
       <Stack.Screen name='TarotCardDetail' component={TarotCardDetailScreen} />
          <Stack.Screen name='AskQuestionAstrologyScreen' component={AskQuestionAstrologyScreen} />

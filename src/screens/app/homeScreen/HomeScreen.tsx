@@ -22,8 +22,9 @@ import CarouselCard, { CardItem } from './CarouselCards';
 import { useAuthStore } from '../../../store/useAuthStore';
 import { useTranslation } from 'react-i18next';
 import { useGetNotificationsStore } from '../../../store/useGetNotificationsStore'; 
-
+import GradientBox from '../../../components/GradientBox';
 import { useInterstitialAd } from '../../../hooks/useInterstitialAd';
+import HightlightsCarouselCards from './HightlightsCarouselCards';
 const { height: SCREEN_HEIGHT, width: SCREEN_WIDTH } = Dimensions.get('screen');
 
 type CardBoxProps = {
@@ -174,10 +175,50 @@ const HomeScreen: React.FC = () => {
             </Text>
           </View>
 
-          {/* Carousel */}
+  {/* Hightlight Carousel */}
           <View style={{ marginTop: 22 }}>
+            <HightlightsCarouselCards 
+            onPressCard={onPressCarouselCard}
+             />
+          </View>
+          {/* Carousel */}
+          <View style={{ marginTop: 30 }}>
             <CarouselCard onPressCard={onPressCarouselCard} />
           </View>
+
+
+
+<View style={styles.aiChatContainer}>
+            <Text style={[styles.aiChatTitle, { color: colors.white }]}>
+         {t('home_ai_chat_title')}
+            </Text>
+            <Text style={[styles.aiChatSubtitle, { color: colors.white }]}>
+       {t('home_ai_chat_subtitle')}
+            </Text>
+            
+            <TouchableOpacity
+              activeOpacity={0.8}
+         
+              onPress={() => navigation.navigate('ChatDetail')} 
+              style={styles.aiChatButtonWrapper}
+            >
+              <GradientBox
+         
+                colors={[colors.bgBox, colors.black]} 
+                style={[styles.aiChatGradient, { borderColor: colors.primary }]}
+              >
+                <Image
+             
+                  source={require('../../../assets/images/chatAvatar.png')} 
+                  style={styles.aiChatButtonIcon}
+                />
+                <Text style={[styles.aiChatButtonText, { color: colors.white }]}>
+                  {t('home_ai_chat_button')}
+                </Text>
+              </GradientBox>
+            </TouchableOpacity>
+          </View>
+
 
           {/* Boxes without map */}
           <View style={styles.cardBoxSection}>
@@ -305,6 +346,52 @@ const styles = StyleSheet.create({
   bottomAvatarImage: {
     height: 75,
     width: 75,
+  },
+
+  aiChatContainer: {
+    marginTop: 30,
+    paddingHorizontal: 20,
+   
+  },
+  aiChatTitle: {
+    fontFamily: Fonts.cormorantSCBold,
+    fontSize: 22,
+    letterSpacing: 0.5,
+
+  
+  },
+  aiChatSubtitle: {
+    fontFamily: Fonts.aeonikRegular,
+    fontSize: 14,
+    opacity: 0.85,
+    marginTop: 4,
+    // textAlign: 'center',
+    marginBottom: 20, // Button se pehle space
+  },
+  aiChatButtonWrapper: {
+    width: '100%',
+    alignSelf: 'center',
+  },
+  aiChatGradient: {
+    height: 60,
+    borderRadius: 30, 
+    borderWidth: 1, 
+    
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+ 
+  },
+  aiChatButtonIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 16, 
+    marginRight: 12, 
+  },
+  aiChatButtonText: {
+    fontFamily: Fonts.aeonikRegular,
+    fontSize: 16,
+    letterSpacing: 0.5,
   },
    notificationBadge: {
     position: 'absolute',

@@ -172,7 +172,12 @@
   "home_subtitle": "Choose your path to divine guidance",
   "home_daily_wisdom_card": "Daily Wisdom Card",
   "home_ritual_tip": "Ritual Tip",
+"home_ai_chat_title": "TALK WITH DIVINE AI",
+  "home_ai_chat_subtitle": "Seek guidance, clarity, or comfort — your cosmic guide is listening.",
+  "home_ai_chat_button": "Begin Conversation",
 
+  "carousel_header_title": "EXPLORE THE REALMS",
+  "carousel_header_subtitle": "Choose your spiritual path today.",
   "carousel_tarot_title": "Tarot Reading",
   "carousel_tarot_subtitle": "Unveil your path through ancient cards of intuition.",
   "carousel_buzious_title": "Buzious",
@@ -181,6 +186,14 @@
   "carousel_astrology_subtitle": "Decode the stars and your cosmic blueprint.",
   "carousel_no_image": "No image",
 
+
+  "highlights_main_title": "Today's Highlights",
+  "highlights_sun_title": "The Sun",
+  "highlights_sun_subtitle": "Joy and growth surround you",
+  "highlights_horoscope_title": "Horoscope",
+  "highlights_horoscope_subtitle": "Balance brings clarity to your choices",
+  "highlights_ritual_title": "Ritual",
+  "highlights_ritual_subtitle": "Light a candle to invite truth and warmth",
 
 "ask_question_header": "Ask a Question",
   "ask_question_heading": "What Guidance Do You Seek?",

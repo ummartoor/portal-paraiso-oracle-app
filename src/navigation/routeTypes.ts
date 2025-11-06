@@ -6,6 +6,11 @@ export type AppStackParamList = {
   Profile: undefined;
   Notification :undefined;
   AskQuestionTarotScreen:undefined;
+ 
+  TheSunScreen:undefined;
+  TheHoroscopeScreen:undefined;
+  TheRitualScreen:undefined;
+
   TarotCardDetail: { userQuestion: string };
     AskQuestionAstrologyScreen:undefined;
     AstrologyCardDetail:{userQuestion:string};

@@ -176,6 +176,12 @@
   "home_daily_wisdom_card": "Carta de Sabedoria Diária",
   "home_ritual_tip": "Dica de Ritual",
 
+"home_ai_chat_title": "FALE COM A IA DIVINA",
+  "home_ai_chat_subtitle": "Busque orientação, clareza ou conforto — seu guia cósmico está ouvindo.",
+  "home_ai_chat_button": "Iniciar Conversa",
+
+  "carousel_header_title": "EXPLORE OS REINOS",
+  "carousel_header_subtitle": "Escolha seu caminho espiritual hoje.",
   "carousel_tarot_title": "Leitura de Tarô",
   "carousel_tarot_subtitle": "Desvende seu caminho através de cartas antigas de intuição.",
   "carousel_buzious_title": "Búzios",
@@ -184,6 +190,15 @@
   "carousel_astrology_subtitle": "Decodifique as estrelas e seu projeto cósmico.",
   "carousel_no_image": "Sem imagem",
 
+
+
+  "highlights_main_title": "Destaques de Hoje",
+  "highlights_sun_title": "O Sol",
+  "highlights_sun_subtitle": "Alegria e crescimento te rodeiam",
+  "highlights_horoscope_title": "Horóscopo",
+  "highlights_horoscope_subtitle": "Equilíbrio traz clareza às suas escolhas",
+  "highlights_ritual_title": "Ritual",
+  "highlights_ritual_subtitle": "Acenda uma vela para convidar a verdade e o calor",
 
 
 

@@ -17,27 +17,28 @@ interface PlaceOfBirthModalProps {
   isVisible: boolean;
   onClose: () => void;
   onConfirm: (place: string) => Promise<boolean>;
-   defaultValue?: string;
+  defaultValue?: string;
 }
 
 const PlaceOfBirthModal: React.FC<PlaceOfBirthModalProps> = ({
   isVisible,
   onClose,
   onConfirm,
-    defaultValue = '',
+  defaultValue = '',
 }) => {
-  const colors = useThemeStore((state) => state.theme.colors);
-    const { t } = useTranslation();
- const [place, setPlace] = useState(defaultValue);
+  const colors = useThemeStore(state => state.theme.colors);
+  const { t } = useTranslation();
+  const [place, setPlace] = useState(defaultValue);
   const [isLoading, setIsLoading] = useState(false);
-useEffect(() => {
+  useEffect(() => {
     if (isVisible) {
       setPlace(defaultValue || '');
     }
   }, [isVisible, defaultValue]);
 
   const handleUpdate = async () => {
-      Vibration.vibrate([0, 35, 40, 35]); 
+    // Vibration.vibrate([0, 35, 40, 35]);
+    Vibration.vibrate([0, 15, 30, 15]);
     if (place.trim().length > 0 && !isLoading) {
       setIsLoading(true);
       await onConfirm(place.trim());
@@ -51,13 +52,13 @@ useEffect(() => {
         <View style={styles(colors).overlay}>
           <View style={styles(colors).modal}>
             {/* Heading */}
-          <Text style={styles(colors).heading}>{t('pob_modal_header')}</Text>
+            <Text style={styles(colors).heading}>{t('pob_modal_header')}</Text>
 
             {/* Input */}
             <View style={styles(colors).fieldContainer}>
               <Text style={styles(colors).label}>{t('pob_modal_label')}</Text>
               <TextInput
-      placeholder={t('pob_modal_placeholder')}
+                placeholder={t('pob_modal_placeholder')}
                 placeholderTextColor="rgba(255,255,255,0.6)"
                 value={place}
                 onChangeText={setPlace}
@@ -72,14 +73,17 @@ useEffect(() => {
             <View style={styles(colors).buttonRow}>
               {/* Cancel */}
               <TouchableOpacity
-               onPress={() => {
-                              Vibration.vibrate([0, 35, 40, 35]); 
-                              onClose();                          
-                            }}
+                onPress={() => {
+                  // Vibration.vibrate([0, 35, 40, 35]);
+                  Vibration.vibrate([0, 15, 30, 15]);
+                  onClose();
+                }}
                 activeOpacity={0.85}
                 style={styles(colors).cancelButton}
               >
-               <Text style={styles(colors).cancelText}>{t('cancel_button')}</Text>
+                <Text style={styles(colors).cancelText}>
+                  {t('cancel_button')}
+                </Text>
               </TouchableOpacity>
 
               {/* Save */}
@@ -92,7 +96,9 @@ useEffect(() => {
                   colors={[colors.black, colors.bgBox]}
                   style={styles(colors).gradientFill}
                 >
-                    <Text style={styles(colors).updateText}>{t('update_button')}</Text>
+                  <Text style={styles(colors).updateText}>
+                    {t('update_button')}
+                  </Text>
                 </GradientBox>
               </TouchableOpacity>
             </View>
@@ -175,8 +181,8 @@ const styles = (colors: any) =>
       flexBasis: 0,
       height: 50,
       borderRadius: 200,
-           borderWidth:1.7,
-      borderColor:'#D9B699',
+      borderWidth: 1.7,
+      borderColor: '#D9B699',
       overflow: 'hidden',
     },
     gradientFill: {

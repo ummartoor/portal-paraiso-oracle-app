@@ -195,7 +195,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
   },
   inputField: {
-    height: 150,
+   height: 70,
     borderRadius: 20,
     backgroundColor: 'rgba(74, 63, 80, 0.5)',
     paddingHorizontal: 20,

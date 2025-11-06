@@ -17,13 +17,13 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 
-import { Fonts } from '../../../../../constants/fonts';
-import { useThemeStore } from '../../../../../store/useThemeStore';
-import GradientBox from '../../../../../components/GradientBox';
+import { Fonts } from '../../../../constants/fonts';
+import { useThemeStore } from '../../../../store/useThemeStore';
+import GradientBox from '../../../../components/GradientBox';
 
 const { height: SCREEN_HEIGHT, width: SCREEN_WIDTH } = Dimensions.get('screen');
 
-const TermOfServiceScreen = () => {
+const TheSunScreen = () => {
   const colors = useThemeStore(s => s.theme.colors);
   const navigation = useNavigation<any>();
 
@@ -31,7 +31,7 @@ const TermOfServiceScreen = () => {
 
   return (
     <ImageBackground
-      source={require('../../../../../assets/images/backgroundImage.png')}
+      source={require('../../../../assets/images/backgroundImage.png')}
       style={[styles.bgImage, { height: SCREEN_HEIGHT, width: SCREEN_WIDTH }]}
       resizeMode="cover"
     >
@@ -42,7 +42,7 @@ const TermOfServiceScreen = () => {
         <View style={styles.header}>
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
             <Image
-              source={require('../../../../../assets/icons/backIcon.png')}
+              source={require('../../../../assets/icons/backIcon.png')}
               style={styles.backIcon}
               resizeMode="contain"
             />
@@ -50,7 +50,7 @@ const TermOfServiceScreen = () => {
 
           <View style={styles.headerTitleWrap} pointerEvents="none">
             <Text numberOfLines={1} ellipsizeMode="tail" style={[styles.headerTitle, { color: colors.white }]}>
-           Terms of Service
+      The Sun
             </Text>
           </View>
         </View>
@@ -63,7 +63,7 @@ const TermOfServiceScreen = () => {
   );
 };
 
-export default TermOfServiceScreen;
+export default TheSunScreen;
 
 /* ----------------- STYLES ----------------- */
 const styles = StyleSheet.create({
