@@ -9,6 +9,11 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 // =================================================================
 
 // --- Interfaces for Stripe Packages ---
+export interface LocalizedString {
+  en: string;
+  pt?: string;
+  [key: string]: string | undefined; // allow dynamic keys
+}
 export interface StripePrice {
   stripe_price_id: string;
   type: string;
@@ -216,7 +221,9 @@ export const useStripeStore = create<StripeState>((set, get) => ({
         'An unknown error occurred.';
       set({ error: errorMessage, isLoading: false });
       Alert.alert('Error', errorMessage);
+            console.log('Error', errorMessage);
     }
+    
   },
 
   createPaymentIntent: async (

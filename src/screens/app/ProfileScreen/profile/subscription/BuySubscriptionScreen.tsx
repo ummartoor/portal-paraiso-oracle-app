@@ -19,7 +19,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import { useShallow } from 'zustand/react/shallow';
-
+import { useAuthStore } from '../../../../../store/useAuthStore';
 import { Fonts } from '../../../../../constants/fonts';
 import { useThemeStore } from '../../../../../store/useThemeStore';
 import {
@@ -36,10 +36,9 @@ const CARD_SPACING = 15;
 const BuySubscriptionScreen = () => {
   const { colors } = useThemeStore(s => s.theme);
   const navigation = useNavigation<any>();
-  const { t } = useTranslation();
+  const { t ,i18n} = useTranslation();
   const { initPaymentSheet, presentPaymentSheet } = useStripe();
-
-  // --- CHANGED: `upgradeSubscription` ko store se remove kar diya gaya hai ---
+const { user } = useAuthStore();
   const {
     packages,
     isLoading,
@@ -214,7 +213,12 @@ const BuySubscriptionScreen = () => {
       <View style={[styles.cardContainer, { width: CARD_WIDTH }]}>
         <View style={[styles.card, { backgroundColor: colors.bgBox }]}>
           <>
-            <Text style={styles.cardTitle}>{item.display_name}</Text>
+         
+            <Text style={styles.cardTitle}>
+  {/* {item.display_name?.[user?.app_language ?? 'en'] ?? item.display_name?.en} */}
+     <Text style={styles.cardTitle}>{item.display_name}</Text>
+</Text>
+            
             <View style={styles.priceRow}>
               <Text style={styles.priceAmount}>
                 {defaultPrice?.amount.toFixed(2)}
