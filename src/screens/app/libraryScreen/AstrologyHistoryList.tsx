@@ -18,11 +18,12 @@ import {
   useAstrologyStore,
   HoroscopeHistoryItem, 
 } from '../../../store/useAstologyStore'; 
+import { useTranslation } from 'react-i18next';
 
 const AstrologyHistoryList: React.FC = () => {
   const navigation = useNavigation<any>();
   const { colors } = useThemeStore(s => s.theme);
-
+  const { t } = useTranslation();
   // Getting state and actions from useAstrologyStore
   const { horoscopeHistory, isHistoryLoading, getHoroscopeHistory } = useAstrologyStore(
     useShallow((state) => ({
@@ -96,7 +97,7 @@ const AstrologyHistoryList: React.FC = () => {
   if (!isHistoryLoading && (!horoscopeHistory || horoscopeHistory.length === 0)) {
     return (
       <View style={styles.emptyContainer}>
-        <Text style={styles.emptyText}>You have no saved horoscopes yet.</Text>
+        <Text style={styles.emptyText}>{t('EMPTY_TEXT')}</Text>
       </View>
     );
   }

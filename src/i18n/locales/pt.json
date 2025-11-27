@@ -222,7 +222,9 @@
   "library_subtitle": "Todos os seus rituais, leituras\ne sabedorias favoritas.",
   "library_tab_tarot": "Tarô",
   "library_tab_astrology": "Astrologia",
+    "EMPTY_HOROSCOPE_ HISTORY_TEXT":"Você ainda não tem horóscopos salvos.",
   "library_tab_buzious": "Búzios",
+    "EMPTY_TEXT":"Você não tem nenhuma leitura salva ainda.",
   "library_tab_daily_wisdom": "Carta de Sabedoria Diária",
   "library_tab_ritual_tip": "Dica de Ritual",
 

@@ -18,11 +18,12 @@ import {
   useTarotCardStore,
   TarotReadingHistoryItem,
 } from '../../../store/useTarotCardStore';
+import { useTranslation } from 'react-i18next';
 
 const TarotHistoryList: React.FC = () => {
   const navigation = useNavigation<any>(); // 👈 navigation hook
   const { colors } = useThemeStore(s => s.theme); // 👈 theme colors
-
+  const { t } = useTranslation();
   const { history, isHistoryLoading, fetchReadingHistory } = useTarotCardStore(
     useShallow((state) => ({
       history: state.history,
@@ -92,7 +93,7 @@ const TarotHistoryList: React.FC = () => {
   if (!isHistoryLoading && history.length === 0) {
     return (
       <View style={styles.emptyContainer}>
-        <Text style={styles.emptyText}>You have no saved readings yet.</Text>
+         <Text style={styles.emptyText}>{t('EMPTY_TEXT')}</Text>
       </View>
     );
   }

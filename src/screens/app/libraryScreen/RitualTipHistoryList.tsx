@@ -17,6 +17,7 @@ import {
   useRitualTipStore,
   RitualHistoryItem,
 } from '../../../store/useRitualTipStore';
+import { useTranslation } from 'react-i18next';
 
 // Static icon for the list 
 const ritualIcon = require('../../../assets/icons/RitualTipIcon.png');
@@ -24,7 +25,7 @@ const ritualIcon = require('../../../assets/icons/RitualTipIcon.png');
 const RitualTipHistoryList: React.FC = () => {
   const navigation = useNavigation<any>();
   const { colors } = useThemeStore(s => s.theme);
-
+  const { t } = useTranslation();
   // --- Using RitualTipStore now ---
   const { history, isLoadingHistory, getRitualTipHistory } = useRitualTipStore(
     useShallow((state) => ({
@@ -93,7 +94,7 @@ const RitualTipHistoryList: React.FC = () => {
   if (!isLoadingHistory && (!history || history.length === 0)) {
     return (
       <View style={styles.emptyContainer}>
-        <Text style={styles.emptyText}>You have no saved ritual tips yet.</Text>
+         <Text style={styles.emptyText}>{t('EMPTY_TEXT')}</Text>
       </View>
     );
   }

@@ -99,7 +99,7 @@ const BuziosHistoryList: React.FC = () => {
   if (!isLoadingHistory && (!history || history.length === 0)) {
     return (
       <View style={styles.emptyContainer}>
-        <Text style={styles.emptyText}>You have no saved readings yet.</Text>
+         <Text style={styles.emptyText}>{t('EMPTY_TEXT')}</Text>
       </View>
     );
   }

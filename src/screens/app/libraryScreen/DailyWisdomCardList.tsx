@@ -17,6 +17,7 @@ import {
   useDailyWisdomStore,
   WisdomHistoryItem,
 } from '../../../store/useDailyWisdomStore';
+import { useTranslation } from 'react-i18next';
 
 // Static icon for the list
 const wisdomCardIcon = require('../../../assets/icons/dailyWisdomIcon.png');
@@ -24,7 +25,7 @@ const wisdomCardIcon = require('../../../assets/icons/dailyWisdomIcon.png');
 const DailyWisdomCardList: React.FC = () => {
   const navigation = useNavigation<any>();
   const { colors } = useThemeStore(s => s.theme);
-
+  const { t } = useTranslation();
   const { history, isLoadingHistory, getWisdomHistory } = useDailyWisdomStore(
     useShallow((state) => ({
       history: state.history,
@@ -92,7 +93,7 @@ const DailyWisdomCardList: React.FC = () => {
   if (!isLoadingHistory && (!history || history.length === 0)) {
     return (
       <View style={styles.emptyContainer}>
-        <Text style={styles.emptyText}>You have no saved wisdom cards yet.</Text>
+         <Text style={styles.emptyText}>{t('EMPTY_TEXT')}</Text>
       </View>
     );
   }

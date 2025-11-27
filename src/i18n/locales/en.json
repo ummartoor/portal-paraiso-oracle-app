@@ -214,7 +214,9 @@
   "library_subtitle": "All your favorite rituals, readings,\nand wisdom.",
   "library_tab_tarot": "Tarot",
   "library_tab_astrology": "Astrology",
+  "EMPTY_HOROSCOPE_ HISTORY_TEXT": "You have no saved horoscopes yet.",
   "library_tab_buzious": "Buzios",
+  "EMPTY_TEXT":"You have no saved readings yet.",
   "library_tab_daily_wisdom": "Daily Wisdom Card",
   "library_tab_ritual_tip": "Ritual Tip",
 
