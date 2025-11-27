@@ -149,6 +149,10 @@ const { user } = useAuthStore();
             `Payment Error: ${paymentError.code}`,
             paymentError.message,
           );
+            console.log(
+            `Payment Error: ${paymentError.code}`,
+            paymentError.message,
+          );
         }
       } else {
         // Step 4: If payment is successful, confirm it with backend
@@ -194,13 +198,16 @@ const { user } = useAuthStore();
     }
   };
 
-  // --- CHANGED: `handleUpgradePlan` function remove kar diya gaya hai ---
+
   
   const Card = ({ item }: { item: StripePackage }) => {
-    const defaultPrice = item.prices.find(p => p.is_default);
+    // const defaultPrice = item.prices.find(p => p.is_default);
+    const defaultPrice =
+  item.prices.find(p => p.currency === 'eur') ||
+  item.prices.find(p => p.is_default);  // fallback
     const isProcessing = processingPackageId === item.id;
 
-    // Naya Logic
+    //  Logic
     const isActivated = activatedPackageId === item.id;
     const hasActiveSubscription = activatedPackageId !== null;
 
