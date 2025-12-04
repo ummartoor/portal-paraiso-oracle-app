@@ -206,8 +206,14 @@
 
   "divine_screen": "Divine",
   "divine_tarot_title": "Tarot Reading",
+  "divine_tarot_subtitle":"Let AI uncover the message behind your cards. Receive clear guidance inspired by the Tarot’s wisdom.",
+  "divine_tarot_btn" :"Start AI Tarot",
   "divine_cauris_title": "Buzios",
+    "divine_cauris_subitle":"Consult AI for an ancestral cowrie reading.  Discover what the shells reveal for your path in life.",
+    "divine_cauris_btn" :"Start AI Cauris",
   "divine_astrology_title": "Astrology",
+  "divine_astrology_subtitle": "Explore your cosmic patterns with AI. Get personalized insights based on today’s astrological energies.",
+    "divine_astrology_btn" :"Start AI Astrology",
 
 
   "library_screen": "Library",

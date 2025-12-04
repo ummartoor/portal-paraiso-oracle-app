@@ -6,7 +6,10 @@ export type AppStackParamList = {
   Profile: undefined;
   Notification :undefined;
   AskQuestionTarotScreen:undefined;
- 
+VideoPlayerScreen: {
+    videoID: string | number; // Changed from videoId
+    videoSRC: any;          // Changed from video
+  };
   TheSunScreen:undefined;
   TheHoroscopeScreen:undefined;
   TheRitualScreen:undefined;

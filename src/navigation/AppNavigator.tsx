@@ -39,6 +39,7 @@ import SubscriptionDetailsScreen from '../screens/app/ProfileScreen/profile/subs
 import TheSunScreen from '../screens/app/homeScreen/HightlightsCarouselCardsDetail/TheSunScreen';
 import TheHoroscopeScreen from '../screens/app/homeScreen/HightlightsCarouselCardsDetail/TheHoroscopeScreen';
 import TheRitualScreen from '../screens/app/homeScreen/HightlightsCarouselCardsDetail/TheRitualScreen';
+import VideoPlayerScreen from '../screens/app/homeScreen/VideoPlayerScreen';
 
 
 
@@ -55,7 +56,7 @@ const AppNavigator = () => {
       <Stack.Screen name='MainTabs' component={MainTabs} />
       {/* <Stack.Screen name='CarouselCardDetail' component={CarouselCardDetailScreen} /> */}
 
-      
+             <Stack.Screen name='VideoPlayerScreen' component={VideoPlayerScreen} />
 
          <Stack.Screen name='Notification' component={NotificationScreen} />
          <Stack.Screen name='TheSunScreen' component={TheSunScreen} />

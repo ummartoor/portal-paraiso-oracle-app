@@ -214,8 +214,14 @@
 
 "divine_screen": "Divino",
   "divine_tarot_title": "Leitura de Tarô",
+     "divine_tarot_subtitle":"Deixe a IA revelar a mensagem por trás das suas cartas. Receba orientações claras inspiradas pela sabedoria do Tarô.",
+     "divine_tarot_btn" :"Comece o Tarô AI",
   "divine_cauris_title": "Búzios",
+   "divine_cauris_subitle":"CConsulte a IA para uma leitura ancestral de búzios. Descubra o que as conchas revelam sobre o seu caminho na vida.",
+"divine_cauris_btn" :"Iniciar AI Cauris",
   "divine_astrology_title": "Astrologia",
+"divine_astrology_subtitle": "Explore seus padrões cósmicos com IA. Obtenha insights personalizados com base nas energias astrológicas de hoje.",
+  "divine_astrology_btn" :"Comece a Astrologia AI",
 
 
   "library_screen": "Biblioteca",
