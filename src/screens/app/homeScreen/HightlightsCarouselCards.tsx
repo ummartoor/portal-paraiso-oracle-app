@@ -16,7 +16,7 @@ import { useIsFocused } from '@react-navigation/native';
 import { useThemeStore } from '../../../store/useThemeStore';
 import { Fonts } from '../../../constants/fonts';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { AppStackParamList } from '../../../navigation/routeTypes'; // NOTE: Ensure AppStackParamList is updated!
+import { AppStackParamList } from '../../../navigation/routeTypes'; 
 import { useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 
@@ -82,23 +82,15 @@ const HightlightsCarouselCards: React.FC<Props> = ({ data, onPressCard }) => {
 
   const cardData = data || DEFAULT_CARDS;
 
-  const handlePress = (item: CardItem) => {
-    Vibration.vibrate([0, 35, 40, 35]);
+const handlePress = (item: CardItem) => {
+  Vibration.vibrate([0, 35, 40, 35]);
 
-    if (onPressCard) {
-      onPressCard(item);
-      return;
-    }
-    if (item.route) {
-      // --- FIX: Renamed parameters to videoID and videoSRC ---
-      console.log('Navigating to VideoPlayerScreen with:', { 
-          videoID: item.id, 
-          videoSRC: item.video
-      });
-      
-      navigation.navigate("VideoPlayerScreen" ,{ videoID: item.id, videoSRC: item.video });
-    }
-  };
+  navigation.navigate("VideoPlayerScreen", {
+    videoID: item.id,
+    videoSRC: item.video,
+  });
+};
+
 
   const renderCard = ({ item, index }: { item: CardItem, index: number }) => {
     

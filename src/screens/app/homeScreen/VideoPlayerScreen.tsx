@@ -111,7 +111,7 @@
 
 
 
-import React, { useState } from 'react';
+import React from 'react';
 import {
   View,
   Text,
@@ -119,7 +119,6 @@ import {
   TouchableOpacity,
   StatusBar,
   ImageBackground,
-  Platform,
   Dimensions,
 } from 'react-native';
 
@@ -133,93 +132,58 @@ import { useThemeStore } from '../../../store/useThemeStore';
 
 const { height: SCREEN_HEIGHT, width: SCREEN_WIDTH } = Dimensions.get('screen');
 
-// --- Define the expected route parameters (MUST MATCH AppStackParamList) ---
 type VideoPlayerRouteParams = {
-  videoID: string | number; // Renamed
-  videoSRC: any;            // Renamed
+  videoID: string | number;
+  videoSRC: any;
 };
 
 type VideoPlayerScreenRouteProp = RouteProp<
   { VideoPlayerScreen: VideoPlayerRouteParams },
   'VideoPlayerScreen'
 >;
-// ---------------------------------------------
-
 
 const VideoPlayerScreen: React.FC = () => {
   const colors = useThemeStore(s => s.theme.colors);
   const navigation = useNavigation<any>();
   const route = useRoute<VideoPlayerScreenRouteProp>();
 
-  // 1. --- FIX: SAFELY ACCESS ROUTE PARAMETERS ---
-  // Must use the new names: videoID and videoSRC
-  const { videoID, videoSRC } = route.params || {}; 
-  
-  // Log the new ID to confirm reception
-  console.log("VideoPlayerScreen received ID:", videoID); 
-  // ---------------------------------------------
-  
-  // 2. OPTIONAL: Handle case where the video data is still missing
-  if (!videoSRC) {
-      console.warn("VideoPlayerScreen loaded without required 'videoSRC' parameter.");
-      return (
-        <ImageBackground
-            source={require('../../../assets/images/backgroundImage.png')}
-            style={[styles.bgImage, { height: SCREEN_HEIGHT, width: SCREEN_WIDTH, justifyContent: 'center', alignItems: 'center' }]}
-            resizeMode="cover"
-        >
-            <SafeAreaView style={styles.container}>
-                 {/* Header (still needed for navigation) */}
-                <View style={styles.header}>
-                    <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-                        <Image
-                          source={require('../../../assets/icons/backIcon.png')}
-                          style={styles.backIcon}
-                          resizeMode="contain"
-                        />
-                    </TouchableOpacity>
-                    <View style={styles.headerTitleWrap} pointerEvents="none">
-                        <Text numberOfLines={1} ellipsizeMode="tail" style={[styles.headerTitle, { color: colors.white }]}>
-                          Video Player
-                        </Text>
-                    </View>
-                </View>
-                {/* Fallback Message */}
-                <View style={styles.fallbackContent}>
-                    <Text style={[styles.fallbackText, { color: colors.white }]}>
-                        ❌ Video not loaded. Please navigate from the carousel.
-                    </Text>
-                </View>
-            </SafeAreaView>
-        </ImageBackground>
-      );
-  }
+  const { videoID, videoSRC } = route.params;
 
+  if (!videoSRC) {
+    return (
+      <ImageBackground
+        source={require('../../../assets/images/backgroundImage.png')}
+        style={styles.bgImage}
+        resizeMode="cover"
+      >
+        <SafeAreaView style={styles.container}>
+          <Text style={{ color: 'white' }}>Video Not Found</Text>
+        </SafeAreaView>
+      </ImageBackground>
+    );
+  }
 
   return (
     <ImageBackground
       source={require('../../../assets/images/backgroundImage.png')}
-      style={[styles.bgImage, { height: SCREEN_HEIGHT, width: SCREEN_WIDTH }]}
+      style={styles.bgImage}
       resizeMode="cover"
     >
       <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
-      
-      {/* --- VIDEO PLAYER CONTAINER --- */}
-      <View style={styles.videoContainer}>
+
+      {/* VIDEO SECTION */}
+      <View style={styles.videoWrapper}>
         <Video
-          source={videoSRC} // Must use videoSRC here
+          source={videoSRC}
           style={styles.videoPlayer}
           resizeMode="contain"
-          repeat={true} 
+          controls={true}      // ⭐ Important — enables pause/play/seek
           paused={false}
-          controls={true}
         />
       </View>
-      {/* ------------------------------- */}
 
-      <SafeAreaView style={styles.container}>
-        
-        {/* Header */}
+      {/* HEADER ON TOP */}
+      <SafeAreaView style={styles.headerWrapper}>
         <View style={styles.header}>
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
             <Image
@@ -229,82 +193,50 @@ const VideoPlayerScreen: React.FC = () => {
             />
           </TouchableOpacity>
 
-          <View style={styles.headerTitleWrap} pointerEvents="none">
-            <Text numberOfLines={1} ellipsizeMode="tail" style={[styles.headerTitle, { color: colors.white }]}>
-               Video Player
-            </Text>
-          </View>
+          <Text style={[styles.headerTitle, { color: colors.white }]}>
+            Video Player
+          </Text>
         </View>
-
-        {/* You can add more content or controls below the video here */}
-    
       </SafeAreaView>
+
     </ImageBackground>
   );
 };
 
 export default VideoPlayerScreen;
 
-/* ----------------- STYLES ----------------- */
 const styles = StyleSheet.create({
   bgImage: {
     flex: 1,
   },
+
   container: {
     flex: 1,
   },
 
-  // --- VIDEO STYLES ---
-  videoContainer: {
-    ...StyleSheet.absoluteFillObject,
+  videoWrapper: {
+    width: '100%',
+    height: SCREEN_HEIGHT * 0.55,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'black', 
+    marginTop: 80,   // Push video below header
   },
+
   videoPlayer: {
-    width: '100%', 
+    width: '100%',
     height: '100%',
   },
-  // -------------------------
 
-  header: {
-    height: 56,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: 8,
-    marginBottom: 20,
-    paddingHorizontal: 20,
-    zIndex: 10, 
-  },
-  backBtn: {
+  headerWrapper: {
     position: 'absolute',
-    left: 20,
-    height: 40,
-    width: 40,
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 11, 
+    top: 0,
+    width: '100%',
+    paddingHorizontal: 20,
   },
-  backIcon: { width: 22, height: 22, tintColor: '#fff' },
-  headerTitleWrap: { maxWidth: '70%', alignItems: 'center', justifyContent: 'center' },
-  headerTitle: {
-    fontFamily: Fonts.cormorantSCBold,
-    fontSize: 22,
-    letterSpacing: 1,
-    textTransform: 'capitalize',
-  },
-  fallbackContent: {
-      flex: 1,
-      justifyContent: 'center',
-      alignItems: 'center',
-      paddingBottom: 100,
-  },
-  fallbackText: {
-      fontFamily: Fonts.aeonikRegular,
-      fontSize: 16,
-      textAlign: 'center',
-  }
+
+header: { height: 56, justifyContent: 'center', alignItems: 'center', marginTop: 8, marginBottom: 20, paddingHorizontal: 20, zIndex: 10, }, backBtn: { position: 'absolute', left: 20, height: 40, width: 40, justifyContent: 'center', alignItems: 'center', zIndex: 11, }, backIcon: { width: 22, height: 22, tintColor: '#fff' }, headerTitleWrap: { maxWidth: '70%', alignItems: 'center', justifyContent: 'center' }, headerTitle: { fontFamily: Fonts.cormorantSCBold, fontSize: 22, letterSpacing: 1, textTransform: 'capitalize', },
 });
+
 // import React, { useState } from 'react';
 // import {
 //   View,
