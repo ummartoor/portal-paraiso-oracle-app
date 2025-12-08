@@ -186,7 +186,7 @@
   "carousel_astrology_subtitle": "Decode the stars and your cosmic blueprint.",
   "carousel_no_image": "No image",
 
-
+        "main_title":"Portal Guide",
   "highlights_main_title": "Today's Highlights",
   "highlights_sun_title": "The Sun",
   "highlights_sun_subtitle": "Joy and growth surround you",
@@ -194,6 +194,7 @@
   "highlights_horoscope_subtitle": "Balance brings clarity to your choices",
   "highlights_ritual_title": "Ritual",
   "highlights_ritual_subtitle": "Light a candle to invite truth and warmth",
+"video_player" :"Video Player",
 
 "ask_question_header": "Ask a Question",
   "ask_question_heading": "What Guidance Do You Seek?",

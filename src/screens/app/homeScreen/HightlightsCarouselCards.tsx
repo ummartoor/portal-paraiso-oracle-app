@@ -135,7 +135,7 @@ const handlePress = (item: CardItem) => {
   return (
     <View style={{ width: VIEWPORT_WIDTH }}>
       <View style={styles.headerContainer}>
-        <Text style={[styles.mainTitle, { color: colors.white }]}>Portal Guide</Text>
+        <Text style={[styles.mainTitle, { color: colors.white }]}>{t('main_title')}</Text>
       </View>
 
       <Carousel
@@ -205,8 +205,8 @@ const styles = StyleSheet.create({
     zIndex: 2, 
   },
   playIcon: {
-    width: 50, 
-    height: 50,
+    width: 32, 
+    height: 32,
     tintColor: 'white', 
   },
 });

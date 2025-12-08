@@ -201,10 +201,10 @@ const { user } = useAuthStore();
 
   
   const Card = ({ item }: { item: StripePackage }) => {
-    // const defaultPrice = item.prices.find(p => p.is_default);
-    const defaultPrice =
-  item.prices.find(p => p.currency === 'eur') ||
-  item.prices.find(p => p.is_default);  // fallback
+    const defaultPrice = item.prices.find(p => p.is_default);
+  //   const defaultPrice =
+  // item.prices.find(p => p.currency === 'eur') ||
+  // item.prices.find(p => p.is_default);  // fallback
     const isProcessing = processingPackageId === item.id;
 
     //  Logic
@@ -229,6 +229,9 @@ const { user } = useAuthStore();
             <View style={styles.priceRow}>
               <Text style={styles.priceAmount}>
                 {defaultPrice?.amount.toFixed(2)}
+              </Text>
+               <Text style={styles.currency}>
+                {defaultPrice?.currency}
               </Text>
               <Text style={styles.priceInterval}>
                 /{defaultPrice?.interval}
@@ -463,6 +466,14 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.aeonikBold,
     fontSize: 32,
     color: '#fff',
+  },
+  currency: {
+    fontFamily: Fonts.aeonikRegular,
+    fontSize: 15,
+    marginLeft: 5,
+    marginBottom: 5,
+    color: '#fff',
+    // opacity: 0.8,
   },
   priceInterval: {
     fontFamily: Fonts.aeonikRegular,

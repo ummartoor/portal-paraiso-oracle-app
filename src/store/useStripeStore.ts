@@ -346,6 +346,7 @@ export const useStripeStore = create<StripeState>((set, get) => ({
         error.message ||
         'An unknown error occurred.';
       set({ historyError: errorMessage, isFetchingHistory: false });
+         console.log('Error', errorMessage);
       Alert.alert('Error', errorMessage);
     }
   },

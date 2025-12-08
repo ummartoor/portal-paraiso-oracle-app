@@ -129,6 +129,7 @@ import { Image } from 'react-native';
 
 import { Fonts } from '../../../constants/fonts';
 import { useThemeStore } from '../../../store/useThemeStore';
+import { useTranslation } from 'react-i18next';
 
 const { height: SCREEN_HEIGHT, width: SCREEN_WIDTH } = Dimensions.get('screen');
 
@@ -146,7 +147,7 @@ const VideoPlayerScreen: React.FC = () => {
   const colors = useThemeStore(s => s.theme.colors);
   const navigation = useNavigation<any>();
   const route = useRoute<VideoPlayerScreenRouteProp>();
-
+  const { t } = useTranslation();
   const { videoID, videoSRC } = route.params;
 
   if (!videoSRC) {
@@ -194,7 +195,7 @@ const VideoPlayerScreen: React.FC = () => {
           </TouchableOpacity>
 
           <Text style={[styles.headerTitle, { color: colors.white }]}>
-            Video Player
+        {t('video_player')}
           </Text>
         </View>
       </SafeAreaView>

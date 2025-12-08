@@ -178,7 +178,7 @@ const HomeScreen: React.FC = () => {
   {/* Hightlight Carousel */}
           <View style={{ marginTop: 22 }}>
             <HightlightsCarouselCards 
-            onPressCard={onPressCarouselCard}
+            // onPressCard={onPressCarouselCard}
              />
           </View>
           {/* Carousel */}

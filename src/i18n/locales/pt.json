@@ -191,7 +191,7 @@
   "carousel_no_image": "Sem imagem",
 
 
-
+     "main_title":"Guia do portal",
   "highlights_main_title": "Destaques de Hoje",
   "highlights_sun_title": "O Sol",
   "highlights_sun_subtitle": "Alegria e crescimento te rodeiam",
@@ -199,7 +199,7 @@
   "highlights_horoscope_subtitle": "Equilíbrio traz clareza às suas escolhas",
   "highlights_ritual_title": "Ritual",
   "highlights_ritual_subtitle": "Acenda uma vela para convidar a verdade e o calor",
-
+"video_player" :"Reprodutor de vídeo",
 
 
   "ask_question_header": "Faça uma Pergunta",
