@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -22,67 +22,89 @@ import { useTranslation } from 'react-i18next';
 // Static icon for the list
 const wisdomCardIcon = require('../../../assets/icons/dailyWisdomIcon.png');
 
+// Memoized list item component for better performance
+const HistoryItem: React.FC<{
+  item: WisdomHistoryItem;
+  onPress: (item: WisdomHistoryItem) => void;
+  colors: { black?: string; bgBox?: string };
+  formatDate: (date: string) => string;
+}> = React.memo(({ item, onPress, colors, formatDate }) => (
+  <TouchableOpacity
+    style={styles.historyCard}
+    activeOpacity={0.7}
+    onPress={() => onPress(item)}
+  >
+    <Image source={wisdomCardIcon} style={styles.cardIcon} />
+    <View style={styles.cardTextContainer}>
+      <Text style={styles.cardTitle}>DAILY WISDOM CARD</Text>
+      <Text style={styles.cardSubtitle} numberOfLines={2}>
+        {item.card.card_name}
+      </Text>
+    </View>
+    <View style={styles.cardRightContainer}>
+      <Text style={styles.cardDate}>{formatDate(item.card_date)}</Text>
+      <GradientBox
+        colors={[colors.black || '#000000', colors.bgBox || '#2F2B3B']}
+        style={styles.iconWrapper}
+      >
+        <Image
+          source={require('../../../assets/icons/rightArrow.png')}
+          style={styles.arrowIcon}
+        />
+      </GradientBox>
+    </View>
+  </TouchableOpacity>
+));
+
 const DailyWisdomCardList: React.FC = () => {
   const navigation = useNavigation<any>();
-  const { colors } = useThemeStore(s => s.theme);
+  const colors = useThemeStore(s => s.theme.colors);
   const { t } = useTranslation();
   const { history, isLoadingHistory, getWisdomHistory } = useDailyWisdomStore(
-    useShallow((state) => ({
+    useShallow(state => ({
       history: state.history,
       isLoadingHistory: state.isLoadingHistory,
       getWisdomHistory: state.getWisdomHistory,
-    }))
+    })),
   );
 
   // Fetch history every time the screen is focused
   useFocusEffect(
-    React.useCallback(() => {
+    useCallback(() => {
       getWisdomHistory();
-    }, [getWisdomHistory])
+    }, [getWisdomHistory]),
   );
 
-  const formatDate = (dateString: string) => {
+  const formatDate = useCallback((dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', {
       day: 'numeric',
       month: 'short',
     });
-  };
+  }, []);
 
-  const renderHistoryItem = ({ item }: { item: WisdomHistoryItem }) => (
-    <TouchableOpacity
-      style={styles.historyCard}
-      activeOpacity={0.7}
-      onPress={() => {
-        // Navigate to the new detail screen and pass the selected item
-        navigation.navigate('DailyWisdomCardHistoryDetail', { historyItem: item });
-      }}
-    >
-      <Image
-        source={wisdomCardIcon}
-        style={styles.cardIcon}
-      />
-      <View style={styles.cardTextContainer}>
-        <Text style={styles.cardTitle}>DAILY WISDOM CARD</Text>
-        <Text style={styles.cardSubtitle} numberOfLines={2}>
-      
-          {item.card.card_name}
-        </Text>
-      </View>
-      <View style={styles.cardRightContainer}>
-        <Text style={styles.cardDate}>{formatDate(item.card_date)}</Text>
-        <GradientBox
-          colors={[colors.black, colors.bgBox]}
-          style={styles.iconWrapper}
-        >
-          <Image
-            source={require('../../../assets/icons/rightArrow.png')}
-            style={styles.arrowIcon}
-          />
-        </GradientBox>
-      </View>
-    </TouchableOpacity>
+  const handleItemPress = useCallback(
+    (item: WisdomHistoryItem) => {
+      navigation.navigate('DailyWisdomCardHistoryDetail', {
+        historyItem: item,
+      });
+    },
+    [navigation],
   );
+
+  const renderHistoryItem = useCallback(
+    ({ item }: { item: WisdomHistoryItem }) => (
+      <HistoryItem
+        item={item}
+        onPress={handleItemPress}
+        colors={colors}
+        formatDate={formatDate}
+      />
+    ),
+    [handleItemPress, colors, formatDate],
+  );
+
+  const keyExtractor = useCallback((item: WisdomHistoryItem) => item.id, []);
 
   if (isLoadingHistory) {
     return (
@@ -93,7 +115,7 @@ const DailyWisdomCardList: React.FC = () => {
   if (!isLoadingHistory && (!history || history.length === 0)) {
     return (
       <View style={styles.emptyContainer}>
-         <Text style={styles.emptyText}>{t('EMPTY_TEXT')}</Text>
+        <Text style={styles.emptyText}>{t('EMPTY_TEXT')}</Text>
       </View>
     );
   }
@@ -102,12 +124,17 @@ const DailyWisdomCardList: React.FC = () => {
     <FlatList
       data={history}
       renderItem={renderHistoryItem}
-      keyExtractor={(item) => item.id}
+      keyExtractor={keyExtractor}
       contentContainerStyle={{
         paddingHorizontal: 16,
         paddingTop: 20,
         paddingBottom: 70,
       }}
+      removeClippedSubviews={true}
+      maxToRenderPerBatch={10}
+      updateCellsBatchingPeriod={50}
+      initialNumToRender={10}
+      windowSize={10}
     />
   );
 };
@@ -170,4 +197,3 @@ const styles = StyleSheet.create({
     tintColor: '#fff',
   },
 });
-

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -12,8 +12,7 @@ import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { useShallow } from 'zustand/react/shallow';
 import { Fonts } from '../../../constants/fonts';
 import GradientBox from '../../../components/GradientBox';
-import { useThemeStore } from '../../../store/useThemeStore'; // 👈 colors lene ke liye
-
+import { useThemeStore } from '../../../store/useThemeStore';
 import {
   useTarotCardStore,
   TarotReadingHistoryItem,
@@ -21,67 +20,85 @@ import {
 import { useTranslation } from 'react-i18next';
 
 const TarotHistoryList: React.FC = () => {
-  const navigation = useNavigation<any>(); // 👈 navigation hook
-  const { colors } = useThemeStore(s => s.theme); // 👈 theme colors
+  const navigation = useNavigation<any>();
+  const colors = useThemeStore(s => s.theme.colors);
   const { t } = useTranslation();
   const { history, isHistoryLoading, fetchReadingHistory } = useTarotCardStore(
-    useShallow((state) => ({
+    useShallow(state => ({
       history: state.history,
       isHistoryLoading: state.isHistoryLoading,
       fetchReadingHistory: state.fetchReadingHistory,
-    }))
+    })),
   );
 
   // Fetch history on screen focus
   useFocusEffect(
-    React.useCallback(() => {
+    useCallback(() => {
       fetchReadingHistory();
-    }, [fetchReadingHistory])
+    }, [fetchReadingHistory]),
   );
 
-  const formatDate = (dateString: string) => {
+  const formatDate = useCallback((dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', {
       day: 'numeric',
       month: 'short',
     });
-  };
+  }, []);
 
-  const renderHistoryItem = ({ item }: { item: TarotReadingHistoryItem }) => (
-    <TouchableOpacity
-      style={styles.historyCard}
-      activeOpacity={0.7}
-      onPress={() => {
-     
-        navigation.navigate('TarotReadingHistoryDetail', { readingItem: item });
-    
-      }}
-    >
-      <Image
-        source={require('../../../assets/images/TarotReading.png')}
-        style={styles.cardIcon}
-      />
-      <View style={styles.cardTextContainer}>
-        <Text style={styles.cardTitle}>TAROT READER</Text>
-        <Text style={styles.cardSubtitle} numberOfLines={2}>
-          {item.user_question || item.reading.introduction}
-        </Text>
-      </View>
-      <View style={styles.cardRightContainer}>
-        <Text style={styles.cardDate}>{formatDate(item.reading_date)}</Text>
+  const handleItemPress = useCallback(
+    (item: TarotReadingHistoryItem) => {
+      navigation.navigate('TarotReadingHistoryDetail', { readingItem: item });
+    },
+    [navigation],
+  );
 
-        {/* Gradient wrapper for arrow */}
-        <GradientBox
-          colors={[colors.black, colors.bgBox]}
-          style={styles.iconWrapper}
-        >
-          <Image
-            source={require('../../../assets/icons/rightArrow.png')}
-            style={styles.arrowIcon}
-          />
-        </GradientBox>
-      </View>
-    </TouchableOpacity>
+  const renderHistoryItem = useCallback(
+    ({ item }: { item: TarotReadingHistoryItem }) => (
+      <TouchableOpacity
+        style={styles.historyCard}
+        activeOpacity={0.7}
+        onPress={() => handleItemPress(item)}
+      >
+        <Image
+          source={require('../../../assets/images/TarotReading.png')}
+          style={styles.cardIcon}
+        />
+        <View style={styles.cardTextContainer}>
+          <Text style={styles.cardTitle}>TAROT READER</Text>
+          <Text style={styles.cardSubtitle} numberOfLines={2}>
+            {item.user_question || item.reading.introduction}
+          </Text>
+        </View>
+        <View style={styles.cardRightContainer}>
+          <Text style={styles.cardDate}>{formatDate(item.reading_date)}</Text>
+          <GradientBox
+            colors={[colors.black, colors.bgBox]}
+            style={styles.iconWrapper}
+          >
+            <Image
+              source={require('../../../assets/icons/rightArrow.png')}
+              style={styles.arrowIcon}
+            />
+          </GradientBox>
+        </View>
+      </TouchableOpacity>
+    ),
+    [handleItemPress, formatDate, colors],
+  );
+
+  const keyExtractor = useCallback(
+    (item: TarotReadingHistoryItem) => item._id,
+    [],
+  );
+
+  const contentContainerStyle = useMemo(
+    () => ({
+      paddingHorizontal: 16,
+      paddingTop: 20,
+      paddingBottom: 70,
+    }),
+    [],
   );
 
   if (isHistoryLoading) {
@@ -93,7 +110,7 @@ const TarotHistoryList: React.FC = () => {
   if (!isHistoryLoading && history.length === 0) {
     return (
       <View style={styles.emptyContainer}>
-         <Text style={styles.emptyText}>{t('EMPTY_TEXT')}</Text>
+        <Text style={styles.emptyText}>{t('EMPTY_TEXT')}</Text>
       </View>
     );
   }
@@ -102,12 +119,13 @@ const TarotHistoryList: React.FC = () => {
     <FlatList
       data={history}
       renderItem={renderHistoryItem}
-      keyExtractor={(item) => item._id}
-      contentContainerStyle={{
-        paddingHorizontal: 16,
-        paddingTop: 20,
-        paddingBottom: 70,
-      }}
+      keyExtractor={keyExtractor}
+      contentContainerStyle={contentContainerStyle}
+      removeClippedSubviews={true}
+      maxToRenderPerBatch={10}
+      updateCellsBatchingPeriod={50}
+      initialNumToRender={10}
+      windowSize={10}
     />
   );
 };

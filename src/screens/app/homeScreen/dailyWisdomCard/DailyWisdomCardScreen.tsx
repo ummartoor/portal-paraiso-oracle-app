@@ -51,14 +51,14 @@ const DailyWisdomCardScreen: React.FC = () => {
     getDailyWisdomCard,
     markCardAsUsed,
   } = useDailyWisdomStore();
-  
+
   // --- 3. OpenAI store se `preloadSpeech` function liya gaya ---
   const { preloadSpeech } = useOpenAiStore();
 
   const [isRevealed, setIsRevealed] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
-  
+
   // --- 4. Audio preloading ke liye states ---
   const [audioFilePath, setAudioFilePath] = useState<string | null>(null);
   const [isPreloadingAudio, setIsPreloadingAudio] = useState(false);
@@ -72,17 +72,22 @@ const DailyWisdomCardScreen: React.FC = () => {
     // Jaise hi wisdomCard ka data aaye, audio preload karein
     if (wisdomCard && wisdomCard.reading) {
       if (wisdomCard.is_used) {
-        setIsRevealed(true); 
+        setIsRevealed(true);
       }
-      
+
       const preload = async () => {
         setIsPreloadingAudio(true);
         // Card ki unique ID ko audio file ke naam ke liye istemal karein
-        const audioPath = await preloadSpeech(wisdomCard.reading, wisdomCard.card.card_uid);
+        const audioPath = await preloadSpeech(
+          wisdomCard.reading,
+          wisdomCard.card.card_uid,
+        );
         if (audioPath) {
           setAudioFilePath(audioPath);
         } else {
-          console.log('Failed to preload daily wisdom audio.');
+          if (__DEV__) {
+            console.log('Failed to preload daily wisdom audio.');
+          }
         }
         setIsPreloadingAudio(false);
       };
@@ -198,6 +203,7 @@ const DailyWisdomCardScreen: React.FC = () => {
                   <Image
                     source={{ uri: wisdomCard.card.card_image.url }}
                     style={styles.cardImage}
+                    resizeMode="contain"
                   />
                 )}
               </View>
@@ -215,7 +221,12 @@ const DailyWisdomCardScreen: React.FC = () => {
                     source={isPlaying ? PauseIcon : PlayIcon}
                     style={[
                       styles.playIcon,
-                      { tintColor: (isPreloadingAudio || !audioFilePath) ? '#999' : colors.primary }
+                      {
+                        tintColor:
+                          isPreloadingAudio || !audioFilePath
+                            ? '#999'
+                            : colors.primary,
+                      },
                     ]}
                     resizeMode="contain"
                   />
@@ -225,8 +236,6 @@ const DailyWisdomCardScreen: React.FC = () => {
               <Text style={[styles.description, { color: colors.white }]}>
                 {wisdomCard?.reading}
               </Text>
-
-         
             </View>
           ) : (
             // --- PHASE 1: INITIAL STATE ---
@@ -390,16 +399,6 @@ const styles = StyleSheet.create({
   },
   buttonText: { color: '#fff', fontSize: 16, fontFamily: Fonts.aeonikRegular },
 });
-
-
-
-
-
-
-
-
-
-
 
 // import React, { useState, useEffect } from 'react';
 // import {
@@ -800,7 +799,7 @@ const styles = StyleSheet.create({
 //     justifyContent: 'center',
 //     alignItems: 'center',
 //     // paddingHorizontal: 20,
-  
+
 //   },
 //   buttonText: { color: '#fff', fontSize: 16, fontFamily: Fonts.aeonikRegular },
 // });

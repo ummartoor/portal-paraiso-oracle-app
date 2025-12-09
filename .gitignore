@@ -16,14 +16,23 @@ build/
 !default.mode2v3
 *.perspectivev3
 !default.perspectivev3
-xcuserdata
+xcuserdata/
 *.xccheckout
 *.moved-aside
-DerivedData
+DerivedData/
 *.hmap
 *.ipa
 *.xcuserstate
 **/.xcode.env.local
+*.xcworkspace/xcuserdata/
+*.xcodeproj/xcuserdata/
+*.xcodeproj/project.xcworkspace/xcuserdata/
+ios/Pods.xcodeproj/xcuserdata/
+*.xcscmblueprint
+*.xcscheme
+!*.xcscheme
+xcshareddata/xcschemes/*.xcscheme
+!xcshareddata/xcschemes/*.xcscheme
 
 # Android/IntelliJ
 #
@@ -62,9 +71,38 @@ yarn-error.log
 # Ruby / CocoaPods
 **/Pods/
 /vendor/bundle/
+Podfile.lock - Keep it committed for team consistency (ensures same pod versions)
+# Uncomment the line below ONLY if you want each developer to use different pod versions
+ios/Podfile.lock
 
 # Temporary files created by Metro to check the health of the file watcher
 .metro-health-check*
+
+# Metro bundler cache
+.metro/
+
+# Watchman
+.watchmanconfig
+
+# iOS specific
+ios/build/
+ios/Pods/
+ios/*.xcworkspace/xcuserdata/
+ios/*.xcodeproj/xcuserdata/
+ios/*.xcodeproj/project.xcworkspace/xcuserdata/
+ios/Pods.xcodeproj/xcuserdata/
+*.xcarchive
+*.dSYM.zip
+*.dSYM
+
+# Android specific
+android/app/build/
+android/.gradle/
+android/local.properties
+android/app/release/
+android/keystores/
+*.apk
+*.aab
 
 # testing
 /coverage

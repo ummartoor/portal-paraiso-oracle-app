@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import {
   View,
@@ -36,9 +35,9 @@ const CARD_SPACING = 15;
 const BuySubscriptionScreen = () => {
   const { colors } = useThemeStore(s => s.theme);
   const navigation = useNavigation<any>();
-  const { t ,i18n} = useTranslation();
+  const { t, i18n } = useTranslation();
   const { initPaymentSheet, presentPaymentSheet } = useStripe();
-const { user } = useAuthStore();
+  const { user } = useAuthStore();
   const {
     packages,
     isLoading,
@@ -149,10 +148,12 @@ const { user } = useAuthStore();
             `Payment Error: ${paymentError.code}`,
             paymentError.message,
           );
+          if (__DEV__) {
             console.log(
-            `Payment Error: ${paymentError.code}`,
-            paymentError.message,
-          );
+              `Payment Error: ${paymentError.code}`,
+              paymentError.message,
+            );
+          }
         }
       } else {
         // Step 4: If payment is successful, confirm it with backend
@@ -188,7 +189,9 @@ const { user } = useAuthStore();
         }
       }
     } catch (error: any) {
-      console.error('Payment processing failed:', error);
+      if (__DEV__) {
+        console.error('Payment processing failed:', error);
+      }
       Alert.alert(
         'An Unexpected Error Occurred',
         error.message || 'Please try again later.',
@@ -198,13 +201,11 @@ const { user } = useAuthStore();
     }
   };
 
-
-  
   const Card = ({ item }: { item: StripePackage }) => {
     const defaultPrice = item.prices.find(p => p.is_default);
-  //   const defaultPrice =
-  // item.prices.find(p => p.currency === 'eur') ||
-  // item.prices.find(p => p.is_default);  // fallback
+    //   const defaultPrice =
+    // item.prices.find(p => p.currency === 'eur') ||
+    // item.prices.find(p => p.is_default);  // fallback
     const isProcessing = processingPackageId === item.id;
 
     //  Logic
@@ -220,19 +221,16 @@ const { user } = useAuthStore();
       <View style={[styles.cardContainer, { width: CARD_WIDTH }]}>
         <View style={[styles.card, { backgroundColor: colors.bgBox }]}>
           <>
-         
             <Text style={styles.cardTitle}>
-  {/* {item.display_name?.[user?.app_language ?? 'en'] ?? item.display_name?.en} */}
-     <Text style={styles.cardTitle}>{item.display_name}</Text>
-</Text>
-            
+              {/* {item.display_name?.[user?.app_language ?? 'en'] ?? item.display_name?.en} */}
+              <Text style={styles.cardTitle}>{item.display_name}</Text>
+            </Text>
+
             <View style={styles.priceRow}>
               <Text style={styles.priceAmount}>
                 {defaultPrice?.amount.toFixed(2)}
               </Text>
-               <Text style={styles.currency}>
-                {defaultPrice?.currency}
-              </Text>
+              <Text style={styles.currency}>{defaultPrice?.currency}</Text>
               <Text style={styles.priceInterval}>
                 /{defaultPrice?.interval}
               </Text>
@@ -536,23 +534,6 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
 });
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 // import React, { useState, useCallback, useRef, useEffect } from 'react';
 // import {

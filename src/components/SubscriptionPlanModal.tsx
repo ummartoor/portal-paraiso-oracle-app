@@ -115,7 +115,6 @@
 //   const [selected, setSelected] = useState<PlanKey>('yearly');
 //   const { t } = useTranslation();
 
-
 //   const plans: Record<
 //     PlanKey,
 //     { title: string; sub: string; strike?: string; perWeek: string; badge?: string }
@@ -247,7 +246,7 @@
 //     height: 200,
 //     // borderRadius: 16,
 //     overflow: 'hidden',
-//     marginBottom: -40, 
+//     marginBottom: -40,
 //   },
 //   heroOverlay: {
 //     flex: 1,
@@ -366,7 +365,13 @@
 //   },
 // });
 
-import React, { useState, useCallback, useEffect, useMemo, useRef } from 'react';
+import React, {
+  useState,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+} from 'react';
 import {
   View,
   Text,
@@ -388,10 +393,7 @@ import { Fonts } from '../constants/fonts';
 import GradientBox from './GradientBox';
 import { useTranslation } from 'react-i18next';
 import { useStripe } from '@stripe/stripe-react-native';
-import {
-  useStripeStore,
-  StripePackage,
-} from '../store/useStripeStore';
+import { useStripeStore, StripePackage } from '../store/useStripeStore';
 import { useShallow } from 'zustand/react/shallow';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('screen');
@@ -413,7 +415,13 @@ const CardContent = ({
   colors,
   t,
 }: {
-  p: { title: string; sub: string; strike?: string; perWeek: string; badge?: string };
+  p: {
+    title: string;
+    sub: string;
+    strike?: string;
+    perWeek: string;
+    badge?: string;
+  };
   isActive: boolean;
   colors: any;
   t: (key: string) => string;
@@ -421,37 +429,71 @@ const CardContent = ({
   <>
     <View style={{ flex: 1 }}>
       <View style={styles.cardTitleRow}>
-        <Text style={[styles.cardTitle, { color: isActive ? colors.black : colors.white }]}>
+        <Text
+          style={[
+            styles.cardTitle,
+            { color: isActive ? colors.black : colors.white },
+          ]}
+        >
           {p.title}
         </Text>
         {p.badge ? (
-          <View style={[styles.badge, { backgroundColor: colors.primary + '22', borderColor: colors.primary }]}>
-            <Text style={[styles.badgeText, { color: colors.primary }]}>{p.badge}</Text>
+          <View
+            style={[
+              styles.badge,
+              {
+                backgroundColor: colors.primary + '22',
+                borderColor: colors.primary,
+              },
+            ]}
+          >
+            <Text style={[styles.badgeText, { color: colors.primary }]}>
+              {p.badge}
+            </Text>
           </View>
         ) : null}
       </View>
       <View style={styles.subRow}>
-        <Text style={[styles.subText, { color: isActive ? colors.black : colors.white, opacity: 0.9 }]}>
+        <Text
+          style={[
+            styles.subText,
+            { color: isActive ? colors.black : colors.white, opacity: 0.9 },
+          ]}
+        >
           {p.sub}
         </Text>
         {p.strike ? (
-          <Text style={[styles.strike, { color: isActive ? colors.black : colors.white, opacity: 0.6 }]}>
+          <Text
+            style={[
+              styles.strike,
+              { color: isActive ? colors.black : colors.white, opacity: 0.6 },
+            ]}
+          >
             {p.strike}
           </Text>
         ) : null}
       </View>
     </View>
     <View style={styles.priceCol}>
-      <Text style={[styles.price, { color: isActive ? colors.black : colors.white }]}>
+      <Text
+        style={[
+          styles.price,
+          { color: isActive ? colors.black : colors.white },
+        ]}
+      >
         {p.perWeek}
       </Text>
-      <Text style={[styles.perWeek, { color: isActive ? colors.black : colors.white, opacity: 0.7 }]}>
+      <Text
+        style={[
+          styles.perWeek,
+          { color: isActive ? colors.black : colors.white, opacity: 0.7 },
+        ]}
+      >
         {t('subscription_per_week')}
       </Text>
     </View>
   </>
 );
-
 
 const SubscriptionPlanModal: React.FC<SubscriptionPlanModalProps> = ({
   isVisible,
@@ -486,8 +528,12 @@ const SubscriptionPlanModal: React.FC<SubscriptionPlanModalProps> = ({
     })),
   );
 
-  const [processingPackageId, setProcessingPackageId] = useState<string | null>(null);
-  const [activatedPackageId, setActivatedPackageId] = useState<string | null>(null);
+  const [processingPackageId, setProcessingPackageId] = useState<string | null>(
+    null,
+  );
+  const [activatedPackageId, setActivatedPackageId] = useState<string | null>(
+    null,
+  );
   const flatListRef = useRef<FlatList>(null);
 
   useEffect(() => {
@@ -509,7 +555,13 @@ const SubscriptionPlanModal: React.FC<SubscriptionPlanModalProps> = ({
 
   const plans: Record<
     PlanKey,
-    { title: string; sub: string; strike?: string; perWeek: string; badge?: string }
+    {
+      title: string;
+      sub: string;
+      strike?: string;
+      perWeek: string;
+      badge?: string;
+    }
   > = {
     yearly: {
       title: t('subscription_yearly'),
@@ -518,15 +570,25 @@ const SubscriptionPlanModal: React.FC<SubscriptionPlanModalProps> = ({
       perWeek: '$3.34',
       badge: t('subscription_save_55'),
     },
-    monthly: { title: t('subscription_monthly'), sub: t('subscription_1_mo'), strike: '$3.99', perWeek: '$1.34' },
-    weekly: { title: t('subscription_weekly'), sub: t('subscription_4_week'), strike: '$1.99', perWeek: '$1.34' },
+    monthly: {
+      title: t('subscription_monthly'),
+      sub: t('subscription_1_mo'),
+      strike: '$3.99',
+      perWeek: '$1.34',
+    },
+    weekly: {
+      title: t('subscription_weekly'),
+      sub: t('subscription_4_week'),
+      strike: '$1.99',
+      perWeek: '$1.34',
+    },
   };
 
   const paidPackages =
     packages
       ?.filter(p => p.type !== 'free')
       .sort((a, b) => a.sort_order - b.sort_order) || [];
-  
+
   const handleChoosePlan = async (item: StripePackage) => {
     const defaultPrice = item.prices.find(p => p.is_default);
     if (!defaultPrice) {
@@ -556,20 +618,30 @@ const SubscriptionPlanModal: React.FC<SubscriptionPlanModalProps> = ({
       });
 
       if (initError) {
-        throw new Error(`Could not initialize payment sheet: ${initError.message}`);
+        throw new Error(
+          `Could not initialize payment sheet: ${initError.message}`,
+        );
       }
 
       const { error: paymentError } = await presentPaymentSheet();
 
       if (paymentError) {
         if (paymentError.code !== 'Canceled') {
-          Alert.alert(`Payment Error: ${paymentError.code}`, paymentError.message);
+          Alert.alert(
+            `Payment Error: ${paymentError.code}`,
+            paymentError.message,
+          );
         }
       } else {
-        const confirmationResult = await confirmPayment(paymentData.paymentIntentId);
+        const confirmationResult = await confirmPayment(
+          paymentData.paymentIntentId,
+        );
 
         if (confirmationResult.success) {
-          Alert.alert('Success!', 'Your subscription has been activated successfully!');
+          Alert.alert(
+            'Success!',
+            'Your subscription has been activated successfully!',
+          );
           setActivatedPackageId(item.id);
           fetchCurrentSubscription();
           onClose();
@@ -582,20 +654,23 @@ const SubscriptionPlanModal: React.FC<SubscriptionPlanModalProps> = ({
       }
     } catch (error: any) {
       console.error('Payment processing failed:', error);
-      Alert.alert('An Unexpected Error Occurred', error.message || 'Please try again later.');
+      Alert.alert(
+        'An Unexpected Error Occurred',
+        error.message || 'Please try again later.',
+      );
     } finally {
       setProcessingPackageId(null);
     }
   };
 
   // --- CHANGED: `handleUpgradePlan` function remove kar diya gaya hai ---
-  
-  const Card = ({ item }: { item: StripePackage }) => {
+
+  const Card: React.FC<{ item: StripePackage }> = React.memo(({ item }) => {
     const defaultPrice = item.prices.find(p => p.is_default);
     const isProcessing = processingPackageId === item.id;
     const isActivated = activatedPackageId === item.id;
     const hasActiveSubscription = activatedPackageId !== null;
-    
+
     const [isExpanded, setIsExpanded] = useState(false);
     const features = item.feature_list_for_ui;
     const hasMoreFeatures = features.length > 8;
@@ -606,28 +681,44 @@ const SubscriptionPlanModal: React.FC<SubscriptionPlanModalProps> = ({
         <View style={[styles.card, { backgroundColor: colors.bgBox }]}>
           <Text style={styles.cardTitle}>{item.display_name}</Text>
           <View style={styles.priceRow}>
-            <Text style={styles.priceAmount}>{defaultPrice?.amount.toFixed(2)}</Text>
+            <Text style={styles.priceAmount}>
+              {defaultPrice?.amount.toFixed(2)}
+            </Text>
             <Text style={styles.priceInterval}>/{defaultPrice?.interval}</Text>
           </View>
           <View style={styles.featuresList}>
             {displayedFeatures.map((feature, i) => (
-              <Text key={i} style={styles.featureText}>• {feature}</Text>
+              <Text key={i} style={styles.featureText}>
+                • {feature}
+              </Text>
             ))}
             {hasMoreFeatures && (
               <TouchableOpacity onPress={() => setIsExpanded(!isExpanded)}>
-                <Text style={styles.seeMoreText}>{isExpanded ? 'See Less' : 'See More'}</Text>
+                <Text style={styles.seeMoreText}>
+                  {isExpanded ? 'See Less' : 'See More'}
+                </Text>
               </TouchableOpacity>
             )}
           </View>
 
           {/* --- CHANGED: Button logic update kiya gaya hai --- */}
           {isActivated ? (
-            <TouchableOpacity style={[styles.actionBtn, styles.activatedButton]} disabled={true}>
+            <TouchableOpacity
+              style={[styles.actionBtn, styles.activatedButton]}
+              disabled={true}
+            >
               <Text style={styles.activatedText}>Activated</Text>
             </TouchableOpacity>
           ) : (
-            <TouchableOpacity style={styles.actionBtn} onPress={() => handleChoosePlan(item)} disabled={isProcessing}>
-              <GradientBox colors={[colors.black, colors.bgBox]} style={styles.gradientWrapper}>
+            <TouchableOpacity
+              style={styles.actionBtn}
+              onPress={() => handleChoosePlan(item)}
+              disabled={isProcessing}
+            >
+              <GradientBox
+                colors={[colors.black, colors.bgBox]}
+                style={styles.gradientWrapper}
+              >
                 {isProcessing ? (
                   <ActivityIndicator color="#D9B699" />
                 ) : (
@@ -641,14 +732,13 @@ const SubscriptionPlanModal: React.FC<SubscriptionPlanModalProps> = ({
         </View>
       </View>
     );
-  };
-  
+  });
+
   return (
     <Modal visible={isVisible} animationType="slide" transparent>
       <View style={[StyleSheet.absoluteFill, styles.overlayBackground]}>
         <TouchableOpacity style={{ flex: 1 }} onPress={onClose} />
         <View style={[styles.modal, { backgroundColor: colors.bgBox }]}>
-          
           <ScrollView showsVerticalScrollIndicator={false}>
             <View style={styles.headerContainer}>
               <View style={styles.headerIconPlaceholder} />
@@ -676,7 +766,11 @@ const SubscriptionPlanModal: React.FC<SubscriptionPlanModalProps> = ({
             </ImageBackground>
 
             {isLoading ? (
-              <ActivityIndicator size="large" color={colors.primary} style={{ height: 400 }} />
+              <ActivityIndicator
+                size="large"
+                color={colors.primary}
+                style={{ height: 400 }}
+              />
             ) : (
               <View style={styles.carouselSection}>
                 <FlatList
@@ -686,13 +780,19 @@ const SubscriptionPlanModal: React.FC<SubscriptionPlanModalProps> = ({
                   horizontal
                   showsHorizontalScrollIndicator={false}
                   contentContainerStyle={{ paddingHorizontal: 0 }}
-                  ItemSeparatorComponent={() => <View style={{ width: CARD_SPACING }} />}
+                  ItemSeparatorComponent={() => (
+                    <View style={{ width: CARD_SPACING }} />
+                  )}
+                  removeClippedSubviews={true}
+                  maxToRenderPerBatch={5}
+                  updateCellsBatchingPeriod={50}
+                  initialNumToRender={3}
+                  windowSize={5}
                 />
               </View>
             )}
-            
+
             {/* Cancel Button ko yahan se hata diya gaya hai (header me close button hai) */}
-            
           </ScrollView>
         </View>
       </View>
@@ -894,4 +994,3 @@ const styles = StyleSheet.create({
   gradientFill: {},
   startText: {},
 });
-

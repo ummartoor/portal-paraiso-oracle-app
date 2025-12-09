@@ -178,7 +178,11 @@ const TarotReadingHistoryDetail: React.FC = () => {
                 <View key={rowIndex} style={styles.selectedRow}>
                   {row.map((card: SelectedCard) => (
                     <View key={card.card_id} style={styles.box}>
-                      <Image source={{ uri: card.image.url }} style={styles.boxImg} />
+                      <Image
+                        source={{ uri: card.image.url }}
+                        style={styles.boxImg}
+                        resizeMode="cover"
+                      />
                     </View>
                   ))}
                   {row.length < 3 &&

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -13,78 +13,80 @@ import { useShallow } from 'zustand/react/shallow';
 import { Fonts } from '../../../constants/fonts';
 import GradientBox from '../../../components/GradientBox';
 import { useThemeStore } from '../../../store/useThemeStore';
-
 import {
   useAstrologyStore,
-  HoroscopeHistoryItem, 
-} from '../../../store/useAstologyStore'; 
+  HoroscopeHistoryItem,
+} from '../../../store/useAstologyStore';
 import { useTranslation } from 'react-i18next';
 
 const AstrologyHistoryList: React.FC = () => {
   const navigation = useNavigation<any>();
-  const { colors } = useThemeStore(s => s.theme);
+  const colors = useThemeStore(s => s.theme.colors);
   const { t } = useTranslation();
   // Getting state and actions from useAstrologyStore
-  const { horoscopeHistory, isHistoryLoading, getHoroscopeHistory } = useAstrologyStore(
-    useShallow((state) => ({
-      horoscopeHistory: state.horoscopeHistory,
-      isHistoryLoading: state.isHistoryLoading,
-      getHoroscopeHistory: state.getHoroscopeHistory,
-    }))
-  );
+  const { horoscopeHistory, isHistoryLoading, getHoroscopeHistory } =
+    useAstrologyStore(
+      useShallow(state => ({
+        horoscopeHistory: state.horoscopeHistory,
+        isHistoryLoading: state.isHistoryLoading,
+        getHoroscopeHistory: state.getHoroscopeHistory,
+      })),
+    );
 
   // Fetch history when the screen comes into focus
   useFocusEffect(
     React.useCallback(() => {
       getHoroscopeHistory();
-    }, [getHoroscopeHistory])
+    }, [getHoroscopeHistory]),
   );
 
-  const formatDate = (dateString: string) => {
+  const formatDate = useCallback((dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', {
       day: 'numeric',
       month: 'short',
     });
-  };
+  }, []);
 
-  const renderHistoryItem = ({ item }: { item: HoroscopeHistoryItem }) => (
-    <TouchableOpacity
-      style={styles.historyCard}
-      activeOpacity={0.7}
-      onPress={() => {
-  
-        navigation.navigate('AstrologyHistoryDetail', { horoscopeItem: item });
-      }}
-    >
-      <Image
-        // Changed icon to represent Astrology
-        source={require('../../../assets/images/astrology.png')}
-        style={styles.cardIcon}
-      />
-      <View style={styles.cardTextContainer}>
-        {/* Changed title to ASTROLOGY */}
-        <Text style={styles.cardTitle}>ASTROLOGY</Text>
-        {/* Changed subtitle to display the dynamic user_question */}
-        <Text style={styles.cardSubtitle} numberOfLines={2}>
-          {item.user_question}
-        </Text>
-      </View>
-      <View style={styles.cardRightContainer}>
-        {/* Formatting the dynamic date from the item */}
-        <Text style={styles.cardDate}>{formatDate(item.date)}</Text>
+  const handleItemPress = useCallback(
+    (item: HoroscopeHistoryItem) => {
+      navigation.navigate('AstrologyHistoryDetail', { horoscopeItem: item });
+    },
+    [navigation],
+  );
 
-        <GradientBox
-          colors={[colors.black, colors.bgBox]}
-          style={styles.iconWrapper}
-        >
-          <Image
-            source={require('../../../assets/icons/rightArrow.png')}
-            style={styles.arrowIcon}
-          />
-        </GradientBox>
-      </View>
-    </TouchableOpacity>
+  const renderHistoryItem = useCallback(
+    ({ item }: { item: HoroscopeHistoryItem }) => (
+      <TouchableOpacity
+        style={styles.historyCard}
+        activeOpacity={0.7}
+        onPress={() => handleItemPress(item)}
+      >
+        <Image
+          source={require('../../../assets/images/astrology.png')}
+          style={styles.cardIcon}
+        />
+        <View style={styles.cardTextContainer}>
+          <Text style={styles.cardTitle}>ASTROLOGY</Text>
+          <Text style={styles.cardSubtitle} numberOfLines={2}>
+            {item.user_question}
+          </Text>
+        </View>
+        <View style={styles.cardRightContainer}>
+          <Text style={styles.cardDate}>{formatDate(item.date)}</Text>
+          <GradientBox
+            colors={[colors.black, colors.bgBox]}
+            style={styles.iconWrapper}
+          >
+            <Image
+              source={require('../../../assets/icons/rightArrow.png')}
+              style={styles.arrowIcon}
+            />
+          </GradientBox>
+        </View>
+      </TouchableOpacity>
+    ),
+    [handleItemPress, formatDate, colors],
   );
 
   if (isHistoryLoading) {
@@ -94,7 +96,10 @@ const AstrologyHistoryList: React.FC = () => {
   }
 
   // Handle case where history might be null initially or empty
-  if (!isHistoryLoading && (!horoscopeHistory || horoscopeHistory.length === 0)) {
+  if (
+    !isHistoryLoading &&
+    (!horoscopeHistory || horoscopeHistory.length === 0)
+  ) {
     return (
       <View style={styles.emptyContainer}>
         <Text style={styles.emptyText}>{t('EMPTY_TEXT')}</Text>
@@ -102,16 +107,31 @@ const AstrologyHistoryList: React.FC = () => {
     );
   }
 
+  const keyExtractor = useCallback(
+    (item: HoroscopeHistoryItem) => item._id,
+    [],
+  );
+
+  const contentContainerStyle = useMemo(
+    () => ({
+      paddingHorizontal: 16,
+      paddingTop: 20,
+      paddingBottom: 70,
+    }),
+    [],
+  );
+
   return (
     <FlatList
       data={horoscopeHistory}
       renderItem={renderHistoryItem}
-      keyExtractor={(item) => item._id}
-      contentContainerStyle={{
-        paddingHorizontal: 16,
-        paddingTop: 20,
-        paddingBottom: 70,
-      }}
+      keyExtractor={keyExtractor}
+      contentContainerStyle={contentContainerStyle}
+      removeClippedSubviews={true}
+      maxToRenderPerBatch={10}
+      updateCellsBatchingPeriod={50}
+      initialNumToRender={10}
+      windowSize={10}
     />
   );
 };

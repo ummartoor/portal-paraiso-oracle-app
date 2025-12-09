@@ -21,7 +21,8 @@ import { AppStackParamList } from '../../../navigation/routeTypes';
 import CarouselCard, { CardItem } from './CarouselCards';
 import { useAuthStore } from '../../../store/useAuthStore';
 import { useTranslation } from 'react-i18next';
-import { useGetNotificationsStore } from '../../../store/useGetNotificationsStore'; 
+import { useGetNotificationsStore } from '../../../store/useGetNotificationsStore';
+import { useShallow } from 'zustand/react/shallow';
 import GradientBox from '../../../components/GradientBox';
 import { useInterstitialAd } from '../../../hooks/useInterstitialAd';
 import HightlightsCarouselCards from './HightlightsCarouselCards';
@@ -34,7 +35,7 @@ type CardBoxProps = {
 };
 
 const CardBox: React.FC<CardBoxProps> = ({ label, icon, onPress }) => {
-  const { colors } = useThemeStore(s => s.theme);
+  const colors = useThemeStore(s => s.theme.colors);
 
   return (
     <TouchableOpacity
@@ -62,22 +63,14 @@ const CardBox: React.FC<CardBoxProps> = ({ label, icon, onPress }) => {
 };
 
 const HomeScreen: React.FC = () => {
-  const theme = useThemeStore(state => state.theme);
-
-  const { colors } = theme;
-  const { user, fetchCurrentUser } = useAuthStore();
-  useFocusEffect(
-    useCallback(() => {
-      fetchCurrentUser();
-    }, []),
+  const colors = useThemeStore(s => s.theme.colors);
+  const { user, fetchCurrentUser } = useAuthStore(
+    useShallow(state => ({
+      user: state.user,
+      fetchCurrentUser: state.fetchCurrentUser,
+    })),
   );
   const { showAd } = useInterstitialAd();
-
-  const handleButtonPress = () => {
-    // 2. Call showAd() when you want to display the ad
-    console.log('Showing Ad...');
-    showAd();
-  };
   const navigation =
     useNavigation<NativeStackNavigationProp<AppStackParamList>>();
   const { t } = useTranslation();
@@ -86,16 +79,28 @@ const HomeScreen: React.FC = () => {
   useFocusEffect(
     useCallback(() => {
       fetchCurrentUser();
-      getUnreadCount(); // Fetch the count every time the screen is focused
-    }, []),
+      getUnreadCount();
+    }, [fetchCurrentUser, getUnreadCount]),
   );
-  const onPressCarouselCard = (item: CardItem) => {
-    if (item.route) {
-      navigation.navigate(item.route as any);
-    } else {
-      console.warn('No route defined for card:', item.id);
+
+  const handleButtonPress = useCallback(() => {
+    if (__DEV__) {
+      console.log('Showing Ad...');
     }
-  };
+    showAd();
+  }, [showAd]);
+  const onPressCarouselCard = useCallback(
+    (item: CardItem) => {
+      if (item.route) {
+        navigation.navigate(item.route as any);
+      } else {
+        if (__DEV__) {
+          console.warn('No route defined for card:', item.id);
+        }
+      }
+    },
+    [navigation],
+  );
 
   return (
     <ImageBackground
@@ -130,7 +135,7 @@ const HomeScreen: React.FC = () => {
               />
               <View style={[styles.onlineDot, { borderColor: colors.white }]} />
             </TouchableOpacity>
-{/* 
+            {/* 
             <TouchableOpacity
               style={styles.headerIconBtn}
               onPress={() => navigation.navigate('Notification')}
@@ -142,7 +147,7 @@ const HomeScreen: React.FC = () => {
               />
             </TouchableOpacity> */}
 
-               <TouchableOpacity
+            <TouchableOpacity
               style={styles.headerIconBtn}
               onPress={() => navigation.navigate('Notification')}
             >
@@ -153,7 +158,9 @@ const HomeScreen: React.FC = () => {
               />
               {unreadCount > 0 && (
                 <View style={styles.notificationBadge}>
-                  <Text style={styles.notificationBadgeText}>{unreadCount}</Text>
+                  <Text style={styles.notificationBadgeText}>
+                    {unreadCount}
+                  </Text>
                 </View>
               )}
             </TouchableOpacity>
@@ -175,50 +182,46 @@ const HomeScreen: React.FC = () => {
             </Text>
           </View>
 
-  {/* Hightlight Carousel */}
+          {/* Hightlight Carousel */}
           <View style={{ marginTop: 22 }}>
-            <HightlightsCarouselCards 
+            <HightlightsCarouselCards
             // onPressCard={onPressCarouselCard}
-             />
+            />
           </View>
           {/* Carousel */}
           <View style={{ marginTop: 30 }}>
             <CarouselCard onPressCard={onPressCarouselCard} />
           </View>
 
-
-
-<View style={styles.aiChatContainer}>
+          <View style={styles.aiChatContainer}>
             <Text style={[styles.aiChatTitle, { color: colors.white }]}>
-         {t('home_ai_chat_title')}
+              {t('home_ai_chat_title')}
             </Text>
             <Text style={[styles.aiChatSubtitle, { color: colors.white }]}>
-       {t('home_ai_chat_subtitle')}
+              {t('home_ai_chat_subtitle')}
             </Text>
-            
+
             <TouchableOpacity
               activeOpacity={0.8}
-         
-              onPress={() => navigation.navigate('ChatDetail')} 
+              onPress={() => navigation.navigate('ChatDetail')}
               style={styles.aiChatButtonWrapper}
             >
               <GradientBox
-         
-                colors={[colors.bgBox, colors.black]} 
+                colors={[colors.bgBox, colors.black]}
                 style={[styles.aiChatGradient, { borderColor: colors.primary }]}
               >
                 <Image
-             
-                  source={require('../../../assets/images/chatAvatar.png')} 
+                  source={require('../../../assets/images/chatAvatar.png')}
                   style={styles.aiChatButtonIcon}
                 />
-                <Text style={[styles.aiChatButtonText, { color: colors.white }]}>
+                <Text
+                  style={[styles.aiChatButtonText, { color: colors.white }]}
+                >
                   {t('home_ai_chat_button')}
                 </Text>
               </GradientBox>
             </TouchableOpacity>
           </View>
-
 
           {/* Boxes without map */}
           <View style={styles.cardBoxSection}>
@@ -227,9 +230,9 @@ const HomeScreen: React.FC = () => {
               label={t('home_daily_wisdom_card')}
               icon={require('../../../assets/icons/dailyWisdomIcon.png')}
               onPress={() => {
-                      Vibration.vibrate([0, 35, 40, 35]); 
-                navigation.navigate('DailyWisdomCardScreen')}
-              }
+                Vibration.vibrate([0, 35, 40, 35]);
+                navigation.navigate('DailyWisdomCardScreen');
+              }}
             />
 
             {/* Second Box */}
@@ -237,8 +240,9 @@ const HomeScreen: React.FC = () => {
               label={t('home_ritual_tip')}
               icon={require('../../../assets/icons/RitualTipIcon.png')}
               onPress={() => {
-                      Vibration.vibrate([0, 35, 40, 35]); 
-                navigation.navigate('RitualTipScreen')}}
+                Vibration.vibrate([0, 35, 40, 35]);
+                navigation.navigate('RitualTipScreen');
+              }}
             />
           </View>
 
@@ -351,14 +355,11 @@ const styles = StyleSheet.create({
   aiChatContainer: {
     marginTop: 30,
     paddingHorizontal: 20,
-   
   },
   aiChatTitle: {
     fontFamily: Fonts.cormorantSCBold,
     fontSize: 22,
     letterSpacing: 0.5,
-
-  
   },
   aiChatSubtitle: {
     fontFamily: Fonts.aeonikRegular,
@@ -374,26 +375,25 @@ const styles = StyleSheet.create({
   },
   aiChatGradient: {
     height: 60,
-    borderRadius: 30, 
-    borderWidth: 1, 
-    
+    borderRadius: 30,
+    borderWidth: 1,
+
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
- 
   },
   aiChatButtonIcon: {
     width: 32,
     height: 32,
-    borderRadius: 16, 
-    marginRight: 12, 
+    borderRadius: 16,
+    marginRight: 12,
   },
   aiChatButtonText: {
     fontFamily: Fonts.aeonikRegular,
     fontSize: 16,
     letterSpacing: 0.5,
   },
-   notificationBadge: {
+  notificationBadge: {
     position: 'absolute',
     top: 5,
     right: 5,

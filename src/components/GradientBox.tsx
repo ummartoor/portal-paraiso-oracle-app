@@ -1,11 +1,11 @@
-import React from "react";
-import LinearGradient from "react-native-linear-gradient";
-import { StyleSheet, ViewStyle } from "react-native";
+import React, { useMemo } from 'react';
+import LinearGradient from 'react-native-linear-gradient';
+import { StyleSheet, ViewStyle } from 'react-native';
 
 interface GradientBoxProps {
   children: React.ReactNode;
   style?: ViewStyle | ViewStyle[];
-  colors: (string | undefined)[]; 
+  colors: (string | undefined)[];
 }
 
 const GradientBox: React.FC<GradientBoxProps> = ({
@@ -13,20 +13,24 @@ const GradientBox: React.FC<GradientBoxProps> = ({
   style,
   colors,
 }) => {
+  const safeColors = useMemo(() => {
+    const filtered = colors.filter(Boolean) as string[];
+    // Fallback if less than 2 colors provided
+    if (filtered.length < 2) {
+      return ['#000000', '#333333'];
+    }
+    return filtered;
+  }, [colors]);
 
-  const safeColors = colors.filter(Boolean) as string[];
-
-  // fallback if less than 2 colors provided
-  if (safeColors.length < 2) {
-    safeColors.push("#000000", "#333333");
-  }
+  const gradientStart = useMemo(() => ({ x: 0.5, y: 0 }), []);
+  const gradientEnd = useMemo(() => ({ x: 0.5, y: 1 }), []);
 
   return (
     <LinearGradient
       colors={safeColors}
       style={[styles.gradient, style]}
-      start={{ x: 0.5, y: 0 }}  
-      end={{ x: 0.5, y: 1 }}    
+      start={gradientStart}
+      end={gradientEnd}
     >
       {children}
     </LinearGradient>

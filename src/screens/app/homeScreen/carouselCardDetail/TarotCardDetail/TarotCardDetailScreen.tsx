@@ -80,7 +80,8 @@ const shuffleArray = (array: TarotCardFromAPI[]): TarotCardFromAPI[] => {
     randomIndex = Math.floor(Math.random() * currentIndex);
     currentIndex--;
     [newArray[currentIndex], newArray[randomIndex]] = [
-      newArray[randomIndex], newArray[currentIndex],
+      newArray[randomIndex],
+      newArray[currentIndex],
     ];
   }
   return newArray;
@@ -119,7 +120,7 @@ const TarotCardDetailScreen: React.FC = () => {
     saveReading,
     isSavingLoading,
   } = useTarotCardStore();
-  
+
   const { preloadSpeech } = useOpenAiStore();
 
   const [fullDeck, setFullDeck] = useState<DeckCard[]>([]);
@@ -128,13 +129,15 @@ const TarotCardDetailScreen: React.FC = () => {
   const [showReading, setShowReading] = useState(false);
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
   const [showRevealGrid, setShowRevealGrid] = useState(false);
-  
+
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
   // --- NEW: State for preloading audio ---
-  const [preloadedAudioPath, setPreloadedAudioPath] = useState<string | null>(null);
+  const [preloadedAudioPath, setPreloadedAudioPath] = useState<string | null>(
+    null,
+  );
   const [isPreloadingAudio, setIsPreloadingAudio] = useState(false);
 
-const { showAd } = useInterstitialAd();
+  const { showAd } = useInterstitialAd();
   const selectedCardsScrollViewRef = useRef<ScrollView>(null);
 
   // const handleSaveReading = async () => {
@@ -143,7 +146,7 @@ const { showAd } = useInterstitialAd();
   //   await saveReading();
   //   navigation.navigate('MainTabs');
   // };
-const performSaveAndNavigate = async () => {
+  const performSaveAndNavigate = async () => {
     if (isSavingLoading) return; // Check again in case
     await saveReading();
     navigation.navigate('MainTabs');
@@ -169,7 +172,7 @@ const performSaveAndNavigate = async () => {
 
   const maxIndex = availableDeck.length > 0 ? availableDeck.length - 1 : 0;
   const progress = useSharedValue(0);
-  
+
   useEffect(() => {
     fetchTarotCards();
   }, [fetchTarotCards]);
@@ -193,30 +196,37 @@ const performSaveAndNavigate = async () => {
       progress.value = withTiming(newMaxIndex);
     }
   }, [availableDeck.length, progress]);
-  
+
   // --- NEW: useEffect to PRELOAD audio when reading data is ready ---
   useEffect(() => {
     const prepareReadingAudio = async () => {
-        // We only preload if we have the necessary data and a unique ID for the reading
-        if (readingData?.reading?.introduction && selectedCards.length > 0) {
-            setIsPreloadingAudio(true);
-            const textToPreload = `An introduction to your reading: ${readingData.reading.introduction}`;
-            
-            // --- THE FIX IS HERE ---
-            // Create a unique ID from the selected cards to use for caching the audio file.
-            // Sorting ensures the ID is the same regardless of selection order.
-            const readingId = selectedCards.map(c => c._id).sort().join('-');
-            
-            const audioPath = await preloadSpeech(textToPreload, readingId);
-            
-            if (audioPath) {
-                setPreloadedAudioPath(audioPath);
-                console.log('Tarot reading audio preloaded successfully.');
-            } else {
-                console.log('Failed to preload tarot reading audio.');
-            }
-            setIsPreloadingAudio(false);
+      // We only preload if we have the necessary data and a unique ID for the reading
+      if (readingData?.reading?.introduction && selectedCards.length > 0) {
+        setIsPreloadingAudio(true);
+        const textToPreload = `An introduction to your reading: ${readingData.reading.introduction}`;
+
+        // --- THE FIX IS HERE ---
+        // Create a unique ID from the selected cards to use for caching the audio file.
+        // Sorting ensures the ID is the same regardless of selection order.
+        const readingId = selectedCards
+          .map(c => c._id)
+          .sort()
+          .join('-');
+
+        const audioPath = await preloadSpeech(textToPreload, readingId);
+
+        if (audioPath) {
+          setPreloadedAudioPath(audioPath);
+          if (__DEV__) {
+            console.log('Tarot reading audio preloaded successfully.');
+          }
+        } else {
+          if (__DEV__) {
+            console.log('Failed to preload tarot reading audio.');
+          }
         }
+        setIsPreloadingAudio(false);
+      }
     };
 
     prepareReadingAudio();
@@ -260,10 +270,9 @@ const performSaveAndNavigate = async () => {
         console.error('Could not play preloaded audio', e);
       }
     } else {
-        console.warn('Audio is not ready yet or failed to preload.');
+      console.warn('Audio is not ready yet or failed to preload.');
     }
   };
-
 
   const handleSelect = (card: DeckCard) => {
     setSelectedCards(prev => [...prev, card]);
@@ -436,35 +445,34 @@ const performSaveAndNavigate = async () => {
                     </Text>
                   </View>
                   <View style={styles.readingCardsContainer}>
-                    <ScrollView nestedScrollEnabled={true}>
-                      {readingData?.selected_cards
-                        .reduce((rows: any[][], card, index) => {
-                          if (index % 3 === 0) rows.push([card]);
-                          else rows[rows.length - 1].push(card);
-                          return rows;
-                        }, [])
-                        .map((row, rowIndex) => (
-                          <View key={rowIndex} style={styles.selectedRow}>
-                            {row.map(card => (
-                              <View key={card.card_id} style={styles.box}>
-                                <Image
-                                  source={{ uri: card.image.url }}
-                                  style={styles.boxImg}
-                                />
-                              </View>
+                    {readingData?.selected_cards
+                      .reduce((rows: any[][], card, index) => {
+                        if (index % 3 === 0) rows.push([card]);
+                        else rows[rows.length - 1].push(card);
+                        return rows;
+                      }, [])
+                      .map((row, rowIndex) => (
+                        <View key={rowIndex} style={styles.selectedRow}>
+                          {row.map(card => (
+                            <View key={card.card_id} style={styles.box}>
+                              <Image
+                                source={{ uri: card.image.url }}
+                                style={styles.boxImg}
+                                resizeMode="cover"
+                              />
+                            </View>
+                          ))}
+                          {row.length < 3 &&
+                            [...Array(3 - row.length)].map((_, i) => (
+                              <View
+                                key={`p-reading-${rowIndex}-${i}`}
+                                style={[styles.box, { opacity: 0 }]}
+                              />
                             ))}
-                            {row.length < 3 &&
-                              [...Array(3 - row.length)].map((_, i) => (
-                                <View
-                                  key={`p-reading-${rowIndex}-${i}`}
-                                  style={[styles.box, { opacity: 0 }]}
-                                />
-                              ))}
-                          </View>
-                        ))}
-                    </ScrollView>
+                        </View>
+                      ))}
                   </View>
-                  
+
                   {/* --- NEW: Updated Playback Button UI for preloading --- */}
                   <View style={{ alignItems: 'center', marginTop: 10 }}>
                     <TouchableOpacity
@@ -474,7 +482,10 @@ const performSaveAndNavigate = async () => {
                       style={styles.playBtnContainer}
                     >
                       {isPreloadingAudio ? (
-                        <ActivityIndicator size="large" color={colors.primary} />
+                        <ActivityIndicator
+                          size="large"
+                          color={colors.primary}
+                        />
                       ) : (
                         <Image
                           source={
@@ -482,17 +493,20 @@ const performSaveAndNavigate = async () => {
                               ? require('../../../../../assets/icons/pauseIcon.png')
                               : require('../../../../../assets/icons/playIcon.png')
                           }
-                          style={{ 
-                              width: 40, 
-                              height: 40, 
-                              tintColor: (isPreloadingAudio || !preloadedAudioPath) ? '#999' : colors.primary 
+                          style={{
+                            width: 40,
+                            height: 40,
+                            tintColor:
+                              isPreloadingAudio || !preloadedAudioPath
+                                ? '#999'
+                                : colors.primary,
                           }}
                           resizeMode="contain"
                         />
                       )}
                     </TouchableOpacity>
                   </View>
-                  
+
                   <View style={styles.readingContentContainer}>
                     {readingData?.reading?.introduction && (
                       <>
@@ -519,7 +533,7 @@ const performSaveAndNavigate = async () => {
                       </>
                     )}
                   </View>
-                  
+
                   <View style={styles.shareRow}>
                     {/* <GradientBox
                       colors={[colors.black, colors.bgBox]}
@@ -561,7 +575,7 @@ const performSaveAndNavigate = async () => {
                     </TouchableOpacity>
                   </View>
                   <TouchableOpacity
-                    style={{ marginTop: 40, paddingHorizontal:20 }}
+                    style={{ marginTop: 40, paddingHorizontal: 20 }}
                     onPress={() => setShowSubscriptionModal(true)}
                   >
                     <View style={styles.buttonBorder}>
@@ -848,7 +862,6 @@ const styles = StyleSheet.create({
   },
   removeIcon: { width: 17, height: 17, tintColor: '#fff' },
   revealBtnWrap: {
-   
     paddingHorizontal: 20,
     paddingVertical: 15,
     marginTop: 'auto',
@@ -951,25 +964,12 @@ const styles = StyleSheet.create({
     paddingBottom: 100,
   },
   playBtnContainer: {
-      width: 60,
-      height: 60,
-      justifyContent: 'center',
-      alignItems: 'center',
-  }
+    width: 60,
+    height: 60,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
 });
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 // import React, { useEffect, useMemo, useState, useRef } from 'react';
 // import {
@@ -1014,7 +1014,6 @@ const styles = StyleSheet.create({
 // import { useTranslation } from 'react-i18next';
 // const { height: SCREEN_HEIGHT, width: SCREEN_WIDTH } = Dimensions.get('window');
 // import SoundPlayer from 'react-native-sound-player';
-
 
 // type TarotCardFromAPI = {
 //   _id: string;
@@ -1094,8 +1093,8 @@ const styles = StyleSheet.create({
 //     generateReading,
 //     readingData,
 //     isReadingLoading,
-//     saveReading, 
-//     isSavingLoading, 
+//     saveReading,
+//     isSavingLoading,
 //   } = useTarotCardStore();
 
 //   const [fullDeck, setFullDeck] = useState<DeckCard[]>([]);
@@ -1109,7 +1108,7 @@ const styles = StyleSheet.create({
 //   const selectedCardsScrollViewRef = useRef<ScrollView>(null);
 
 //   const handleSaveReading = async () => {
-//            Vibration.vibrate([0, 35, 40, 35]); 
+//            Vibration.vibrate([0, 35, 40, 35]);
 //     if (isSavingLoading) return;
 
 //     await saveReading();
@@ -1136,8 +1135,6 @@ const styles = StyleSheet.create({
 //   //   }
 //   // }, [apiCards]);
 
-
-
 //   // NEW UPDATED CODE
 // useEffect(() => {
 //     if (apiCards.length > 0) {
@@ -1151,13 +1148,12 @@ const styles = StyleSheet.create({
 //         ...card,
 //         cardBackImg,
 //       }));
-      
+
 //       setFullDeck(transformedDeck);
 //       progress.value = Math.floor(transformedDeck.length / 2);
 //     }
 // }, [apiCards]);
 
-  
 //   useEffect(() => {
 //     const newMaxIndex = availableDeck.length > 0 ? availableDeck.length - 1 : 0;
 //     if (progress.value > newMaxIndex) {
@@ -1210,12 +1206,12 @@ const styles = StyleSheet.create({
 //     triggerHaptic();
 //   };
 //   const handleStartRevealFlow = () => {
-       
+
 //     setShowVideo(true);
 //   };
 
 //   const handleRevealMeaning = async () => {
-//            Vibration.vibrate([0, 35, 40, 35]); 
+//            Vibration.vibrate([0, 35, 40, 35]);
 //     // FIX 4: Add a check for userQuestion before calling the API
 //     if (isReadingLoading || selectedCards.length === 0 || !userQuestion) return;
 
@@ -1227,7 +1223,7 @@ const styles = StyleSheet.create({
 //     if (result) {
 //       setShowRevealGrid(false);
 //       setShowReading(true);
-      
+
 //     }
 //   };
 
@@ -1257,21 +1253,21 @@ const styles = StyleSheet.create({
 
 //   return (
 //     <GestureHandlerRootView style={{ flex: 1 }}>
-//            
+//
 //       <ImageBackground
 //         source={require('../../../../../assets/images/backgroundImage.png')}
 //         style={{ flex: 1 }}
 //         resizeMode="cover"
 //       >
-//          
+//
 //         <SafeAreaView style={styles.container}>
-//                
+//
 //           <StatusBar
 //             barStyle="light-content"
 //             translucent
 //             backgroundColor="transparent"
 //           />
-//                  
+//
 //           {showVideo ? (
 //             <View style={styles.fullscreenCenter}>
 //               <Video
@@ -1284,7 +1280,7 @@ const styles = StyleSheet.create({
 //               <View style={styles.footer}>
 //                 <TouchableOpacity
 //                   onPress={() => {
-//                            Vibration.vibrate([0, 35, 40, 35]); 
+//                            Vibration.vibrate([0, 35, 40, 35]);
 //                     setShowVideo(false);
 //                     setShowRevealGrid(true);
 //                   }}
@@ -1317,7 +1313,7 @@ const styles = StyleSheet.create({
 //                 </View>
 //                 <View style={styles.revealGridContainer}>
 //                   <ScrollView contentContainerStyle={styles.selectedScroll}>
-//                                    
+//
 //                     {selectedCards
 //                       .reduce((rows: DeckCard[][], card, index) => {
 //                         if (index % 3 === 0) rows.push([card]);
@@ -1343,27 +1339,27 @@ const styles = StyleSheet.create({
 //                             ))}
 //                         </View>
 //                       ))}
-//                                      
+//
 //                   </ScrollView>
 //                 </View>
-//                              
+//
 //               </View>
-//                            
+//
 //               <View style={styles.footer}>
-//                                
+//
 //                 <TouchableOpacity
 //                   onPress={handleRevealMeaning}
 //                   activeOpacity={0.9}
 //                   disabled={isReadingLoading}
 //                 >
-//                                      
+//
 //                   <View style={styles.buttonBorder}>
-//                                            
+//
 //                     <GradientBox
 //                       colors={[colors.black, colors.bgBox]}
 //                       style={styles.revealBtnGrad}
 //                     >
-//                                                  
+//
 //                       {isReadingLoading ? (
 //                         <ActivityIndicator color="#fff" />
 //                       ) : (
@@ -1371,13 +1367,13 @@ const styles = StyleSheet.create({
 //                           {t('tarot_reveal_meaning_button')}
 //                         </Text>
 //                       )}
-//                                                
+//
 //                     </GradientBox>
-//                                          
+//
 //                   </View>
-//                                    
+//
 //                 </TouchableOpacity>
-//                              
+//
 //               </View>
 //             </>
 //           ) : showReading ? (
@@ -1392,11 +1388,11 @@ const styles = StyleSheet.create({
 //                       {t('tarot_your_reading_title')}
 //                     </Text>
 //                   </View>
-//                                    
+//
 //                   <View style={styles.readingCardsContainer}>
-//                                          
+//
 //                     <ScrollView nestedScrollEnabled={true}>
-//                                            
+//
 //                       {readingData?.selected_cards
 //                         .reduce((rows: any[][], card, index) => {
 //                           if (index % 3 === 0) rows.push([card]);
@@ -1405,7 +1401,7 @@ const styles = StyleSheet.create({
 //                         }, [])
 //                         .map((row, rowIndex) => (
 //                           <View key={rowIndex} style={styles.selectedRow}>
-//                                                        
+//
 //                             {row.map(card => (
 //                               <View key={card.card_id} style={styles.box}>
 //                                 <Image
@@ -1414,7 +1410,7 @@ const styles = StyleSheet.create({
 //                                 />
 //                               </View>
 //                             ))}
-//                                                          
+//
 //                             {row.length < 3 &&
 //                               [...Array(3 - row.length)].map((_, i) => (
 //                                 <View
@@ -1422,14 +1418,14 @@ const styles = StyleSheet.create({
 //                                   style={[styles.box, { opacity: 0 }]}
 //                                 />
 //                               ))}
-//                                                        
+//
 //                           </View>
 //                         ))}
-//                                            
+//
 //                     </ScrollView>
-//                                      
+//
 //                   </View>
-//                                    
+//
 //                   <View style={{ alignItems: 'center', marginTop: 10 }}>
 //                     <TouchableOpacity
 //                       onPress={onPressPlayToggle}
@@ -1446,13 +1442,13 @@ const styles = StyleSheet.create({
 //                       />
 //                     </TouchableOpacity>
 //                   </View>
-//                                                    
+//
 //                   <View style={styles.readingContentContainer}>
-//                                        
+//
 //                     {readingData?.reading?.introduction && (
 //                       <>
 //                         {/*                           <Text style={styles.readingTitle}>Introduction</Text> */}
-//                                                
+//
 //                         <Text style={styles.readingParagraph}>
 //                           "{readingData.reading.introduction}"
 //                         </Text>
@@ -1474,10 +1470,10 @@ const styles = StyleSheet.create({
 //                             </Text>
 //                           </TouchableOpacity>
 //                         </View>
-//                                            
+//
 //                       </>
 //                     )}
-//                                          
+//
 //                     {/* {readingData?.reading?.love && (
 //                         <>
 //                           <Text style={[styles.readingTitle, { marginTop: 15 }]}>Love</Text>
@@ -1490,9 +1486,9 @@ const styles = StyleSheet.create({
 //                           <Text style={styles.readingParagraph}>"{readingData.reading.career}"</Text>
 //                         </>
 //                       )} */}
-//                                  
+//
 //                   </View>
-//                                
+//
 //                   <View style={styles.shareRow}>
 //                     <GradientBox
 //                       colors={[colors.black, colors.bgBox]}
@@ -1537,7 +1533,7 @@ const styles = StyleSheet.create({
 //                       </GradientBox>
 //                     </TouchableOpacity>
 //                   </View>
-//                              
+//
 //                   <TouchableOpacity
 //                     style={{ marginTop: 40, alignItems: 'center' }}
 //                     onPress={() => setShowSubscriptionModal(true)}
@@ -1553,36 +1549,36 @@ const styles = StyleSheet.create({
 //                       </GradientBox>
 //                     </View>
 //                   </TouchableOpacity>
-//                                  
+//
 //                 </ScrollView>
 //               </View>
 //             </>
 //           ) : (
 //             <>
-//                                  
+//
 //               <View style={styles.topContentContainer}>
-//                                             {renderHeader()}                   
-//                      
+//                                             {renderHeader()}
+//
 //                 <View style={styles.content}>
-//                                          
+//
 //                   <Text style={[styles.focusTitle, { color: colors.primary }]}>
 //                     {t('tarot_focus_question_title')}
 //                   </Text>
-//                                              
+//
 //                   <Text style={[styles.paragraph, { color: colors.white }]}>
 //                     {t('tarot_focus_question_subtitle')}
 //                   </Text>
-//                                          
+//
 //                 </View>
-//                                          
+//
 //                 {selectedCards.length > 0 && (
 //                   <View style={styles.selectedArea}>
-//                                              
+//
 //                     <ScrollView
 //                       ref={selectedCardsScrollViewRef}
 //                       contentContainerStyle={styles.selectedScroll}
 //                     >
-//                                                
+//
 //                       {selectedCards
 //                         .reduce((rows: DeckCard[][], card, index) => {
 //                           if (index % 3 === 0) rows.push([card]);
@@ -1591,7 +1587,7 @@ const styles = StyleSheet.create({
 //                         }, [])
 //                         .map((row, rowIndex) => (
 //                           <View key={rowIndex} style={styles.selectedRow}>
-//                                                                
+//
 //                             {row.map(card => (
 //                               <View key={card._id} style={styles.box}>
 //                                 <Image
@@ -1609,7 +1605,7 @@ const styles = StyleSheet.create({
 //                                 </TouchableOpacity>
 //                               </View>
 //                             ))}
-//                                                                
+//
 //                             {row.length < 3 &&
 //                               [...Array(3 - row.length)].map((_, i) => (
 //                                 <View
@@ -1617,23 +1613,23 @@ const styles = StyleSheet.create({
 //                                   style={[styles.box, { opacity: 0 }]}
 //                                 />
 //                               ))}
-//                                                              
+//
 //                           </View>
 //                         ))}
-//                                                
+//
 //                     </ScrollView>
-//                                                
+//
 //                   </View>
 //                 )}
-//                                          
+//
 //                 {selectedCards.length > 0 && (
 //                   <View style={styles.revealBtnWrap}>
-//                                                
+//
 //                     <TouchableOpacity
 //                       onPress={handleStartRevealFlow}
 //                       activeOpacity={0.9}
 //                     >
-//                                                    
+//
 //                       <View style={styles.buttonBorder}>
 //                         <GradientBox
 //                           colors={[colors.black, colors.bgBox]}
@@ -1644,16 +1640,16 @@ const styles = StyleSheet.create({
 //                           </Text>
 //                         </GradientBox>
 //                       </View>
-//                                                  
+//
 //                     </TouchableOpacity>
-//                                                
+//
 //                   </View>
 //                 )}
-//                                      
+//
 //               </View>
-//                                      
+//
 //               <View style={styles.deckWrap}>
-//                                            
+//
 //                 {isDeckLoading ? (
 //                   <ActivityIndicator size="large" color={colors.primary} />
 //                 ) : (
@@ -1668,18 +1664,18 @@ const styles = StyleSheet.create({
 //                     />
 //                   ))
 //                 )}
-//                                        
+//
 //                 {!isDeckLoading && (
 //                   <Text style={styles.hint}>
 //                     {t('tarot_tap_to_select_hint')}
 //                   </Text>
 //                 )}
-//                                      
+//
 //               </View>
-//                                  
+//
 //             </>
 //           )}
-//                      
+//
 //           <SubscriptionPlanModal
 //             isVisible={showSubscriptionModal}
 //             onClose={() => setShowSubscriptionModal(false)}
@@ -1688,11 +1684,11 @@ const styles = StyleSheet.create({
 //               setShowSubscriptionModal(false);
 //             }}
 //           />
-//                    
+//
 //         </SafeAreaView>
-//              
+//
 //       </ImageBackground>
-//        
+//
 //     </GestureHandlerRootView>
 //   );
 // };
@@ -1977,19 +1973,6 @@ const styles = StyleSheet.create({
 //     paddingBottom: 100,
 //   },
 // });
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 // import React, { useEffect, useMemo, useState, useRef } from 'react';
 // import {

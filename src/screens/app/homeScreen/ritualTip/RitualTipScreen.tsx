@@ -43,12 +43,12 @@ const RitualTipScreen: React.FC = () => {
     getDailyRitualTip,
     markRitualTipAsUsed,
   } = useRitualTipStore();
-  
+
   // --- 5. `preloadSpeech` function liya gaya ---
   const { preloadSpeech } = useOpenAiStore();
 
   const [isPlaying, setIsPlaying] = useState(false);
-  
+
   // --- 6. Audio preloading ke liye states ---
   const [audioFilePath, setAudioFilePath] = useState<string | null>(null);
   const [isPreloadingAudio, setIsPreloadingAudio] = useState(false);
@@ -63,14 +63,19 @@ const RitualTipScreen: React.FC = () => {
       if (!ritualTip.is_used) {
         markRitualTipAsUsed();
       }
-      
+
       const preload = async () => {
         setIsPreloadingAudio(true);
-        const audioPath = await preloadSpeech(ritualTip.ai_response, ritualTip.ritual_tip.id);
+        const audioPath = await preloadSpeech(
+          ritualTip.ai_response,
+          ritualTip.ritual_tip.id,
+        );
         if (audioPath) {
           setAudioFilePath(audioPath);
         } else {
-          console.log('Failed to preload ritual tip audio.');
+          if (__DEV__) {
+            console.log('Failed to preload ritual tip audio.');
+          }
         }
         setIsPreloadingAudio(false);
       };
@@ -201,7 +206,12 @@ const RitualTipScreen: React.FC = () => {
                 source={isPlaying ? PauseIcon : PlayIcon}
                 style={[
                   styles.playIcon,
-                  { tintColor: (isPreloadingAudio || !audioFilePath) ? '#999' : colors.primary }
+                  {
+                    tintColor:
+                      isPreloadingAudio || !audioFilePath
+                        ? '#999'
+                        : colors.primary,
+                  },
                 ]}
               />
             )}
@@ -334,13 +344,6 @@ const styles = StyleSheet.create({
   },
 });
 
-
-
-
-
-
-
-
 // import React, { useState, useEffect } from 'react';
 // import {
 //   View,
@@ -435,7 +438,7 @@ const styles = StyleSheet.create({
 //         SoundPlayer.playUrl(`file://${audioFilePath}`);
 //         setIsPlaying(true);
 //       } else {
-      
+
 //         setIsPlaying(true);
 //         const success = await generateAndPlaySpeech(ritualTip!.ai_response);
 //         if (!success) {
