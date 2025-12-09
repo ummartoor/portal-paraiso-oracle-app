@@ -18,6 +18,13 @@ import {
   TarotReadingHistoryItem,
 } from '../../../store/useTarotCardStore';
 import { useTranslation } from 'react-i18next';
+import {
+  Colors,
+  Spacing,
+  BorderRadius,
+  Shadows,
+} from '../../../constants/design';
+import { SkeletonListItem } from '../../../components/SkeletonLoader';
 
 const TarotHistoryList: React.FC = () => {
   const navigation = useNavigation<any>();
@@ -103,7 +110,11 @@ const TarotHistoryList: React.FC = () => {
 
   if (isHistoryLoading) {
     return (
-      <ActivityIndicator size="large" color="#D9B699" style={styles.loader} />
+      <View style={styles.skeletonContainer}>
+        {[1, 2, 3, 4, 5].map(i => (
+          <SkeletonListItem key={i} />
+        ))}
+      </View>
     );
   }
 
@@ -147,12 +158,15 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   historyCard: {
-    backgroundColor: '#4A3F50',
-    borderRadius: 20,
-    padding: 16,
+    backgroundColor: Colors.bgBox,
+    borderRadius: BorderRadius.xl,
+    padding: Spacing.lg,
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: Spacing.md,
+    borderWidth: 1,
+    borderColor: Colors.borderMuted,
+    ...Shadows.medium,
   },
   cardIcon: { width: 50, height: 50, marginRight: 12 },
   cardTextContainer: { flex: 1 },
@@ -175,16 +189,21 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   iconWrapper: {
-    width: 30,
-    height: 30,
-    borderRadius: 15, // circle
+    width: 32,
+    height: 32,
+    borderRadius: BorderRadius.round,
     justifyContent: 'center',
     alignItems: 'center',
+    ...Shadows.small,
   },
   arrowIcon: {
     width: 18,
     height: 18,
     resizeMode: 'contain',
     tintColor: '#fff',
+  },
+  skeletonContainer: {
+    paddingHorizontal: Spacing.md,
+    paddingTop: Spacing.md,
   },
 });

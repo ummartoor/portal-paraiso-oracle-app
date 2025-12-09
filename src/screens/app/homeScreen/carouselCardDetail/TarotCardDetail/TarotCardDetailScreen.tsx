@@ -34,6 +34,7 @@ import GradientBox from '../../../../../components/GradientBox';
 import { Fonts } from '../../../../../constants/fonts';
 import { useThemeStore } from '../../../../../store/useThemeStore';
 import { AppStackParamList } from '../../../../../navigation/routeTypes';
+import Pressable from '../../../../../components/Pressable';
 import Video from 'react-native-video';
 import { useTarotCardStore } from '../../../../../store/useTarotCardStore';
 import { useTranslation } from 'react-i18next';
@@ -649,21 +650,20 @@ const TarotCardDetailScreen: React.FC = () => {
                 )}
                 {selectedCards.length > 0 && (
                   <View style={styles.revealBtnWrap}>
-                    <TouchableOpacity
+                    <Pressable
                       onPress={handleStartRevealFlow}
-                      activeOpacity={0.9}
+                      hapticType="medium"
+                      style={styles.buttonBorder}
                     >
-                      <View style={styles.buttonBorder}>
-                        <GradientBox
-                          colors={[colors.black, colors.bgBox]}
-                          style={styles.revealBtnGrad}
-                        >
-                          <Text style={styles.revealBtnText}>
-                            {t('tarot_start_revealing_button')}
-                          </Text>
-                        </GradientBox>
-                      </View>
-                    </TouchableOpacity>
+                      <GradientBox
+                        colors={[colors.black, colors.bgBox]}
+                        style={styles.revealBtnGrad}
+                      >
+                        <Text style={styles.revealBtnText}>
+                          {t('tarot_start_revealing_button')}
+                        </Text>
+                      </GradientBox>
+                    </Pressable>
                   </View>
                 )}
               </View>
@@ -948,7 +948,7 @@ const styles = StyleSheet.create({
   buttonBorder: {
     borderColor: '#D9B699',
     borderWidth: 1,
-    borderRadius: 60,
+    borderRadius: 26,
     overflow: 'hidden',
   },
   video: {

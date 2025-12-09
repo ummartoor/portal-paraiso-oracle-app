@@ -27,6 +27,8 @@ import GradientBox from '../../../../components/GradientBox';
 import { Fonts } from '../../../../constants/fonts';
 import { useThemeStore } from '../../../../store/useThemeStore';
 import { AppStackParamList } from '../../../../navigation/routeTypes';
+import { SkeletonCardDetail } from '../../../../components/SkeletonLoader';
+import Pressable from '../../../../components/Pressable';
 
 // --- Import Icons ---
 const BackIcon = require('../../../../assets/icons/backIcon.png');
@@ -169,9 +171,21 @@ const DailyWisdomCardScreen: React.FC = () => {
       <ImageBackground
         source={require('../../../../assets/images/backgroundImage.png')}
         style={styles.bgImage}
+        resizeMode="cover"
       >
-        <SafeAreaView style={[styles.container, styles.centered]}>
-          <ActivityIndicator size="large" color={colors.primary} />
+        <SafeAreaView style={styles.container}>
+          <StatusBar
+            barStyle="light-content"
+            translucent
+            backgroundColor="transparent"
+          />
+          {renderHeader()}
+          <ScrollView contentContainerStyle={styles.scrollContent}>
+            <SkeletonCardDetail
+              width={SCREEN_WIDTH * 0.65}
+              height={SCREEN_WIDTH * 0.65 * 1.7}
+            />
+          </ScrollView>
         </SafeAreaView>
       </ImageBackground>
     );
@@ -256,19 +270,23 @@ const DailyWisdomCardScreen: React.FC = () => {
         {/* --- FOOTER BUTTON --- */}
         {!isRevealed && (
           <View style={styles.footer}>
-            <TouchableOpacity onPress={handleRevealCard} disabled={!wisdomCard}>
-              <View style={styles.buttonBorder}>
-                <GradientBox
-                  colors={[colors.black, colors.bgBox]}
-                  style={styles.mainButton}
-                >
-                  <Text style={styles.buttonText}>
-                    {/* --- TRANSLATED --- */}
-                    {t('daily_wisdom_reveal_button')}
-                  </Text>
-                </GradientBox>
-              </View>
-            </TouchableOpacity>
+            <Pressable
+              onPress={handleRevealCard}
+              disabled={!wisdomCard}
+              hapticType="medium"
+              haptic={!!wisdomCard}
+              style={styles.buttonBorder}
+            >
+              <GradientBox
+                colors={[colors.black, colors.bgBox]}
+                style={styles.mainButton}
+              >
+                <Text style={styles.buttonText}>
+                  {/* --- TRANSLATED --- */}
+                  {t('daily_wisdom_reveal_button')}
+                </Text>
+              </GradientBox>
+            </Pressable>
           </View>
         )}
 
@@ -387,8 +405,8 @@ const styles = StyleSheet.create({
   footer: { position: 'absolute', bottom: 40, left: 20, right: 20 },
   buttonBorder: {
     borderColor: '#D9B699',
-    borderWidth: 1.5,
-    borderRadius: 60,
+    borderWidth: 1,
+    borderRadius: 26,
     overflow: 'hidden',
   },
   mainButton: {
@@ -396,6 +414,7 @@ const styles = StyleSheet.create({
     width: '100%',
     justifyContent: 'center',
     alignItems: 'center',
+    borderRadius: 26,
   },
   buttonText: { color: '#fff', fontSize: 16, fontFamily: Fonts.aeonikRegular },
 });

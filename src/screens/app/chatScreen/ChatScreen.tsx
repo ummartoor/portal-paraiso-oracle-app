@@ -17,6 +17,14 @@ import { Fonts } from '../../../constants/fonts';
 import { useThemeStore } from '../../../store/useThemeStore';
 import GradientBox from '../../../components/GradientBox';
 import { useTranslation } from 'react-i18next';
+import {
+  Colors,
+  Spacing,
+  BorderRadius,
+  Shadows,
+} from '../../../constants/design';
+import { SkeletonListItem } from '../../../components/SkeletonLoader';
+import Pressable from '../../../components/Pressable';
 
 // Assets
 const addIcon = require('../../../assets/icons/newChatIcon.png');
@@ -24,7 +32,7 @@ const menuIcon = require('../../../assets/icons/dotIcon.png');
 
 const ChatScreen: React.FC = () => {
   const navigation = useNavigation<any>();
-  const { colors } = useThemeStore(s => s.theme);
+  const colors = useThemeStore(s => s.theme.colors);
   const { t } = useTranslation();
   const {
     sessions,
@@ -102,7 +110,13 @@ const ChatScreen: React.FC = () => {
   // Renders content when the list is empty
   const renderListEmpty = useCallback(() => {
     if (isLoadingSessions) {
-      return <ActivityIndicator color="#FFFFFF" style={{ marginTop: 30 }} />;
+      return (
+        <View style={styles.skeletonContainer}>
+          {[1, 2, 3, 4].map(i => (
+            <SkeletonListItem key={i} />
+          ))}
+        </View>
+      );
     }
     if (!isLoadingSessions && (!sessions || sessions.length === 0)) {
       return (
@@ -120,9 +134,10 @@ const ChatScreen: React.FC = () => {
   // renderItem for FlatList
   const renderSessionItem = useCallback(
     ({ item }: { item: ChatSession }) => (
-      <TouchableOpacity
+      <Pressable
         key={item.session_id}
-        style={styles.sessionItem}
+        style={[styles.sessionItem, Shadows.small]}
+        hapticType="light"
         onPress={() => handleSessionSelect(item.session_id)}
       >
         <View style={styles.sessionTextContainer}>
@@ -135,8 +150,10 @@ const ChatScreen: React.FC = () => {
             </Text>
           )}
         </View>
-        <TouchableOpacity
+        <Pressable
           style={styles.menuButton}
+          hapticType="light"
+          haptic={false}
           onPress={() =>
             setMenuVisibleFor(
               menuVisibleFor === item.session_id ? null : item.session_id,
@@ -144,19 +161,20 @@ const ChatScreen: React.FC = () => {
           }
         >
           <Image source={menuIcon} style={styles.menuIcon} />
-        </TouchableOpacity>
+        </Pressable>
 
         {menuVisibleFor === item.session_id && (
-          <View style={styles.dropdownMenu}>
-            <TouchableOpacity
+          <View style={[styles.dropdownMenu, Shadows.medium]}>
+            <Pressable
               style={styles.dropdownItem}
+              hapticType="medium"
               onPress={() => handleDelete(item.session_id)}
             >
               <Text style={styles.dropdownText}>{t('chat_delete_button')}</Text>
-            </TouchableOpacity>
+            </Pressable>
           </View>
         )}
-      </TouchableOpacity>
+      </Pressable>
     ),
     [handleSessionSelect, handleDelete, menuVisibleFor, t],
   );
@@ -174,15 +192,18 @@ const ChatScreen: React.FC = () => {
         <View style={styles.headerContainer}>
           <Text style={styles.headerTitle}>{t('chat_screen_title')}</Text>
 
-          <TouchableOpacity onPress={handleNewChat}>
+          <Pressable hapticType="medium" onPress={handleNewChat}>
             <GradientBox
-              colors={[colors.black, colors.bgBox]}
-              style={styles.newChatButton}
+              colors={[
+                colors.black || Colors.black,
+                colors.bgBox || Colors.bgBox,
+              ]}
+              style={[styles.newChatButton, Shadows.medium]}
             >
               <Image source={addIcon} style={styles.addIcon} />
               <Text style={styles.newChatText}>{t('chat_start_new_chat')}</Text>
             </GradientBox>
-          </TouchableOpacity>
+          </Pressable>
 
           <Text style={styles.sessionListHeader}>{t('chat_recent_chats')}</Text>
         </View>
@@ -224,14 +245,14 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
   newChatButton: {
-    height: 56,
-    marginTop: 20,
+    height: 60,
+    marginTop: Spacing.xl,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 15,
-    borderWidth: 1,
-    borderColor: '#D9B699',
+    borderRadius: BorderRadius.lg,
+    borderWidth: 1.5,
+    borderColor: Colors.primary,
   },
   addIcon: { width: 24, height: 24, marginRight: 12, tintColor: '#FFFFFF' },
   newChatText: {
@@ -251,12 +272,14 @@ const styles = StyleSheet.create({
     paddingBottom: 60,
   },
   sessionItem: {
-    backgroundColor: 'rgba(47, 43, 59, 0.8)',
-    padding: 20,
-    borderRadius: 12,
-    marginBottom: 10,
+    backgroundColor: Colors.bgOverlay,
+    padding: Spacing.xl,
+    borderRadius: BorderRadius.lg,
+    marginBottom: Spacing.md,
     flexDirection: 'row',
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: Colors.borderMuted,
   },
   sessionTextContainer: { flex: 1 },
   sessionTitle: {
@@ -276,24 +299,32 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: 45,
     top: 40,
-    backgroundColor: '#3A3A3C',
-    borderRadius: 8,
-    padding: 5,
+    backgroundColor: Colors.bgBoxDark,
+    borderRadius: BorderRadius.md,
+    padding: Spacing.xs,
     zIndex: 100,
-    elevation: 5,
+    borderWidth: 1,
+    borderColor: Colors.borderMuted,
   },
-  dropdownItem: { paddingVertical: 8, paddingHorizontal: 15 },
+  dropdownItem: {
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.lg,
+    borderRadius: BorderRadius.sm,
+  },
   dropdownText: {
-    color: '#FF453A',
+    color: Colors.error,
     fontSize: 15,
     fontFamily: Fonts.aeonikRegular,
   },
   noSessionsContainer: {
     alignItems: 'center',
-    paddingVertical: 40,
-    backgroundColor: 'rgba(47, 43, 59, 0.5)',
-    borderRadius: 12,
-    marginTop: 20,
+    paddingVertical: Spacing.huge,
+    paddingHorizontal: Spacing.xl,
+    backgroundColor: Colors.bgOverlayLight,
+    borderRadius: BorderRadius.lg,
+    marginTop: Spacing.xl,
+    borderWidth: 1,
+    borderColor: Colors.borderMuted,
   },
   noSessionsText: {
     color: '#FFFFFF',
@@ -306,5 +337,8 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.aeonikRegular,
     marginTop: 8,
     textAlign: 'center',
+  },
+  skeletonContainer: {
+    paddingTop: Spacing.md,
   },
 });

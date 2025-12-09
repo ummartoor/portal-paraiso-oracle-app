@@ -1,4 +1,10 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, {
+  useState,
+  useEffect,
+  useCallback,
+  useRef,
+  useMemo,
+} from 'react';
 import {
   View,
   Text,
@@ -19,6 +25,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Fonts } from '../../../../../constants/fonts';
 import { useThemeStore } from '../../../../../store/useThemeStore';
 import { useAuthStore } from '../../../../../store/useAuthStore';
+import { useShallow } from 'zustand/react/shallow';
 import { AppStackParamList } from '../../../../../navigation/routeTypes';
 import { useTranslation } from 'react-i18next';
 // --- Import All Modals ---
@@ -39,14 +46,22 @@ const EditProfileScreen = () => {
   const navigation =
     useNavigation<NativeStackNavigationProp<AppStackParamList>>();
   const { t } = useTranslation();
-  
+
   const {
     user,
     fetchCurrentUser,
     updatePassword,
     uploadProfilePicture,
     updateUserProfile,
-  } = useAuthStore();
+  } = useAuthStore(
+    useShallow(state => ({
+      user: state.user,
+      fetchCurrentUser: state.fetchCurrentUser,
+      updatePassword: state.updatePassword,
+      uploadProfilePicture: state.uploadProfilePicture,
+      updateUserProfile: state.updateUserProfile,
+    })),
+  );
 
   // --- Local state for all display fields ---
   const [name, setName] = useState('');
@@ -74,17 +89,26 @@ const EditProfileScreen = () => {
     useState(false);
   const [isZodiacModalVisible, setZodiacModalVisible] = useState(false);
   const [imagePickerModalVisible, setImagePickerModalVisible] = useState(false);
- const translatedGoalsList = getTranslatedGoalsList(t);
-  // --- Fetch fresh user data every time the screen is focused ---
-  useFocusEffect(
-    useCallback(() => {
+
+  // Memoize translated goals list to prevent recreation on every render
+  const translatedGoalsList = useMemo(() => getTranslatedGoalsList(t), [t]);
+
+  // Fetch user only once on mount to prevent blinking on focus
+  const hasFetchedUser = useRef(false);
+  useEffect(() => {
+    if (!hasFetchedUser.current && !user) {
+      hasFetchedUser.current = true;
       fetchCurrentUser();
-    }, []),
-  );
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Only run once on mount
 
   // --- Populate local state once user data is fetched ---
+  // Use a ref to track if we've already populated from this user object
+  const lastUserIdRef = useRef<string | null>(null);
   useEffect(() => {
-    if (user) {
+    if (user && user.id && user.id !== lastUserIdRef.current) {
+      lastUserIdRef.current = user.id;
       setName(user.name || '');
       setEmail(user.email || '');
       setGender(user.gender || null);
@@ -96,7 +120,7 @@ const EditProfileScreen = () => {
       setZodiac(user.sign_in_zodiac || null);
       setProfileImage(user.profile_image?.url || null);
     }
-  }, [user]);
+  }, [user?.id]); // Only depend on user.id to prevent unnecessary updates
 
   // --- Individual update handler ---
   const handleUpdate = async (payload: object) => {
@@ -116,16 +140,22 @@ const EditProfileScreen = () => {
     setIsUploading(false);
   };
 
+  const formatDate = (d: Date | null) =>
+    d ? d.toLocaleDateString('en-GB') : t('edit_profile_dob_placeholder');
 
-  const formatDate = (d: Date | null) => d ? d.toLocaleDateString('en-GB') : t('edit_profile_dob_placeholder');
-
-   const formatGoalsForDisplay = (goalKeys: string[]) => {
-    if (!goalKeys || goalKeys.length === 0) return t('edit_profile_goals_placeholder');
+  const formatGoalsForDisplay = (goalKeys: string[]) => {
+    if (!goalKeys || goalKeys.length === 0)
+      return t('edit_profile_goals_placeholder');
     const labels = goalKeys.map(
-      key => translatedGoalsList.find(g => g.key === key)?.label || key,
+      (key: string) =>
+        translatedGoalsList.find(
+          (g: { key: string; label: string }) => g.key === key,
+        )?.label || key,
     );
     if (labels.length > 2) {
-      return `${labels.slice(0, 2).join(', ')} ${t('edit_profile_goals_more', { count: labels.length - 2 })}`;
+      return `${labels.slice(0, 2).join(', ')} ${t('edit_profile_goals_more', {
+        count: labels.length - 2,
+      })}`;
     }
     return labels.join(', ');
   };
@@ -135,19 +165,18 @@ const EditProfileScreen = () => {
   const formatGenderForDisplay = (genderKey: string | null) => {
     if (!genderKey) return t('edit_profile_gender_placeholder');
 
-    // Key ko translation 
+    // Key ko translation
     switch (genderKey) {
       case 'male':
-        return t('gender_male'); 
+        return t('gender_male');
       case 'female':
-        return t('gender_female'); 
+        return t('gender_female');
       case 'other':
-        return t('gender_non_binary'); 
+        return t('gender_non_binary');
       default:
-        return genderKey; 
+        return genderKey;
     }
   };
-
 
   // ... (formatGenderForDisplay function ke baad)
 
@@ -171,7 +200,6 @@ const EditProfileScreen = () => {
       case 'divorced':
         return t('status_divorced');
       default:
-    
         return statusKey.charAt(0).toUpperCase() + statusKey.slice(1);
     }
   };
@@ -194,10 +222,11 @@ const EditProfileScreen = () => {
           <ScrollView
             contentContainerStyle={styles.scrollInner}
             keyboardShouldPersistTaps="handled"
+            removeClippedSubviews={false}
           >
-           {/* Header */}
-           <View style={styles.header}>
-             <TouchableOpacity
+            {/* Header */}
+            <View style={styles.header}>
+              <TouchableOpacity
                 onPress={() => navigation.goBack()}
                 style={styles.backBtn}
               >
@@ -208,10 +237,11 @@ const EditProfileScreen = () => {
                 />
               </TouchableOpacity>
               <View style={styles.headerTitleWrap}>
-               <Text style={[styles.headerTitle, { color: colors.white }]}>{t('edit_profile_header')}</Text>
+                <Text style={[styles.headerTitle, { color: colors.white }]}>
+                  {t('edit_profile_header')}
+                </Text>
               </View>
             </View>
-
 
             {/* Profile Image */}
             <View style={styles.profileImageWrap}>
@@ -241,22 +271,26 @@ const EditProfileScreen = () => {
             </View>
 
             {/* Form Fields as Touchable Buttons */}
-                   <Text style={styles.label}>{t('name_label')}</Text>
+            <Text style={styles.label}>{t('name_label')}</Text>
             <TouchableOpacity
               activeOpacity={0.8}
               onPress={() => setNameModalVisible(true)}
               style={styles.input}
             >
-       <Text style={styles.inputText}>{name || t('edit_profile_name_placeholder')}</Text>
+              <Text style={styles.inputText}>
+                {name || t('edit_profile_name_placeholder')}
+              </Text>
             </TouchableOpacity>
 
-             <Text style={styles.label}>{t('email_label')}</Text>
+            <Text style={styles.label}>{t('email_label')}</Text>
             <TouchableOpacity
               activeOpacity={0.8}
               onPress={() => setEmailModalVisible(true)}
               style={styles.input}
             >
-           <Text style={styles.inputText}>{email || t('edit_profile_email_placeholder')}</Text>
+              <Text style={styles.inputText}>
+                {email || t('edit_profile_email_placeholder')}
+              </Text>
             </TouchableOpacity>
 
             <View style={{ alignItems: 'flex-end', marginTop: 8 }}>
@@ -264,32 +298,42 @@ const EditProfileScreen = () => {
                 activeOpacity={0.85}
                 onPress={() => setPasswordModalVisible(true)}
               >
-             <Text style={{ color: colors.primary, fontFamily: Fonts.aeonikRegular, fontSize: 14 }}>
+                <Text
+                  style={{
+                    color: colors.primary,
+                    fontFamily: Fonts.aeonikRegular,
+                    fontSize: 14,
+                  }}
+                >
                   {t('edit_profile_update_password_button')}
                 </Text>
               </TouchableOpacity>
             </View>
 
-          <Text style={styles.label}>{t('edit_profile_gender_label')}</Text>
+            <Text style={styles.label}>{t('edit_profile_gender_label')}</Text>
             <TouchableOpacity
               activeOpacity={0.8}
               onPress={() => setGenderModalVisible(true)}
               style={styles.input}
             >
-              <Text style={styles.inputText}>{formatGenderForDisplay(gender)}</Text>
-  {/* <Text style={styles.inputText}>{gender || t('edit_profile_gender_placeholder')}</Text> */}
+              <Text style={styles.inputText}>
+                {formatGenderForDisplay(gender)}
+              </Text>
+              {/* <Text style={styles.inputText}>{gender || t('edit_profile_gender_placeholder')}</Text> */}
             </TouchableOpacity>
 
-        <Text style={styles.label}>{t('edit_profile_goals_label')}</Text>
+            <Text style={styles.label}>{t('edit_profile_goals_label')}</Text>
             <TouchableOpacity
               activeOpacity={0.8}
               onPress={() => setGoalsModalVisible(true)}
               style={styles.input}
             >
-               <Text style={styles.inputText}>{formatGoalsForDisplay(goals)}</Text>
+              <Text style={styles.inputText}>
+                {formatGoalsForDisplay(goals)}
+              </Text>
             </TouchableOpacity>
 
-     <Text style={styles.label}>{t('edit_profile_dob_label')}</Text>
+            <Text style={styles.label}>{t('edit_profile_dob_label')}</Text>
             <TouchableOpacity
               activeOpacity={0.8}
               onPress={() => setDobModalVisible(true)}
@@ -298,41 +342,51 @@ const EditProfileScreen = () => {
               <Text style={styles.inputText}>{formatDate(dob)}</Text>
             </TouchableOpacity>
 
-        <Text style={styles.label}>{t('edit_profile_tob_label')}</Text>
+            <Text style={styles.label}>{t('edit_profile_tob_label')}</Text>
             <TouchableOpacity
               activeOpacity={0.8}
               onPress={() => setTimeModalVisible(true)}
               style={styles.input}
             >
-              <Text style={styles.inputText}>{timeOfBirth || t('edit_profile_tob_placeholder')}</Text>
+              <Text style={styles.inputText}>
+                {timeOfBirth || t('edit_profile_tob_placeholder')}
+              </Text>
             </TouchableOpacity>
 
-  <Text style={styles.label}>{t('edit_profile_pob_label')}</Text>
+            <Text style={styles.label}>{t('edit_profile_pob_label')}</Text>
             <TouchableOpacity
               activeOpacity={0.8}
               onPress={() => setPlaceModalVisible(true)}
               style={styles.input}
             >
-         <Text style={styles.inputText}>{placeOfBirth || t('edit_profile_pob_placeholder')}</Text>
+              <Text style={styles.inputText}>
+                {placeOfBirth || t('edit_profile_pob_placeholder')}
+              </Text>
             </TouchableOpacity>
 
-             <Text style={styles.label}>{t('edit_profile_relationship_label')}</Text>
+            <Text style={styles.label}>
+              {t('edit_profile_relationship_label')}
+            </Text>
             <TouchableOpacity
               activeOpacity={0.8}
               onPress={() => setRelationshipModalVisible(true)}
               style={styles.input}
             >
-           {/* <Text style={styles.inputText}>{relationshipStatus  || t('edit_profile_relationship_placeholder')}</Text> */}
-           <Text style={styles.inputText}>{formatRelationshipStatusForDisplay(relationshipStatus)}</Text>
+              {/* <Text style={styles.inputText}>{relationshipStatus  || t('edit_profile_relationship_placeholder')}</Text> */}
+              <Text style={styles.inputText}>
+                {formatRelationshipStatusForDisplay(relationshipStatus)}
+              </Text>
             </TouchableOpacity>
 
-                      <Text style={styles.label}>{t('edit_profile_zodiac_label')}</Text>
+            <Text style={styles.label}>{t('edit_profile_zodiac_label')}</Text>
             <TouchableOpacity
               activeOpacity={0.8}
               onPress={() => setZodiacModalVisible(true)}
               style={styles.input}
             >
-             <Text style={styles.inputText}>{zodiac || t('edit_profile_zodiac_placeholder')}</Text>
+              <Text style={styles.inputText}>
+                {zodiac || t('edit_profile_zodiac_placeholder')}
+              </Text>
             </TouchableOpacity>
           </ScrollView>
         </KeyboardAvoidingView>
@@ -358,7 +412,7 @@ const EditProfileScreen = () => {
         isVisible={isNameModalVisible}
         defaultValue={name}
         onClose={() => setNameModalVisible(false)}
-      onConfirm={async (newName) => {
+        onConfirm={async newName => {
           const success = await handleUpdate({ name: newName });
           if (success) setNameModalVisible(false);
           return success;
@@ -369,7 +423,7 @@ const EditProfileScreen = () => {
         isVisible={isEmailModalVisible}
         defaultValue={email}
         onClose={() => setEmailModalVisible(false)}
-         onConfirm={async (newEmail) => {
+        onConfirm={async newEmail => {
           const success = await handleUpdate({ email: newEmail });
           if (success) setEmailModalVisible(false);
           return success;
@@ -380,7 +434,7 @@ const EditProfileScreen = () => {
         isVisible={isGenderModalVisible}
         defaultValue={gender}
         onClose={() => setGenderModalVisible(false)}
-   onConfirm={async (selected) => {
+        onConfirm={async selected => {
           const success = await handleUpdate({ gender: selected });
           if (success) setGenderModalVisible(false);
         }}
@@ -390,7 +444,7 @@ const EditProfileScreen = () => {
         isVisible={isGoalsModalVisible}
         defaultValue={goals}
         onClose={() => setGoalsModalVisible(false)}
-      onConfirm={async (selected) => {
+        onConfirm={async selected => {
           const success = await handleUpdate({ goals: selected });
           if (success) setGoalsModalVisible(false);
         }}
@@ -400,7 +454,7 @@ const EditProfileScreen = () => {
         isVisible={isDobModalVisible}
         defaultValue={dob}
         onClose={() => setDobModalVisible(false)}
-          onConfirm={async (selected) => {
+        onConfirm={async selected => {
           const success = await handleUpdate({ dob: selected });
           if (success) setDobModalVisible(false);
         }}
@@ -410,19 +464,28 @@ const EditProfileScreen = () => {
         isVisible={isTimeModalVisible}
         defaultValue={timeOfBirth}
         onClose={() => setTimeModalVisible(false)}
-           onConfirm={async (selected) => {
+        onConfirm={async selected => {
           const success = await handleUpdate({ time_of_birth: selected });
           if (success) setTimeModalVisible(false);
         }}
       />
 
-     <PlaceOfBirthModal isVisible={isPlaceModalVisible} defaultValue={placeOfBirth} onClose={() => setPlaceModalVisible(false)} onConfirm={async (v) => { const s = await handleUpdate({ place_of_birth: v }); if (s) setPlaceModalVisible(false); return s; }} />
+      <PlaceOfBirthModal
+        isVisible={isPlaceModalVisible}
+        defaultValue={placeOfBirth}
+        onClose={() => setPlaceModalVisible(false)}
+        onConfirm={async v => {
+          const s = await handleUpdate({ place_of_birth: v });
+          if (s) setPlaceModalVisible(false);
+          return s;
+        }}
+      />
 
       <RelationshipStatusModal
         isVisible={isRelationshipModalVisible}
         defaultValue={relationshipStatus}
         onClose={() => setRelationshipModalVisible(false)}
-          onConfirm={async (selected) => {
+        onConfirm={async selected => {
           const success = await handleUpdate({ relationship_status: selected });
           if (success) setRelationshipModalVisible(false);
         }}
@@ -432,7 +495,7 @@ const EditProfileScreen = () => {
         isVisible={isZodiacModalVisible}
         defaultValue={zodiac}
         onClose={() => setZodiacModalVisible(false)}
-        onConfirm={async (selected) => {
+        onConfirm={async selected => {
           const success = await handleUpdate({ sign_in_zodiac: selected });
           if (success) setZodiacModalVisible(false);
         }}
@@ -518,23 +581,6 @@ const styles = StyleSheet.create({
   },
   inputText: { fontFamily: Fonts.aeonikRegular, fontSize: 14, color: '#fff' },
 });
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 // import React, { useState, useEffect, useCallback } from 'react';
 // import {

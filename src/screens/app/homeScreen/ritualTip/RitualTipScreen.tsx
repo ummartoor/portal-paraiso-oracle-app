@@ -24,6 +24,7 @@ import { useOpenAiStore } from '../../../../store/useOpenAiStore'; // --- 3. Ope
 import { Fonts } from '../../../../constants/fonts';
 import { useThemeStore } from '../../../../store/useThemeStore';
 import { AppStackParamList } from '../../../../navigation/routeTypes';
+import { SkeletonCardDetail } from '../../../../components/SkeletonLoader';
 
 const BackIcon = require('../../../../assets/icons/backIcon.png');
 const PlayIcon = require('../../../../assets/icons/playIcon.png');
@@ -157,10 +158,9 @@ const RitualTipScreen: React.FC = () => {
   const renderContent = () => {
     if (isTipLoading) {
       return (
-        <ActivityIndicator
-          size="large"
-          color={colors.primary}
-          style={styles.centeredLoader}
+        <SkeletonCardDetail
+          width={SCREEN_WIDTH * 0.8}
+          height={SCREEN_WIDTH * 0.8 * (2 / 3)}
         />
       );
     }

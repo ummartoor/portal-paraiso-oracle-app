@@ -18,6 +18,13 @@ import {
   WisdomHistoryItem,
 } from '../../../store/useDailyWisdomStore';
 import { useTranslation } from 'react-i18next';
+import {
+  Colors,
+  Spacing,
+  BorderRadius,
+  Shadows,
+} from '../../../constants/design';
+import { SkeletonListItem } from '../../../components/SkeletonLoader';
 
 // Static icon for the list
 const wisdomCardIcon = require('../../../assets/icons/dailyWisdomIcon.png');
@@ -108,7 +115,11 @@ const DailyWisdomCardList: React.FC = () => {
 
   if (isLoadingHistory) {
     return (
-      <ActivityIndicator size="large" color="#D9B699" style={styles.loader} />
+      <View style={styles.skeletonContainer}>
+        {[1, 2, 3, 4, 5].map(i => (
+          <SkeletonListItem key={i} />
+        ))}
+      </View>
     );
   }
 
@@ -156,12 +167,15 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   historyCard: {
-    backgroundColor: '#4A3F50',
-    borderRadius: 20,
-    padding: 16,
+    backgroundColor: Colors.bgBox,
+    borderRadius: BorderRadius.xl,
+    padding: Spacing.lg,
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: Spacing.md,
+    borderWidth: 1,
+    borderColor: Colors.borderMuted,
+    ...Shadows.medium,
   },
   cardIcon: { width: 50, height: 50, borderRadius: 8, marginRight: 12 },
   cardTextContainer: { flex: 1 },
@@ -184,16 +198,21 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   iconWrapper: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
+    width: 32,
+    height: 32,
+    borderRadius: BorderRadius.round,
     justifyContent: 'center',
     alignItems: 'center',
+    ...Shadows.small,
   },
   arrowIcon: {
     width: 18,
     height: 18,
     resizeMode: 'contain',
     tintColor: '#fff',
+  },
+  skeletonContainer: {
+    paddingHorizontal: Spacing.md,
+    paddingTop: Spacing.md,
   },
 });

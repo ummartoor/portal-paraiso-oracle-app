@@ -31,6 +31,14 @@ import { useThemeStore } from '../../../store/useThemeStore';
 import { useAuthStore } from '../../../store/useAuthStore';
 import TypingIndicator from '../../../components/TypingIndicator';
 import { useTranslation } from 'react-i18next';
+import {
+  Colors,
+  Spacing,
+  BorderRadius,
+  Shadows,
+} from '../../../constants/design';
+import { SkeletonMessage } from '../../../components/SkeletonLoader';
+import Pressable from '../../../components/Pressable';
 
 // Assets
 const sendIcon = require('../../../assets/icons/sendIcon.png');
@@ -128,9 +136,12 @@ const ChatDetailScreen: React.FC<ChatDetailScreenProps> = ({ route }) => {
 
   useEffect(() => {
     if (displayMessages.length > 0) {
-      setTimeout(() => {
-        flatListRef.current?.scrollToEnd({ animated: true });
-      }, 100);
+      // Use requestAnimationFrame for smoother scrolling
+      requestAnimationFrame(() => {
+        setTimeout(() => {
+          flatListRef.current?.scrollToEnd({ animated: true });
+        }, 50);
+      });
     }
   }, [displayMessages.length]);
 
@@ -175,7 +186,10 @@ const ChatDetailScreen: React.FC<ChatDetailScreenProps> = ({ route }) => {
     [user?.profile_image?.url],
   );
 
-  const keyExtractor = useCallback((item: ChatMessage) => item._id || '', []);
+  const keyExtractor = useCallback(
+    (item: ChatMessage, index: number) => item._id || `msg-${index}`,
+    [],
+  );
 
   const renderFooter = useCallback(() => {
     if (!isSendingMessage) return null;
@@ -194,8 +208,11 @@ const ChatDetailScreen: React.FC<ChatDetailScreenProps> = ({ route }) => {
   const renderEmpty = useCallback(() => {
     if (isLoadingHistory) {
       return (
-        <View style={styles.centeredContent}>
-          <ActivityIndicator size="large" color="#FFFFFF" />
+        <View style={styles.skeletonContainer}>
+          <SkeletonMessage isUser={false} />
+          <SkeletonMessage isUser={true} />
+          <SkeletonMessage isUser={false} />
+          <SkeletonMessage isUser={true} />
         </View>
       );
     }
@@ -221,16 +238,17 @@ const ChatDetailScreen: React.FC<ChatDetailScreenProps> = ({ route }) => {
         />
 
         <View style={styles.header}>
-          <TouchableOpacity
+          <Pressable
             onPress={() => navigation.goBack()}
             style={styles.backBtn}
+            hapticType="light"
           >
             <Image
               source={backIcon}
               style={styles.backIcon}
               resizeMode="contain"
             />
-          </TouchableOpacity>
+          </Pressable>
           <View style={styles.headerTitleWrap} pointerEvents="none">
             <Text
               numberOfLines={1}
@@ -243,9 +261,9 @@ const ChatDetailScreen: React.FC<ChatDetailScreenProps> = ({ route }) => {
         </View>
 
         <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
           style={{ flex: 1 }}
-          keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? insets.bottom : 0}
         >
           {/* Messages Area - Using FlatList for better performance */}
           <FlatList
@@ -257,14 +275,16 @@ const ChatDetailScreen: React.FC<ChatDetailScreenProps> = ({ route }) => {
             ListFooterComponent={renderFooter}
             contentContainerStyle={styles.messagesContainer}
             showsVerticalScrollIndicator={false}
-            removeClippedSubviews={true}
-            maxToRenderPerBatch={10}
-            updateCellsBatchingPeriod={50}
-            initialNumToRender={15}
-            windowSize={10}
+            removeClippedSubviews={false}
+            maxToRenderPerBatch={15}
+            updateCellsBatchingPeriod={100}
+            initialNumToRender={20}
+            windowSize={21}
             maintainVisibleContentPosition={{
               minIndexForVisible: 0,
             }}
+            keyboardShouldPersistTaps="handled"
+            keyboardDismissMode="interactive"
           />
 
           {/* Input Area */}
@@ -279,12 +299,27 @@ const ChatDetailScreen: React.FC<ChatDetailScreenProps> = ({ route }) => {
               returnKeyType="send"
               multiline={false}
             />
-            <TouchableOpacity
+            <Pressable
               onPress={handleSend}
               disabled={isSendingMessage || !inputText.trim()}
+              hapticType="medium"
+              haptic={!isSendingMessage && !!inputText.trim()}
+              style={styles.sendButton}
             >
-              <Image source={sendIcon} style={styles.sendIcon} />
-            </TouchableOpacity>
+              {isSendingMessage ? (
+                <ActivityIndicator size="small" color={Colors.primary} />
+              ) : (
+                <Image
+                  source={sendIcon}
+                  style={[
+                    styles.sendIcon,
+                    (isSendingMessage || !inputText.trim()) &&
+                      styles.sendIconDisabled,
+                  ]}
+                  resizeMode="contain"
+                />
+              )}
+            </Pressable>
           </View>
         </KeyboardAvoidingView>
       </SafeAreaView>
@@ -339,12 +374,13 @@ const styles = StyleSheet.create({
   },
   messagesContainer: {
     flexGrow: 1,
-    paddingHorizontal: 10,
-    paddingVertical: 10,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.md,
+    paddingBottom: Spacing.lg,
   },
   messageRow: {
     flexDirection: 'row',
-    marginVertical: 8,
+    marginVertical: Spacing.xs,
     alignItems: 'flex-end',
   },
   aiMessageRow: { justifyContent: 'flex-start' },
@@ -364,46 +400,85 @@ const styles = StyleSheet.create({
   },
   messageContent: { maxWidth: '75%' },
   messageBubble: {
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 20,
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.lg,
+    borderRadius: BorderRadius.lg,
+    ...Shadows.small,
   },
-  aiBubble: { backgroundColor: '#2F2B3B', borderBottomLeftRadius: 4 },
-  userBubble: { backgroundColor: '#4A3F50', borderBottomRightRadius: 4 },
+  aiBubble: {
+    backgroundColor: Colors.bgBoxDark,
+    borderBottomLeftRadius: BorderRadius.xs,
+    borderWidth: 1,
+    borderColor: Colors.borderMuted,
+  },
+  userBubble: {
+    backgroundColor: Colors.primary,
+    borderBottomRightRadius: BorderRadius.xs,
+    borderWidth: 1,
+    borderColor: Colors.primaryDark,
+  },
   messageText: {
-    color: '#FFFFFF',
+    color: Colors.white,
     fontSize: 16,
     fontFamily: Fonts.aeonikRegular,
-    lineHeight: 22,
+    lineHeight: 24,
+    letterSpacing: 0.2,
   },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#4A3F50',
-    borderRadius: 30,
-    paddingHorizontal: 15,
-    paddingVertical: Platform.OS === 'ios' ? 12 : 5,
-    marginHorizontal: 15,
-    marginTop: 10,
-    borderWidth: 1,
-    borderColor: '#D9B699',
-    marginBottom: 12,
+    backgroundColor: Colors.bgBox,
+    borderRadius: BorderRadius.xl,
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Platform.OS === 'ios' ? Spacing.md : Spacing.sm,
+    marginHorizontal: Spacing.md,
+    marginTop: Spacing.sm,
+    borderWidth: 1.5,
+    borderColor: Colors.primary,
+    marginBottom: Platform.OS === 'ios' ? Spacing.md : Spacing.sm,
+    ...Shadows.medium,
+    minHeight: 52,
   },
   textInput: {
     flex: 1,
-    color: '#FFFFFF',
-    fontSize: 15,
-    marginRight: 10,
+    color: Colors.white,
+    fontSize: 16,
+    marginRight: Spacing.sm,
     fontFamily: Fonts.aeonikRegular,
+    paddingVertical: 0, // Remove default padding
+    minHeight: 20,
   },
-  sendIcon: { width: 32, height: 32 },
+  sendButton: {
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: Spacing.xs,
+  },
+  sendIcon: {
+    width: 24,
+    height: 24,
+    tintColor: Colors.primary,
+  },
+  sendIconDisabled: {
+    opacity: 0.3,
+    tintColor: Colors.textMuted,
+  },
   typingIndicator: {
-    marginLeft: 6,
-    backgroundColor: '#2F2B3B',
-    borderRadius: 20,
-    paddingVertical: 10,
-    paddingHorizontal: 12,
+    marginLeft: Spacing.sm,
+    backgroundColor: Colors.bgBoxDark,
+    borderRadius: BorderRadius.lg,
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.md,
     alignSelf: 'flex-start',
-    borderBottomLeftRadius: 4,
+    borderBottomLeftRadius: BorderRadius.xs,
+    borderWidth: 1,
+    borderColor: Colors.borderMuted,
+    ...Shadows.small,
+  },
+  skeletonContainer: {
+    flex: 1,
+    paddingHorizontal: Spacing.sm,
+    paddingTop: Spacing.lg,
   },
 });

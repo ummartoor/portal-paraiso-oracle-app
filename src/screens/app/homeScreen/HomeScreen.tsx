@@ -26,6 +26,13 @@ import { useShallow } from 'zustand/react/shallow';
 import GradientBox from '../../../components/GradientBox';
 import { useInterstitialAd } from '../../../hooks/useInterstitialAd';
 import HightlightsCarouselCards from './HightlightsCarouselCards';
+import {
+  Colors,
+  Spacing,
+  BorderRadius,
+  Shadows,
+} from '../../../constants/design';
+import Pressable from '../../../components/Pressable';
 const { height: SCREEN_HEIGHT, width: SCREEN_WIDTH } = Dimensions.get('screen');
 
 type CardBoxProps = {
@@ -34,33 +41,44 @@ type CardBoxProps = {
   onPress?: () => void;
 };
 
-const CardBox: React.FC<CardBoxProps> = ({ label, icon, onPress }) => {
-  const colors = useThemeStore(s => s.theme.colors);
+const CardBox: React.FC<CardBoxProps> = React.memo(
+  ({ label, icon, onPress }) => {
+    const colors = useThemeStore(s => s.theme.colors);
 
-  return (
-    <TouchableOpacity
-      activeOpacity={0.8}
-      onPress={onPress}
-      style={[
-        styles.cardBox,
-        {
-          backgroundColor: colors.bgBox,
-        },
-      ]}
-    >
-      {/* Left: Text */}
-      <Text
-        style={[styles.cardBoxText, { color: colors.white }]}
-        numberOfLines={1}
+    return (
+      <Pressable
+        hapticType="light"
+        onPress={onPress}
+        style={[
+          styles.cardBox,
+          {
+            backgroundColor: colors.bgBox,
+          },
+          Shadows.medium,
+        ]}
       >
-        {label}
-      </Text>
+        {/* Left: Text Container */}
+        <View style={styles.cardBoxTextContainer}>
+          <Text
+            style={[styles.cardBoxText, { color: colors.white }]}
+            numberOfLines={1}
+          >
+            {label}
+          </Text>
+        </View>
 
-      {/* Right: Icon */}
-      <Image source={icon} style={styles.cardBoxIcon} resizeMode="contain" />
-    </TouchableOpacity>
-  );
-};
+        {/* Right: Icon with subtle glow */}
+        <View style={styles.cardBoxIconContainer}>
+          <Image
+            source={icon}
+            style={styles.cardBoxIcon}
+            resizeMode="contain"
+          />
+        </View>
+      </Pressable>
+    );
+  },
+);
 
 const HomeScreen: React.FC = () => {
   const colors = useThemeStore(s => s.theme.colors);
@@ -120,9 +138,9 @@ const HomeScreen: React.FC = () => {
         >
           {/* Header */}
           <View style={styles.headerRow}>
-            <TouchableOpacity
+            <Pressable
               style={styles.profileWrap}
-              activeOpacity={0.8}
+              hapticType="light"
               onPress={() => navigation.navigate('Profile')}
             >
               <Image
@@ -134,7 +152,7 @@ const HomeScreen: React.FC = () => {
                 }
               />
               <View style={[styles.onlineDot, { borderColor: colors.white }]} />
-            </TouchableOpacity>
+            </Pressable>
             {/* 
             <TouchableOpacity
               style={styles.headerIconBtn}
@@ -147,8 +165,9 @@ const HomeScreen: React.FC = () => {
               />
             </TouchableOpacity> */}
 
-            <TouchableOpacity
+            <Pressable
               style={styles.headerIconBtn}
+              hapticType="light"
               onPress={() => navigation.navigate('Notification')}
             >
               <Image
@@ -163,7 +182,7 @@ const HomeScreen: React.FC = () => {
                   </Text>
                 </View>
               )}
-            </TouchableOpacity>
+            </Pressable>
           </View>
 
           {/* Titles */}
@@ -201,13 +220,13 @@ const HomeScreen: React.FC = () => {
               {t('home_ai_chat_subtitle')}
             </Text>
 
-            <TouchableOpacity
-              activeOpacity={0.8}
+            <Pressable
+              hapticType="medium"
               onPress={() => navigation.navigate('ChatDetail')}
               style={styles.aiChatButtonWrapper}
             >
               <GradientBox
-                colors={[colors.bgBox, colors.black]}
+                colors={[colors.black, colors.bgBox]}
                 style={[styles.aiChatGradient, { borderColor: colors.primary }]}
               >
                 <Image
@@ -220,7 +239,7 @@ const HomeScreen: React.FC = () => {
                   {t('home_ai_chat_button')}
                 </Text>
               </GradientBox>
-            </TouchableOpacity>
+            </Pressable>
           </View>
 
           {/* Boxes without map */}
@@ -285,23 +304,24 @@ const styles = StyleSheet.create({
   profileImg: {
     height: 50,
     width: 50,
-    borderRadius: 30,
-    borderWidth: 2,
+    borderRadius: 25,
+    borderWidth: 2.5,
   },
   onlineDot: {
     position: 'absolute',
-    bottom: 4,
-    right: 7,
-    height: 12,
-    width: 12,
-    borderRadius: 6,
-    backgroundColor: '#27C93F',
-    borderWidth: 2,
+    bottom: 2,
+    right: 5,
+    height: 14,
+    width: 14,
+    borderRadius: 7,
+    backgroundColor: Colors.success,
+    borderWidth: 2.5,
+    ...Shadows.small,
   },
   titlesBox: {
-    marginTop: 21,
+    marginTop: Spacing.xl,
     alignItems: 'center',
-    paddingHorizontal: 20,
+    paddingHorizontal: Spacing.xl,
   },
   title: {
     fontSize: 24,
@@ -319,27 +339,44 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.aeonikRegular,
   },
   cardBoxSection: {
-    marginTop: 24,
-    paddingHorizontal: 20,
-    rowGap: 12,
+    marginTop: Spacing.xxl,
+    paddingHorizontal: Spacing.xl,
+    gap: Spacing.md,
   },
   cardBox: {
-    height: 70,
-    borderRadius: 25,
+    height: 76,
+    borderRadius: BorderRadius.xl,
     justifyContent: 'space-between',
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 20,
+    paddingHorizontal: Spacing.xl,
+    marginBottom: Spacing.md,
+    borderWidth: 1,
+    borderColor: Colors.borderMuted,
+  },
+  cardBoxTextContainer: {
+    flex: 1,
+    marginRight: Spacing.md,
   },
   cardBoxText: {
     fontSize: 18,
     fontFamily: Fonts.cormorantSCBold,
     letterSpacing: 0.4,
     textTransform: 'capitalize',
+    lineHeight: 26,
+  },
+  cardBoxIconContainer: {
+    width: 52,
+    height: 52,
+    borderRadius: BorderRadius.md,
+    backgroundColor: Colors.primaryAlpha20,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   cardBoxIcon: {
-    height: 50,
-    width: 50,
+    height: 32,
+    width: 32,
+    tintColor: Colors.primary,
   },
 
   bottomAvatarButton: {
@@ -353,8 +390,8 @@ const styles = StyleSheet.create({
   },
 
   aiChatContainer: {
-    marginTop: 30,
-    paddingHorizontal: 20,
+    marginTop: Spacing.xxxl,
+    paddingHorizontal: Spacing.xl,
   },
   aiChatTitle: {
     fontFamily: Fonts.cormorantSCBold,
@@ -374,10 +411,9 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
   },
   aiChatGradient: {
-    height: 60,
-    borderRadius: 30,
+    height: 52,
+    borderRadius: 26,
     borderWidth: 1,
-
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -395,21 +431,23 @@ const styles = StyleSheet.create({
   },
   notificationBadge: {
     position: 'absolute',
-    top: 5,
-    right: 5,
-    backgroundColor: 'red',
-    borderRadius: 10,
-    width: 20,
+    top: 2,
+    right: 2,
+    backgroundColor: Colors.error,
+    borderRadius: BorderRadius.round,
+    minWidth: 20,
     height: 20,
+    paddingHorizontal: 5,
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#fff',
+    borderWidth: 2,
+    borderColor: Colors.white,
+    ...Shadows.small,
   },
   notificationBadgeText: {
-    color: 'white',
+    color: Colors.white,
     fontSize: 10,
-    fontWeight: 'bold',
     fontFamily: Fonts.aeonikBold,
+    lineHeight: 14,
   },
 });

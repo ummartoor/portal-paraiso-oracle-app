@@ -15,7 +15,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useShallow } from 'zustand/react/shallow';
-import { useTranslation } from 'react-i18next'; 
+import { useTranslation } from 'react-i18next';
 import { Fonts } from '../../../../constants/fonts';
 import { useThemeStore } from '../../../../store/useThemeStore';
 import {
@@ -23,6 +23,7 @@ import {
   NotificationItem,
 } from '../../../../store/useGetNotificationsStore';
 import { AppStackParamList } from '../../../../navigation/routeTypes';
+import { SkeletonListItem } from '../../../../components/SkeletonLoader';
 
 // --- Import Icons ---
 const BackIcon = require('../../../../assets/icons/backIcon.png');
@@ -32,7 +33,7 @@ const NotificationScreen: React.FC = () => {
   const { colors } = useThemeStore(s => s.theme);
   const navigation =
     useNavigation<NativeStackNavigationProp<AppStackParamList>>();
-      const { t } = useTranslation(); 
+  const { t } = useTranslation();
   const [menuVisibleFor, setMenuVisibleFor] = useState<string | null>(null);
 
   const {
@@ -71,7 +72,6 @@ const NotificationScreen: React.FC = () => {
     getNotifications(pagination.currentPage + 1);
   };
 
-
   const handleNotificationPress = (item: NotificationItem) => {
     if (!item.is_read) {
       markNotificationAsRead(item._id);
@@ -103,16 +103,16 @@ const NotificationScreen: React.FC = () => {
   //   return `${diffInDays}d ago`;
   // };
 
-
-
-    const formatRelativeTime = (dateString: string) => {
+  const formatRelativeTime = (dateString: string) => {
     const date = new Date(dateString);
     const now = new Date();
     const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
 
-    if (diffInSeconds < 60) return t('time_ago_seconds', { count: diffInSeconds });
+    if (diffInSeconds < 60)
+      return t('time_ago_seconds', { count: diffInSeconds });
     const diffInMinutes = Math.floor(diffInSeconds / 60);
-    if (diffInMinutes < 60) return t('time_ago_minutes', { count: diffInMinutes });
+    if (diffInMinutes < 60)
+      return t('time_ago_minutes', { count: diffInMinutes });
     const diffInHours = Math.floor(diffInMinutes / 60);
     if (diffInHours < 24) return t('time_ago_hours', { count: diffInHours });
     const diffInDays = Math.floor(diffInHours / 24);
@@ -156,22 +156,24 @@ const NotificationScreen: React.FC = () => {
             style={styles.dropdownItem}
             onPress={() => handleDelete(item._id)}
           >
-             <Text style={styles.dropdownText}>{t('notifications_delete_button')}</Text>
+            <Text style={styles.dropdownText}>
+              {t('notifications_delete_button')}
+            </Text>
           </TouchableOpacity>
         </View>
       )}
     </TouchableOpacity>
   );
-  
+
   // --- NEW: Footer component for the FlatList ---
   const renderFooter = () => {
     if (!isLoadingMore) return null;
     return (
-        <ActivityIndicator
-            size="small"
-            color={colors.primary}
-            style={{ marginVertical: 20 }}
-        />
+      <ActivityIndicator
+        size="small"
+        color={colors.primary}
+        style={{ marginVertical: 20 }}
+      />
     );
   };
 
@@ -200,18 +202,20 @@ const NotificationScreen: React.FC = () => {
             />
           </TouchableOpacity>
           <View style={styles.headerTitleWrap}>
-          <Text style={[styles.headerTitle, { color: colors.white }]}>{t('notifications_screen_header')}</Text>
+            <Text style={[styles.headerTitle, { color: colors.white }]}>
+              {t('notifications_screen_header')}
+            </Text>
           </View>
           <View style={styles.backBtn} />
         </View>
 
         <View style={styles.listContainer}>
           {isLoading ? (
-            <ActivityIndicator
-              size="large"
-              color={colors.primary}
-              style={{ flex: 1 }}
-            />
+            <View style={styles.skeletonContainer}>
+              {[1, 2, 3, 4, 5].map(i => (
+                <SkeletonListItem key={i} />
+              ))}
+            </View>
           ) : notifications && notifications.length > 0 ? (
             <FlatList
               data={notifications}
@@ -225,7 +229,9 @@ const NotificationScreen: React.FC = () => {
             />
           ) : (
             <View style={styles.emptyContainer}>
-               <Text style={styles.emptyText}>{t('notifications_empty_state')}</Text>
+              <Text style={styles.emptyText}>
+                {t('notifications_empty_state')}
+              </Text>
             </View>
           )}
         </View>
@@ -280,13 +286,9 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.1)',
   },
-   unreadCard: {
-
-    backgroundColor: 'rgba(113, 111, 116, 0.85)', // Slightly lighter background
-
-
-
-  },
+  unreadCard: {
+    backgroundColor: 'rgba(113, 111, 116, 0.85)', // Slightly lighter background
+  },
   unreadDot: {
     position: 'absolute',
     top: 22,
@@ -337,10 +339,10 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: Fonts.aeonikRegular,
   },
+  skeletonContainer: {
+    paddingTop: 10,
+  },
 });
-
-
-
 
 // import React, { useCallback, useState } from 'react';
 // import {

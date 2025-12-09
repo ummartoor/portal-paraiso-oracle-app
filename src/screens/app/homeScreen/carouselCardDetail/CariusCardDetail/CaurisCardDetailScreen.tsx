@@ -14,7 +14,7 @@ import {
   ActivityIndicator,
   Alert,
   Vibration,
-  Modal, 
+  Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
@@ -39,6 +39,7 @@ import { useTranslation } from 'react-i18next';
 import { useOpenAiStore } from '../../../../../store/useOpenAiStore';
 import SoundPlayer from 'react-native-sound-player';
 import { useInterstitialAd } from '../../../../../hooks/useInterstitialAd';
+import Pressable from '../../../../../components/Pressable';
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const CONTAINER_W = SCREEN_WIDTH - 40;
 
@@ -124,7 +125,7 @@ const CaurisCardDetailScreen: React.FC = () => {
   const route = useRoute<RouteProp<AppStackParamList, 'CaurisCardDetail'>>();
   const { userQuestion } = route.params;
   const { t } = useTranslation();
-  
+
   const {
     reading,
     isLoadingReading,
@@ -135,13 +136,15 @@ const CaurisCardDetailScreen: React.FC = () => {
   } = useBuziosStore();
 
   const { preloadSpeech } = useOpenAiStore();
-const { showAd } = useInterstitialAd();
+  const { showAd } = useInterstitialAd();
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
   // --- UPDATED: Added phase 4 for the final reading screen ---
   const [phase, setPhase] = useState<0 | 1 | 2 | 3 | 4>(0);
-  
+
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
-  const [preloadedAudioPath, setPreloadedAudioPath] = useState<string | null>(null);
+  const [preloadedAudioPath, setPreloadedAudioPath] = useState<string | null>(
+    null,
+  );
   const [isPreloadingAudio, setIsPreloadingAudio] = useState(false);
 
   const circleScale = useSharedValue(1);
@@ -242,23 +245,36 @@ const { showAd } = useInterstitialAd();
 
   // --- UPDATED: onActionPress logic for new phases ---
   const onActionPress = async () => {
-    Vibration.vibrate([0, 35, 40, 35]); 
+    Vibration.vibrate([0, 35, 40, 35]);
     if (phase === 0) {
       setPhase(1);
       getBuziosReading(userQuestion);
-      circleScale.value = withSpring(0.98, { damping: 20, stiffness: 240 }, () => {
-        circleScale.value = withSpring(1);
-      });
+      circleScale.value = withSpring(
+        0.98,
+        { damping: 20, stiffness: 240 },
+        () => {
+          circleScale.value = withSpring(1);
+        },
+      );
       shellConfigs.forEach((c, i) => {
-        xSV[i].value = withDelay(c.delay, withSpring(c.targetX, { damping: 14, stiffness: 170 }));
-        ySV[i].value = withDelay(c.delay, withSpring(c.targetY, { damping: 14, stiffness: 170 }));
+        xSV[i].value = withDelay(
+          c.delay,
+          withSpring(c.targetX, { damping: 14, stiffness: 170 }),
+        );
+        ySV[i].value = withDelay(
+          c.delay,
+          withSpring(c.targetY, { damping: 14, stiffness: 170 }),
+        );
         rSV[i].value = withDelay(c.delay, withTiming(c.rot, { duration: 650 }));
-        sSV[i].value = withDelay(c.delay, withSpring(1, { damping: 14, stiffness: 200 }));
+        sSV[i].value = withDelay(
+          c.delay,
+          withSpring(1, { damping: 14, stiffness: 200 }),
+        );
         oSV[i].value = withDelay(c.delay, withTiming(1, { duration: 260 }));
       });
     } else if (phase === 2) {
       // Phase 2 button now transitions to the video screen (phase 3)
-      setPhase(3); 
+      setPhase(3);
     } else if (phase === 4) {
       setShowSubscriptionModal(true);
     }
@@ -269,26 +285,33 @@ const { showAd } = useInterstitialAd();
       setPhase(2);
     }
   }, [isLoadingReading, reading, phase]);
-  
+
   useEffect(() => {
     const prepareReadingAudio = async () => {
-        if (reading?.ai_reading && reading?.buzios_result?.overall_polarity) {
-            setIsPreloadingAudio(true);
-            const readingId = `${userQuestion}_${reading.buzios_result.overall_polarity}`.replace(/[^a-zA-Z0-9]/g, '_');
-            const audioPath = await preloadSpeech(reading.ai_reading, readingId);
-            if (audioPath) {
-                setPreloadedAudioPath(audioPath);
-            }
-            setIsPreloadingAudio(false);
+      if (reading?.ai_reading && reading?.buzios_result?.overall_polarity) {
+        setIsPreloadingAudio(true);
+        const readingId =
+          `${userQuestion}_${reading.buzios_result.overall_polarity}`.replace(
+            /[^a-zA-Z0-9]/g,
+            '_',
+          );
+        const audioPath = await preloadSpeech(reading.ai_reading, readingId);
+        if (audioPath) {
+          setPreloadedAudioPath(audioPath);
         }
+        setIsPreloadingAudio(false);
+      }
     };
     prepareReadingAudio();
   }, [reading, userQuestion, preloadSpeech]);
-  
+
   useEffect(() => {
-    const onFinishedPlayingSubscription = SoundPlayer.addEventListener('FinishedPlaying', () => {
-      setIsPlayingAudio(false);
-    });
+    const onFinishedPlayingSubscription = SoundPlayer.addEventListener(
+      'FinishedPlaying',
+      () => {
+        setIsPlayingAudio(false);
+      },
+    );
     return () => {
       SoundPlayer.stop();
       onFinishedPlayingSubscription.remove();
@@ -296,7 +319,7 @@ const { showAd } = useInterstitialAd();
   }, []);
 
   // const handleSave = () => {
-  //   Vibration.vibrate([0, 35, 40, 35]); 
+  //   Vibration.vibrate([0, 35, 40, 35]);
   //   if (reading && !isSaving) {
   //     saveBuziosReading(reading).then(success => {
   //       if (success) {
@@ -305,8 +328,8 @@ const { showAd } = useInterstitialAd();
   //     });
   //   }
   // };
-  
-// --- ADD THIS NEW FUNCTION ---
+
+  // --- ADD THIS NEW FUNCTION ---
   // This contains the actual logic we want to run AFTER the ad.
   const performSaveAndNavigate = async () => {
     if (reading && !isSaving) {
@@ -322,7 +345,7 @@ const { showAd } = useInterstitialAd();
   // This is what the "Save" button presses.
   // It now shows the ad and passes our save function as the callback.
   const handleSave = () => {
-    Vibration.vibrate([0, 35, 40, 35]); 
+    Vibration.vibrate([0, 35, 40, 35]);
     if (isSaving) return; // Check if already saving
 
     // Show the ad.
@@ -352,28 +375,36 @@ const { showAd } = useInterstitialAd();
       { text: 'OK', onPress: () => navigation.goBack() },
     ]);
   }
-  
+
   // --- UPDATED: Title logic for new phases ---
   const titleTop = t(
-    phase === 0 ? 'cauris_phase0_title' :
-    phase === 1 ? 'cauris_phase1_title' :
-    phase === 2 ? 'cauris_phase2_title' :
-    phase === 3 ? 'cauris_phase2_title' : // Video phase can reuse phase 2 title
-    'cauris_phase3_title'
+    phase === 0
+      ? 'cauris_phase0_title'
+      : phase === 1
+      ? 'cauris_phase1_title'
+      : phase === 2
+      ? 'cauris_phase2_title'
+      : phase === 3
+      ? 'cauris_phase2_title' // Video phase can reuse phase 2 title
+      : 'cauris_phase3_title',
   );
-  
-  const subtitle = phase < 2 ? t(
-    phase === 0 ? 'cauris_phase0_subtitle' :
-    'cauris_phase1_subtitle'
-  ) : undefined;
+
+  const subtitle =
+    phase < 2
+      ? t(phase === 0 ? 'cauris_phase0_subtitle' : 'cauris_phase1_subtitle')
+      : undefined;
 
   // --- UPDATED: Button label logic for new phases ---
-  const actionLabel = 
-    phase === 0 ? t('cauris_phase0_button') :
-    phase === 1 ? t('continue_button') : 
-    phase === 2 ? t('cauris_phase2_button') :
-    phase === 4 ? t('get_premium_button') :
-    ''; // No label needed for phase 3, as the button is in the modal
+  const actionLabel =
+    phase === 0
+      ? t('cauris_phase0_button')
+      : phase === 1
+      ? t('continue_button')
+      : phase === 2
+      ? t('cauris_phase2_button')
+      : phase === 4
+      ? t('get_premium_button')
+      : ''; // No label needed for phase 3, as the button is in the modal
 
   const showShells = phase >= 1;
   const divineMessage = reading?.ai_reading ?? t('cauris_default_message');
@@ -385,44 +416,47 @@ const { showAd } = useInterstitialAd();
       imageStyle={{ resizeMode: 'cover' }}
     >
       {/* --- NEW: Full screen video modal for Phase 3 --- */}
-      <Modal
-        visible={phase === 3}
-        transparent={true}
-        animationType="fade"
-      >
+      <Modal visible={phase === 3} transparent={true} animationType="fade">
         <View style={styles.videoContainer}>
-            {/* IMPORTANT: Replace the video URI with your own video file. 
+          {/* IMPORTANT: Replace the video URI with your own video file. 
               You can use a remote URL or a local file with require().
             */}
-            <Video
-         source={require('../../../../../assets/videos/onboardingVideo3.mp4')}
-              style={styles.videoPlayer}
-              resizeMode="cover"
-              repeat={true}
-           
-            />
-            <View style={styles.videoOverlay}>
-                <TouchableOpacity
-                    activeOpacity={0.8}
-                    style={styles.videoContinueTouchable}
-                    onPress={() => setPhase(4)} // Pressing continue moves to final phase 4
-                >
-                    <GradientBox
-                        colors={[colors.black, colors.bgBox]}
-                        style={[styles.actionButton, { borderColor: colors.primary }]}>
-                        <Text style={[styles.actionLabel, { color: colors.white }]}>
-                            {t('continue_button')}
-                        </Text>
-                    </GradientBox>
-                </TouchableOpacity>
-            </View>
+          <Video
+            source={require('../../../../../assets/videos/onboardingVideo3.mp4')}
+            style={styles.videoPlayer}
+            resizeMode="cover"
+            repeat={true}
+          />
+          <View style={styles.videoOverlay}>
+            <TouchableOpacity
+              activeOpacity={0.8}
+              style={styles.videoContinueTouchable}
+              onPress={() => setPhase(4)} // Pressing continue moves to final phase 4
+            >
+              <GradientBox
+                colors={[colors.black, colors.bgBox]}
+                style={[styles.actionButton, { borderColor: colors.primary }]}
+              >
+                <Text style={[styles.actionLabel, { color: colors.white }]}>
+                  {t('continue_button')}
+                </Text>
+              </GradientBox>
+            </TouchableOpacity>
+          </View>
         </View>
       </Modal>
 
       <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
-        <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+        <StatusBar
+          barStyle="light-content"
+          translucent
+          backgroundColor="transparent"
+        />
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
+          <TouchableOpacity
+            onPress={() => navigation.goBack()}
+            style={styles.backBtn}
+          >
             <Image
               source={require('../../../../../assets/icons/backIcon.png')}
               style={[styles.backIcon, { tintColor: colors.white }]}
@@ -430,7 +464,7 @@ const { showAd } = useInterstitialAd();
             />
           </TouchableOpacity>
           <View style={styles.headerTitleWrap} pointerEvents="none">
-             <Text
+            <Text
               numberOfLines={1}
               ellipsizeMode="tail"
               style={[styles.headerTitle, { color: colors.white }]}
@@ -439,7 +473,7 @@ const { showAd } = useInterstitialAd();
             </Text>
           </View>
         </View>
-        
+
         {/* --- MODIFIED: Main content is in ScrollView, Button is outside and at the bottom --- */}
         <ScrollView
           contentContainerStyle={[
@@ -449,11 +483,21 @@ const { showAd } = useInterstitialAd();
           showsVerticalScrollIndicator={false}
         >
           <View style={styles.contentHeader}>
-            <Text style={[styles.contentTitle, { color: colors.primary, textAlign: 'center' }]}>
+            <Text
+              style={[
+                styles.contentTitle,
+                { color: colors.primary, textAlign: 'center' },
+              ]}
+            >
               {titleTop}
             </Text>
             {subtitle ? (
-              <Text style={[styles.contentSubtitle, { color: colors.white, textAlign: 'center' }]}>
+              <Text
+                style={[
+                  styles.contentSubtitle,
+                  { color: colors.white, textAlign: 'center' },
+                ]}
+              >
                 {subtitle}
               </Text>
             ) : null}
@@ -465,19 +509,32 @@ const { showAd } = useInterstitialAd();
           </View>
 
           <View style={styles.centerImageWrap}>
-            <Image source={DECAL_IMG} style={styles.decalFull} resizeMode="contain" />
+            <Image
+              source={DECAL_IMG}
+              style={styles.decalFull}
+              resizeMode="contain"
+            />
             <Animated.View
               style={[
                 styles.circleWrap,
-                { left: (CONTAINER_W - BOWL_SIZE) / 2, borderColor: colors.primary },
+                {
+                  left: (CONTAINER_W - BOWL_SIZE) / 2,
+                  borderColor: colors.primary,
+                },
                 circleAnimStyle,
               ]}
             >
-              <GradientBox colors={[colors.black, colors.bgBox]} style={styles.circleGradient}>
+              <GradientBox
+                colors={[colors.black, colors.bgBox]}
+                style={styles.circleGradient}
+              >
                 <View />
               </GradientBox>
               {showShells && (
-                <View style={[styles.shellsOverlay, { padding: SHELL_PADDING }]} pointerEvents="none">
+                <View
+                  style={[styles.shellsOverlay, { padding: SHELL_PADDING }]}
+                  pointerEvents="none"
+                >
                   {shellConfigs.map((cfg, i) => (
                     <ShellSprite
                       key={`shell-${i}`}
@@ -494,7 +551,7 @@ const { showAd } = useInterstitialAd();
               )}
             </Animated.View>
           </View>
-        
+
           {/* --- UPDATED: Show final content only in phase 4 --- */}
           {phase === 4 && (
             <>
@@ -512,7 +569,12 @@ const { showAd } = useInterstitialAd();
                       source={isPlayingAudio ? PAUSE_ICON : PLAY_ICON}
                       style={[
                         styles.playIcon,
-                        { tintColor: (isPreloadingAudio || !preloadedAudioPath) ? '#999' : colors.primary }
+                        {
+                          tintColor:
+                            isPreloadingAudio || !preloadedAudioPath
+                              ? '#999'
+                              : colors.primary,
+                        },
                       ]}
                       resizeMode="contain"
                     />
@@ -543,8 +605,14 @@ const { showAd } = useInterstitialAd();
                       <ActivityIndicator color={colors.white} />
                     ) : (
                       <>
-                        <Image source={SAVE_ICON} style={styles.smallIcon} resizeMode="contain" />
-                        <Text style={[styles.smallBtnText, { color: colors.white }]}>
+                        <Image
+                          source={SAVE_ICON}
+                          style={styles.smallIcon}
+                          resizeMode="contain"
+                        />
+                        <Text
+                          style={[styles.smallBtnText, { color: colors.white }]}
+                        >
                           {t('save_button')}
                         </Text>
                       </>
@@ -555,31 +623,30 @@ const { showAd } = useInterstitialAd();
             </>
           )}
 
-    
-        
-        {/* --- MOVED: This is the main action button, now outside ScrollView and at the bottom --- */}
-        <View style={styles.actionsRow}>
-          <TouchableOpacity
-            activeOpacity={0.7}
-            style={styles.actionTouchable}
-            onPress={onActionPress}
-            disabled={(phase === 1 && isLoadingReading) || phase === 3}
-          >
-            <GradientBox
-              colors={[colors.black, colors.bgBox]}
-              style={[styles.actionButton, { borderColor: colors.primary }]}
+          {/* --- MOVED: This is the main action button, now outside ScrollView and at the bottom --- */}
+          <View style={styles.actionsRow}>
+            <Pressable
+              style={styles.actionTouchable}
+              onPress={onActionPress}
+              disabled={(phase === 1 && isLoadingReading) || phase === 3}
+              hapticType="medium"
+              haptic={!((phase === 1 && isLoadingReading) || phase === 3)}
             >
-              {phase === 1 && isLoadingReading ? (
-                <ActivityIndicator color={colors.primary} />
-              ) : (
-                <Text style={[styles.actionLabel, { color: colors.white }]}>
-                  {actionLabel}
-                </Text>
-              )}
-            </GradientBox>
-          </TouchableOpacity>
-        </View>
-    </ScrollView>
+              <GradientBox
+                colors={[colors.black, colors.bgBox]}
+                style={[styles.actionButton, { borderColor: colors.primary }]}
+              >
+                {phase === 1 && isLoadingReading ? (
+                  <ActivityIndicator color={colors.primary} />
+                ) : (
+                  <Text style={[styles.actionLabel, { color: colors.white }]}>
+                    {actionLabel}
+                  </Text>
+                )}
+              </GradientBox>
+            </Pressable>
+          </View>
+        </ScrollView>
         <SubscriptionPlanModal
           isVisible={showSubscriptionModal}
           onClose={() => setShowSubscriptionModal(false)}
@@ -738,10 +805,10 @@ const styles = StyleSheet.create({
   },
   actionLabel: { fontFamily: Fonts.aeonikRegular, fontSize: 14 },
   playBtnContainer: {
-      width: 60,
-      height: 60,
-      justifyContent: 'center',
-      alignItems: 'center',
+    width: 60,
+    height: 60,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   // --- NEW: Styles for the full screen video modal ---
   videoContainer: {
@@ -762,36 +829,6 @@ const styles = StyleSheet.create({
     marginBottom: 50, // Position button up from the very bottom edge
   },
 });
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 // import React, { useMemo, useState, useEffect } from 'react';
 // import {
@@ -917,7 +954,7 @@ const styles = StyleSheet.create({
 //   const route = useRoute<RouteProp<AppStackParamList, 'CaurisCardDetail'>>();
 //   const { userQuestion } = route.params;
 //   const { t } = useTranslation();
-  
+
 //   const {
 //     reading,
 //     isLoadingReading,
@@ -932,7 +969,7 @@ const styles = StyleSheet.create({
 
 //   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
 //   const [phase, setPhase] = useState<0 | 1 | 2 | 3>(0);
-  
+
 //   // --- NEW: State for audio playback and preloading ---
 //   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
 //   const [preloadedAudioPath, setPreloadedAudioPath] = useState<string | null>(null);
@@ -1035,7 +1072,7 @@ const styles = StyleSheet.create({
 //   const oSV = shellConfigs.map(() => useSharedValue(0));
 
 //   const onActionPress = async () => {
-//     Vibration.vibrate([0, 35, 40, 35]); 
+//     Vibration.vibrate([0, 35, 40, 35]);
 //     if (phase === 0) {
 //       setPhase(1);
 //       getBuziosReading(userQuestion);
@@ -1061,13 +1098,13 @@ const styles = StyleSheet.create({
 //       setPhase(2);
 //     }
 //   }, [isLoadingReading, reading, phase]);
-  
+
 //   // --- NEW: useEffect to PRELOAD audio when reading is ready ---
 //   useEffect(() => {
 //     const prepareReadingAudio = async () => {
 //         if (reading?.ai_reading && reading?.buzios_result?.overall_polarity) {
 //             setIsPreloadingAudio(true);
-            
+
 //             // --- THE FIX IS HERE ---
 //             // Create a unique ID from the reading result to use for caching the audio file.
 //             // We sanitize it to make it a valid filename component.
@@ -1085,7 +1122,7 @@ const styles = StyleSheet.create({
 //     };
 //     prepareReadingAudio();
 //   }, [reading, userQuestion, preloadSpeech]);
-  
+
 //   // --- NEW: useEffect for SoundPlayer events ---
 //   useEffect(() => {
 //     const onFinishedPlayingSubscription = SoundPlayer.addEventListener('FinishedPlaying', () => {
@@ -1098,7 +1135,7 @@ const styles = StyleSheet.create({
 //   }, []);
 
 //   const handleSave = () => {
-//     Vibration.vibrate([0, 35, 40, 35]); 
+//     Vibration.vibrate([0, 35, 40, 35]);
 //     if (reading && !isSaving) {
 //       saveBuziosReading(reading).then(success => {
 //         if (success) {
@@ -1107,7 +1144,7 @@ const styles = StyleSheet.create({
 //       });
 //     }
 //   };
-  
+
 //   // --- NEW: Updated playback toggle function ---
 //   const onPressPlayToggle = () => {
 //     if (isPlayingAudio) {
@@ -1132,20 +1169,20 @@ const styles = StyleSheet.create({
 //       { text: 'OK', onPress: () => navigation.goBack() },
 //     ]);
 //   }
-  
+
 //   const titleTop = t(
 //     phase === 0 ? 'cauris_phase0_title' :
 //     phase === 1 ? 'cauris_phase1_title' :
 //     phase === 2 ? 'cauris_phase2_title' :
 //     'cauris_phase3_title'
 //   );
-  
+
 //   const subtitle = phase < 2 ? t(
 //     phase === 0 ? 'cauris_phase0_subtitle' :
 //     'cauris_phase1_subtitle'
 //   ) : undefined;
 
-//   const actionLabel = 
+//   const actionLabel =
 //     phase === 0 ? t('cauris_phase0_button') :
 //     phase === 1 ? t('continue_button') : // This is a temporary state, button is disabled
 //     phase === 2 ? t('cauris_phase2_button') :
@@ -1479,6 +1516,3 @@ const styles = StyleSheet.create({
 //       alignItems: 'center',
 //   }
 // });
-
-
-

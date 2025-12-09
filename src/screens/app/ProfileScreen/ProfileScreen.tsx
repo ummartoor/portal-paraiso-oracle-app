@@ -1,4 +1,10 @@
-import React, { useCallback, useState, useMemo, useEffect } from 'react';
+import React, {
+  useCallback,
+  useState,
+  useMemo,
+  useEffect,
+  useRef,
+} from 'react';
 import {
   View,
   Text,
@@ -13,7 +19,10 @@ import {
   Platform,
   Vibration,
 } from 'react-native';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from 'react-native-safe-area-context';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { AppStackParamList } from '../../../navigation/routeTypes';
@@ -24,7 +33,12 @@ import LogOutModal from '../../../components/LogOutModal';
 import { useGetNotificationsStore } from '../../../store/useGetNotificationsStore';
 import NotificationToggleModal from './NotificationToggleModal';
 import { useTranslation } from 'react-i18next';
-import Animated, { useSharedValue, useAnimatedStyle, withTiming } from 'react-native-reanimated';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+} from 'react-native-reanimated';
+import { useShallow } from 'zustand/react/shallow';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -49,22 +63,33 @@ const formatDate = (dateString?: string) => {
 };
 
 const ProfileScreen: React.FC = () => {
-  const { colors } = useThemeStore(state => state.theme);
+  const colors = useThemeStore(state => state.theme.colors);
   const { t, i18n } = useTranslation();
   const insets = useSafeAreaInsets();
   const [logoutModalVisible, setLogoutModalVisible] = useState(false);
-  const navigation = useNavigation<NativeStackNavigationProp<AppStackParamList>>();
-  
-  const { user, fetchCurrentUser, logout, updateAppLanguage } = useAuthStore(); // Removed 'isUpdating' as 'isLangLoading' is used
-  
-  const notificationSettings = useGetNotificationsStore(
-    state => state.notificationSettings,
+  const navigation =
+    useNavigation<NativeStackNavigationProp<AppStackParamList>>();
+
+  const { user, fetchCurrentUser, logout, updateAppLanguage } = useAuthStore(
+    useShallow(state => ({
+      user: state.user,
+      fetchCurrentUser: state.fetchCurrentUser,
+      logout: state.logout,
+      updateAppLanguage: state.updateAppLanguage,
+    })),
   );
-  const [notificationModalVisible, setNotificationModalVisible] = useState(false);
+
+  const { notificationSettings } = useGetNotificationsStore(
+    useShallow(state => ({
+      notificationSettings: state.notificationSettings,
+    })),
+  );
+  const [notificationModalVisible, setNotificationModalVisible] =
+    useState(false);
 
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [selectedLanguage, setSelectedLanguage] = useState(
-    LANGUAGES.find(lang => lang.key === i18n.language) || LANGUAGES[0]
+    LANGUAGES.find(lang => lang.key === i18n.language) || LANGUAGES[0],
   );
   const [isLangLoading, setIsLangLoading] = useState(false);
 
@@ -77,41 +102,109 @@ const ProfileScreen: React.FC = () => {
   });
 
   useEffect(() => {
-    dropdownAnimation.value = withTiming(isDropdownOpen ? 1 : 0, { duration: 200 });
+    dropdownAnimation.value = withTiming(isDropdownOpen ? 1 : 0, {
+      duration: 200,
+    });
   }, [isDropdownOpen, dropdownAnimation]);
 
-  const ZODIACS: Zodiac[] = [
-    { key: "aries", name: t('zodiac_aries'), icon: require("../../../assets/icons/AriesIcon.png") },
-    { key: "taurus", name: t('zodiac_taurus'), icon: require("../../../assets/icons/TaurusIcon.png") },
-    { key: "gemini", name: t('zodiac_gemini'), icon: require("../../../assets/icons/GeminiIcon.png") },
-    { key: "cancer", name: t('zodiac_cancer'), icon: require("../../../assets/icons/CancerIcon.png") },
-    { key: "leo", name: t('zodiac_leo'), icon: require("../../../assets/icons/leoIcon.png") },
-    { key: "virgo", name: t('zodiac_virgo'), icon: require("../../../assets/icons/VirgoIcon.png") },
-    { key: "libra", name: t('zodiac_libra'), icon: require("../../../assets/icons/libraIcon.png") },
-    { key: "scorpio", name: t('zodiac_scorpio'), icon: require("../../../assets/icons/ScorpioIcon.png") },
-    { key: "sagittarius", name: t('zodiac_sagittarius'), icon: require("../../../assets/icons/SagittariusIcon.png")},
-    { key: "capricorn", name: t('zodiac_capricorn'), icon: require("../../../assets/icons/CapricornIcon.png") },
-    { key: "aquarius", name: t('zodiac_aquarius'), icon: require("../../../assets/icons/AquariusIcon.png") },
-    { key: "pisces", name: t('zodiac_pisces'), icon: require("../../../assets/icons/PiscesIcon.png") },
-  ];
-
-  useFocusEffect(
-    useCallback(() => {
-      fetchCurrentUser();
-    }, [fetchCurrentUser])
+  // Memoize ZODIACS to prevent recreation on every render
+  const ZODIACS: Zodiac[] = useMemo(
+    () => [
+      {
+        key: 'aries',
+        name: t('zodiac_aries'),
+        icon: require('../../../assets/icons/AriesIcon.png'),
+      },
+      {
+        key: 'taurus',
+        name: t('zodiac_taurus'),
+        icon: require('../../../assets/icons/TaurusIcon.png'),
+      },
+      {
+        key: 'gemini',
+        name: t('zodiac_gemini'),
+        icon: require('../../../assets/icons/GeminiIcon.png'),
+      },
+      {
+        key: 'cancer',
+        name: t('zodiac_cancer'),
+        icon: require('../../../assets/icons/CancerIcon.png'),
+      },
+      {
+        key: 'leo',
+        name: t('zodiac_leo'),
+        icon: require('../../../assets/icons/leoIcon.png'),
+      },
+      {
+        key: 'virgo',
+        name: t('zodiac_virgo'),
+        icon: require('../../../assets/icons/VirgoIcon.png'),
+      },
+      {
+        key: 'libra',
+        name: t('zodiac_libra'),
+        icon: require('../../../assets/icons/libraIcon.png'),
+      },
+      {
+        key: 'scorpio',
+        name: t('zodiac_scorpio'),
+        icon: require('../../../assets/icons/ScorpioIcon.png'),
+      },
+      {
+        key: 'sagittarius',
+        name: t('zodiac_sagittarius'),
+        icon: require('../../../assets/icons/SagittariusIcon.png'),
+      },
+      {
+        key: 'capricorn',
+        name: t('zodiac_capricorn'),
+        icon: require('../../../assets/icons/CapricornIcon.png'),
+      },
+      {
+        key: 'aquarius',
+        name: t('zodiac_aquarius'),
+        icon: require('../../../assets/icons/AquariusIcon.png'),
+      },
+      {
+        key: 'pisces',
+        name: t('zodiac_pisces'),
+        icon: require('../../../assets/icons/PiscesIcon.png'),
+      },
+    ],
+    [t],
   );
 
+  // Fetch user only once on mount to prevent blinking on focus
+  const hasFetchedUser = useRef(false);
+  useEffect(() => {
+    if (!hasFetchedUser.current && !user) {
+      hasFetchedUser.current = true;
+      fetchCurrentUser();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Only run once on mount
+
+  // Memoize language sync to prevent unnecessary re-renders
   useEffect(() => {
     if (user?.app_language) {
       const backendLangKey = user.app_language;
       const currenti18nLang = i18n.language;
 
+      // Only update if language actually changed
       if (backendLangKey !== currenti18nLang) {
         i18n.changeLanguage(backendLangKey);
       }
-      setSelectedLanguage(LANGUAGES.find(l => l.key === backendLangKey) || LANGUAGES[0]);
+
+      // Only update selected language if it's different
+      const newSelectedLang =
+        LANGUAGES.find(l => l.key === backendLangKey) || LANGUAGES[0];
+      if (newSelectedLang.key !== selectedLanguage.key) {
+        setSelectedLanguage(newSelectedLang);
+      }
     }
-  }, [user, i18n]);
+    // Remove i18n from dependencies to prevent re-renders
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.app_language, selectedLanguage.key]);
 
   const isAnyNotificationEnabled = useMemo(() => {
     if (!notificationSettings) return false;
@@ -126,24 +219,34 @@ const ProfileScreen: React.FC = () => {
   const userZodiac = useMemo(() => {
     if (!user?.sign_in_zodiac) return null;
     return ZODIACS.find(z => z.key === user.sign_in_zodiac);
-  }, [user, ZODIACS]);
+  }, [user?.sign_in_zodiac, ZODIACS]);
 
-  const handleSelectLanguage = async (language: typeof LANGUAGES[0]) => {
+  const handleSelectLanguage = async (language: (typeof LANGUAGES)[0]) => {
     if (Platform.OS === 'android') {
       Vibration.vibrate([0, 35, 40, 35]);
     } else {
       Vibration.vibrate();
     }
-    
+
     setIsDropdownOpen(false);
     setSelectedLanguage(language);
-    
+
     await i18n.changeLanguage(language.key);
-    
+
     setIsLangLoading(true);
     await updateAppLanguage(language.key);
     setIsLangLoading(false);
   };
+
+  // Memoize scroll content style to prevent re-creation
+  const scrollContentStyle = useMemo(
+    () => ({
+      paddingTop: 10,
+      paddingBottom: insets.bottom + 10,
+      paddingHorizontal: H_PADDING,
+    }),
+    [insets.bottom],
+  );
 
   return (
     <SafeAreaView
@@ -157,47 +260,57 @@ const ProfileScreen: React.FC = () => {
       >
         <ScrollView
           style={{ flex: 1 }}
-          contentContainerStyle={{
-            paddingTop: 10,
-            paddingBottom: insets.bottom + 10,
-            paddingHorizontal: H_PADDING,
-          }}
+          contentContainerStyle={scrollContentStyle}
           showsVerticalScrollIndicator={false}
+          removeClippedSubviews={false}
         >
           {/* --- CHANGED: Header layout updated as requested --- */}
           <View style={styles.header}>
-           <View style={styles.headerLeft}>
-    <TouchableOpacity
-      style={styles.backBtn}
-      onPress={() => navigation.goBack()}
-    >
-      <Image
-        source={require('../../../assets/icons/backIcon.png')}
-        style={styles.backIcon}
-        resizeMode="contain"
-      />
-    </TouchableOpacity>
-    
+            <View style={styles.headerLeft}>
+              <TouchableOpacity
+                style={styles.backBtn}
+                onPress={() => navigation.goBack()}
+              >
+                <Image
+                  source={require('../../../assets/icons/backIcon.png')}
+                  style={styles.backIcon}
+                  resizeMode="contain"
+                />
+              </TouchableOpacity>
 
-    <Text style={[styles.headerTitle, { color: colors.white }]}>
-      {t('profile_screen_title')}
-    </Text>
-  </View>
+              <Text style={[styles.headerTitle, { color: colors.white }]}>
+                {t('profile_screen_title')}
+              </Text>
+            </View>
 
-          
-            
             <View style={styles.headerRight}>
               {/* --- CHANGED: Dropdown moved to the right --- */}
               <TouchableOpacity
-                style={[styles.dropdownTrigger, { backgroundColor: colors.bgBox, borderColor: 'rgba(255,255,255,0.2)' }]}
+                style={[
+                  styles.dropdownTrigger,
+                  {
+                    backgroundColor: colors.bgBox,
+                    borderColor: 'rgba(255,255,255,0.2)',
+                  },
+                ]}
                 onPress={() => setIsDropdownOpen(prev => !prev)}
                 activeOpacity={0.8}
                 disabled={isLangLoading}
               >
-                <Text style={styles.dropdownText}>{selectedLanguage.key.toUpperCase()}</Text>
+                <Text style={styles.dropdownText}>
+                  {selectedLanguage.key.toUpperCase()}
+                </Text>
                 <Image
                   source={require('../../../assets/icons/arrowDown.png')}
-                  style={[styles.dropdownIcon, { tintColor: colors.white, transform: [{ rotate: isDropdownOpen ? '180deg' : '0deg' }] }]}
+                  style={[
+                    styles.dropdownIcon,
+                    {
+                      tintColor: colors.white,
+                      transform: [
+                        { rotate: isDropdownOpen ? '180deg' : '0deg' },
+                      ],
+                    },
+                  ]}
                   resizeMode="contain"
                 />
               </TouchableOpacity>
@@ -205,20 +318,42 @@ const ProfileScreen: React.FC = () => {
           </View>
 
           {/* --- CHANGED: Animated menu position updated --- */}
-          <Animated.View style={[styles.dropdownMenu, { backgroundColor: colors.bgBox, borderColor: 'rgba(255, 255, 255, 0.94)', top: insets.top + 20 }, dropdownAnimatedStyle]}>
-            {LANGUAGES.map(lang => (
-              <TouchableOpacity
-                key={lang.key}
-                style={styles.dropdownItem}
-                onPress={() => handleSelectLanguage(lang)}
-                activeOpacity={0.7}
-              >
-                <Text style={[styles.dropdownItemText, { color: lang.key === selectedLanguage.key ? colors.primary : colors.white }]}>
-                  {lang.name}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </Animated.View>
+          {isDropdownOpen && (
+            <Animated.View
+              style={[
+                styles.dropdownMenu,
+                {
+                  backgroundColor: colors.bgBox,
+                  borderColor: 'rgba(255, 255, 255, 0.94)',
+                  top: insets.top + 20,
+                },
+                dropdownAnimatedStyle,
+              ]}
+            >
+              {LANGUAGES.map(lang => (
+                <TouchableOpacity
+                  key={lang.key}
+                  style={styles.dropdownItem}
+                  onPress={() => handleSelectLanguage(lang)}
+                  activeOpacity={0.7}
+                >
+                  <Text
+                    style={[
+                      styles.dropdownItemText,
+                      {
+                        color:
+                          lang.key === selectedLanguage.key
+                            ? colors.primary
+                            : colors.white,
+                      },
+                    ]}
+                  >
+                    {lang.name}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </Animated.View>
+          )}
           {/* --- END OF HEADER CHANGES --- */}
 
           {/* profile name  */}
@@ -249,7 +384,6 @@ const ProfileScreen: React.FC = () => {
             </Text>
           </TouchableOpacity>
 
-       
           <View style={{ flexDirection: 'row', marginTop: 16 }}>
             <View
               style={[
@@ -492,13 +626,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
   },
-headerLeft: {
-  flex: 2, 
-  justifyContent: 'flex-start', 
-  alignItems: 'center', 
-  flexDirection: 'row', 
-},
- 
+  headerLeft: {
+    flex: 2,
+    justifyContent: 'flex-start',
+    alignItems: 'center',
+    flexDirection: 'row',
+  },
+
   headerRight: {
     flex: 1,
     justifyContent: 'center',
@@ -511,18 +645,18 @@ headerLeft: {
     justifyContent: 'center',
     alignItems: 'center',
   },
-  backIcon: { 
-    width: 22, 
-    height: 22, 
-    tintColor: '#fff' 
+  backIcon: {
+    width: 22,
+    height: 22,
+    tintColor: '#fff',
   },
   headerTitle: {
-   fontSize: 24,
-  lineHeight: 26,
-  textTransform: 'uppercase',
-  fontFamily: Fonts.cormorantSCBold,
+    fontSize: 24,
+    lineHeight: 26,
+    textTransform: 'uppercase',
+    fontFamily: Fonts.cormorantSCBold,
 
-  marginLeft: 8,
+    marginLeft: 8,
   },
   topRow: {
     marginTop: 12,
@@ -583,7 +717,7 @@ headerLeft: {
     marginBottom: 10,
     fontSize: 16,
     fontFamily: Fonts.aeonikRegular,
-    color: '#D9B699'
+    color: '#D9B699',
   },
   rowBtn: {
     height: 55,
@@ -610,7 +744,6 @@ headerLeft: {
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 10,
-
   },
   dropdownText: {
     fontFamily: Fonts.aeonikBold,
@@ -625,14 +758,14 @@ headerLeft: {
   dropdownMenu: {
     position: 'absolute',
     width: 120,
-   right: 20, 
-   borderWidth:1,
-   borderColor:'#fff',
+    right: 20,
+    borderWidth: 1,
+    borderColor: '#fff',
     borderRadius: 12,
     overflow: 'hidden',
     zIndex: 100,
- 
-    transformOrigin: 'top right', 
+
+    transformOrigin: 'top right',
   },
   dropdownItem: {
     paddingVertical: 12,
@@ -643,30 +776,6 @@ headerLeft: {
     fontSize: 14,
   },
 });
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 // import React, { useState, useCallback, useEffect, useMemo } from 'react';
 // import { useNavigation, useFocusEffect } from '@react-navigation/native';

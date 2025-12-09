@@ -21,6 +21,7 @@ import GradientBox from '../../../components/GradientBox';
 import { Fonts } from '../../../constants/fonts';
 import { useRegisterStore } from '../../../store/useRegisterStore'; // --- ADDED ---
 import { useTranslation } from 'react-i18next';
+import Pressable from '../../../components/Pressable';
 const { height: SCREEN_HEIGHT, width: SCREEN_WIDTH } = Dimensions.get('screen');
 
 // Define type for relationship options
@@ -42,28 +43,54 @@ const RelationshipScreen_6: React.FC = () => {
   const { updateUserDetails, isUpdating } = useRegisterStore();
 
   const relationshipOptions: RelationshipOption[] = [
-    { key: 'single', label: t('status_single'), icon: require('../../../assets/icons/goalIcon1.png') },
-    { key: 'relationship', label: t('status_relationship'), icon: require('../../../assets/icons/goalIcon1.png') },
-    { key: 'married', label: t('status_married'), icon: require('../../../assets/icons/goalIcon1.png') },
-    { key: 'engaged', label: t('status_engaged'), icon: require('../../../assets/icons/goalIcon1.png') },
-    { key: 'complicated', label: t('status_complicated'), icon: require('../../../assets/icons/goalIcon1.png') },
-    { key: 'divorced', label: t('status_divorced'), icon: require('../../../assets/icons/goalIcon1.png') },
+    {
+      key: 'single',
+      label: t('status_single'),
+      icon: require('../../../assets/icons/goalIcon1.png'),
+    },
+    {
+      key: 'relationship',
+      label: t('status_relationship'),
+      icon: require('../../../assets/icons/goalIcon1.png'),
+    },
+    {
+      key: 'married',
+      label: t('status_married'),
+      icon: require('../../../assets/icons/goalIcon1.png'),
+    },
+    {
+      key: 'engaged',
+      label: t('status_engaged'),
+      icon: require('../../../assets/icons/goalIcon1.png'),
+    },
+    {
+      key: 'complicated',
+      label: t('status_complicated'),
+      icon: require('../../../assets/icons/goalIcon1.png'),
+    },
+    {
+      key: 'divorced',
+      label: t('status_divorced'),
+      icon: require('../../../assets/icons/goalIcon1.png'),
+    },
   ];
 
   // --- ADDED: Handle 'Next' button press and API call ---
   const handleNext = async () => {
-     Vibration.vibrate([0, 35, 40, 35]);
+    Vibration.vibrate([0, 35, 40, 35]);
     if (!selectedStatus) {
-   Alert.alert(
+      Alert.alert(
         t('alert_selection_required_title'),
-        t('alert_relationship_status_message')
+        t('alert_relationship_status_message'),
       );
       return;
     }
-    
-    const success = await updateUserDetails({ relationship_status: selectedStatus });
-    
-   if (success) {
+
+    const success = await updateUserDetails({
+      relationship_status: selectedStatus,
+    });
+
+    if (success) {
       navigation.reset({
         index: 0,
         routes: [{ name: 'Login' }],
@@ -100,10 +127,10 @@ const RelationshipScreen_6: React.FC = () => {
 
         {/* Heading */}
         <Text style={[styles.heading, { color: colors.white }]}>
-     {t('relationship_header')}
+          {t('relationship_header')}
         </Text>
         <Text style={[styles.subheading, { color: colors.primary }]}>
-     {t('relationship_subheader')}
+          {t('relationship_subheader')}
         </Text>
 
         {/* Relationship Status Options */}
@@ -124,14 +151,17 @@ const RelationshipScreen_6: React.FC = () => {
                       style={[
                         styles.statusBox,
                         {
-                          borderColor: isSelected ? colors.primary : colors.white,
+                          borderColor: isSelected
+                            ? colors.primary
+                            : colors.white,
                           borderWidth: isSelected ? 1.5 : 1,
                         },
                       ]}
                       activeOpacity={0.8}
                       onPress={() => {
-                              Vibration.vibrate([0, 35, 40, 35]); 
-                        setSelectedStatus(item.key)}}
+                        Vibration.vibrate([0, 35, 40, 35]);
+                        setSelectedStatus(item.key);
+                      }}
                     >
                       <View style={styles.iconWrapper}>
                         <Image
@@ -165,11 +195,12 @@ const RelationshipScreen_6: React.FC = () => {
 
         {/* --- UPDATED: Next Button with loading state and API call --- */}
         <View style={styles.footer}>
-          <TouchableOpacity
-            activeOpacity={0.8}
+          <Pressable
             onPress={handleNext}
-            style={{ width: '100%' }}
             disabled={isUpdating}
+            hapticType="medium"
+            haptic={!isUpdating}
+            style={{ width: '100%' }}
           >
             <GradientBox
               colors={[colors.black, colors.bgBox]}
@@ -181,10 +212,10 @@ const RelationshipScreen_6: React.FC = () => {
               {isUpdating ? (
                 <ActivityIndicator color={colors.primary} />
               ) : (
-                <Text style={styles.nextText}>{t('finish_button')}</Text> 
+                <Text style={styles.nextText}>{t('finish_button')}</Text>
               )}
             </GradientBox>
-          </TouchableOpacity>
+          </Pressable>
         </View>
       </SafeAreaView>
     </ImageBackground>
@@ -267,9 +298,9 @@ const styles = StyleSheet.create({
     marginBottom: 40,
   },
   nextBtn: {
-    height: 56,
+    height: 52,
     width: '100%',
-    borderRadius: 65,
+    borderRadius: 26,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -280,16 +311,6 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.aeonikRegular,
   },
 });
-
-
-
-
-
-
-
-
-
-
 
 // import React, { useState } from 'react';
 // import {
@@ -407,7 +428,7 @@ const styles = StyleSheet.create({
 //                           style={{
 //                             width: 21,
 //                             height: 21,
-                  
+
 //                           }}
 //                           resizeMode="contain"
 //                         />
@@ -431,7 +452,7 @@ const styles = StyleSheet.create({
 //                 {row.length === 1 && (
 //                   <View style={[styles.statusBox, { opacity: 0 }]} />
 //                 )}
-            
+
 //               </View>
 //             ))}
 //         </View>
