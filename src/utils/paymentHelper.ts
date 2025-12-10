@@ -1,19 +1,23 @@
 import { Alert } from 'react-native';
 import { useStripeStore } from '../store/useStripeStore';
+import { pollSubscriptionStatus } from './subscriptionPolling';
 
 export interface PaymentResult {
   success: boolean;
   subscription?: any;
   error?: string;
+  isProcessing?: boolean; // True if payment confirmed but subscription not yet updated
 }
 
 /**
- * Utility function to handle payment flow for packages
+ * Utility function to handle payment flow for packages using webhook-based architecture
+ * After payment confirmation, polls subscription status instead of calling verification endpoint
  * @param packageId - The package ID to purchase
  * @param priceId - The price ID for the package
  * @param stripe - Stripe hook instance
- * @param onSuccess - Callback when payment is successful
+ * @param onSuccess - Callback when payment is successful and subscription is confirmed
  * @param onError - Callback when payment fails
+ * @param onProcessing - Callback when payment is confirmed but subscription is still processing
  */
 export const processPayment = async (
   packageId: string,
@@ -21,9 +25,10 @@ export const processPayment = async (
   stripe: { initPaymentSheet: any; presentPaymentSheet: any },
   onSuccess?: (subscription: any) => void,
   onError?: (error: string) => void,
+  onProcessing?: () => void,
 ): Promise<PaymentResult> => {
   const { initPaymentSheet, presentPaymentSheet } = stripe;
-  const { createPaymentIntent, confirmPayment } = useStripeStore.getState();
+  const { createPaymentIntent } = useStripeStore.getState();
 
   try {
     // Step 1: Create payment intent
@@ -70,19 +75,46 @@ export const processPayment = async (
       return { success: false, error: 'Payment canceled by user' };
     }
 
-    // Step 4: Confirm payment with backend
-    const confirmationResult = await confirmPayment(
-      paymentData.paymentIntentId,
-    );
+    // Step 4: Payment confirmed by Stripe SDK - now poll for webhook processing
+    // The webhook will process the payment automatically on the server
+    if (onProcessing) {
+      onProcessing();
+    }
 
-    if (confirmationResult.success) {
-      onSuccess?.(confirmationResult.subscription);
+    const pollingResult = await pollSubscriptionStatus({
+      expectedPackageId: packageId,
+      maxDuration: 30000, // 30 seconds
+      interval: 2500, // 2.5 seconds
+      onUpdate: subscription => {
+        if (__DEV__) {
+          console.log('Subscription updated via polling:', subscription);
+        }
+      },
+      onTimeout: () => {
+        if (__DEV__) {
+          console.log('Polling timeout - webhook may still be processing');
+        }
+      },
+    });
+
+    if (pollingResult.success && pollingResult.subscription) {
+      onSuccess?.(pollingResult.subscription);
       return {
         success: true,
-        subscription: confirmationResult.subscription,
+        subscription: pollingResult.subscription,
+      };
+    } else if (pollingResult.timedOut) {
+      // Payment was confirmed but subscription not yet updated
+      // This is okay - webhook will process it in the background
+      return {
+        success: false,
+        isProcessing: true,
+        error: 'Payment received. Your subscription will be activated shortly.',
       };
     } else {
-      const error = 'Payment verification failed';
+      const error =
+        pollingResult.error ||
+        'Payment confirmed but subscription status could not be verified';
       onError?.(error);
       return { success: false, error };
     }

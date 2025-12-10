@@ -1,14 +1,17 @@
 import { Alert } from 'react-native';
 import { useStripeStore } from '../store/useStripeStore';
+import { pollSubscriptionStatus } from './subscriptionPolling';
 
 export interface PaymentResult {
   success: boolean;
   subscription?: any;
   error?: string;
+  isProcessing?: boolean; // True if payment confirmed but subscription not yet updated
 }
 
 /**
- * Improved payment helper that handles payment method issues
+ * Improved payment helper that handles payment method issues using webhook-based architecture
+ * After payment confirmation, polls subscription status instead of calling verification endpoint
  */
 export const processPaymentImproved = async (
   packageId: string,
@@ -16,32 +19,39 @@ export const processPaymentImproved = async (
   stripe: { initPaymentSheet: any; presentPaymentSheet: any },
   onSuccess?: (subscription: any) => void,
   onError?: (error: string) => void,
+  onProcessing?: () => void,
 ): Promise<PaymentResult> => {
   const { initPaymentSheet, presentPaymentSheet } = stripe;
-  const { createPaymentIntent, confirmPayment } = useStripeStore.getState();
+  const { createPaymentIntent } = useStripeStore.getState();
 
   try {
-    console.log(
-      'Starting payment process for package:',
-      packageId,
-      'price:',
-      priceId,
-    );
+    if (__DEV__) {
+      console.log(
+        'Starting payment process for package:',
+        packageId,
+        'price:',
+        priceId,
+      );
+    }
 
     // Step 1: Create payment intent
     const paymentData = await createPaymentIntent(packageId, priceId);
 
     if (!paymentData) {
       const error = 'Failed to create payment intent';
-      console.error(error);
+      if (__DEV__) {
+        console.error(error);
+      }
       onError?.(error);
       return { success: false, error };
     }
 
-    console.log('Payment intent created:', {
-      paymentIntentId: paymentData.paymentIntentId,
-      hasSubscriptionId: !!paymentData.subscriptionId,
-    });
+    if (__DEV__) {
+      console.log('Payment intent created:', {
+        paymentIntentId: paymentData.paymentIntentId,
+        hasSubscriptionId: !!paymentData.subscriptionId,
+      });
+    }
 
     // Step 2: Initialize payment sheet with proper configuration
     const paymentSheetConfig = {
@@ -65,62 +75,115 @@ export const processPaymentImproved = async (
       }),
     };
 
-    console.log('Initializing payment sheet with config:', paymentSheetConfig);
+    if (__DEV__) {
+      console.log(
+        'Initializing payment sheet with config:',
+        paymentSheetConfig,
+      );
+    }
 
     const { error: initError } = await initPaymentSheet(paymentSheetConfig);
 
     if (initError) {
       const error = `Could not initialize payment sheet: ${initError.message}`;
-      console.error('Payment sheet initialization failed:', initError);
+      if (__DEV__) {
+        console.error('Payment sheet initialization failed:', initError);
+      }
       onError?.(error);
       return { success: false, error };
     }
 
-    console.log('Payment sheet initialized successfully');
+    if (__DEV__) {
+      console.log('Payment sheet initialized successfully');
+    }
 
     // Step 3: Present payment sheet
     const { error: paymentError } = await presentPaymentSheet();
 
     if (paymentError) {
-      console.log('Payment sheet error:', paymentError);
+      if (__DEV__) {
+        console.log('Payment sheet error:', paymentError);
+      }
 
       if (paymentError.code === 'Canceled') {
         // User canceled - not an error
         return { success: false, error: 'Payment canceled by user' };
       } else {
         const error = `Payment Error: ${paymentError.code} - ${paymentError.message}`;
-        console.error('Payment failed:', paymentError);
+        if (__DEV__) {
+          console.error('Payment failed:', paymentError);
+        }
         onError?.(error);
         return { success: false, error };
       }
     }
 
-    console.log('Payment sheet completed successfully, confirming payment...');
-
-    // Step 4: Confirm payment with backend
-    const confirmationResult = await confirmPayment(
-      paymentData.paymentIntentId,
-    );
-
-    if (confirmationResult.success) {
+    if (__DEV__) {
       console.log(
-        'Payment confirmed successfully:',
-        confirmationResult.subscription,
+        'Payment sheet completed successfully, polling for webhook processing...',
       );
-      onSuccess?.(confirmationResult.subscription);
+    }
+
+    // Step 4: Payment confirmed by Stripe SDK - now poll for webhook processing
+    // The webhook will process the payment automatically on the server
+    if (onProcessing) {
+      onProcessing();
+    }
+
+    const pollingResult = await pollSubscriptionStatus({
+      expectedPackageId: packageId,
+      maxDuration: 30000, // 30 seconds
+      interval: 2500, // 2.5 seconds
+      onUpdate: subscription => {
+        if (__DEV__) {
+          console.log('Subscription updated via polling:', subscription);
+        }
+      },
+      onTimeout: () => {
+        if (__DEV__) {
+          console.log('Polling timeout - webhook may still be processing');
+        }
+      },
+    });
+
+    if (pollingResult.success && pollingResult.subscription) {
+      if (__DEV__) {
+        console.log(
+          'Payment confirmed and subscription activated:',
+          pollingResult.subscription,
+        );
+      }
+      onSuccess?.(pollingResult.subscription);
       return {
         success: true,
-        subscription: confirmationResult.subscription,
+        subscription: pollingResult.subscription,
+      };
+    } else if (pollingResult.timedOut) {
+      // Payment was confirmed but subscription not yet updated
+      // This is okay - webhook will process it in the background
+      if (__DEV__) {
+        console.log('Polling timed out - payment will be processed by webhook');
+      }
+      return {
+        success: false,
+        isProcessing: true,
+        error: 'Payment received. Your subscription will be activated shortly.',
       };
     } else {
-      const error = 'Payment verification failed';
-      console.error('Payment confirmation failed:', confirmationResult);
+      const error =
+        pollingResult.error ||
+        'Payment confirmed but subscription status could not be verified';
+      if (__DEV__) {
+        console.error('Payment polling failed:', error);
+      }
       onError?.(error);
       return { success: false, error };
     }
   } catch (error: any) {
     const errorMessage = error.message || 'An unexpected error occurred';
-    console.error('Payment process failed:', error);
+    if (__DEV__) {
+      console.error('Payment process failed:', error);
+    }
     onError?.(errorMessage);
     return { success: false, error: errorMessage };
   }

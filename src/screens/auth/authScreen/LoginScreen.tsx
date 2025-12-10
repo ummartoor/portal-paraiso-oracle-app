@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import {
   View,
@@ -14,23 +13,25 @@ import {
   Platform,
   Dimensions,
   ActivityIndicator,
-  Vibration, 
+  Vibration,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useThemeStore } from '../../../store/useThemeStore';
 import { Formik } from 'formik';
 import * as Yup from 'yup';
-import messaging from '@react-native-firebase/messaging'; 
+import messaging from '@react-native-firebase/messaging';
 import eyeIcon from '../../../assets/icons/eye.png';
 import eyeOffIcon from '../../../assets/icons/eyeOff.png';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { AuthStackParamsList } from '../../../navigation/routeTypes';
 import { useNavigation } from '@react-navigation/native';
 import { useAuthStore } from '../../../store/useAuthStore';
-import { useNotificationStore } from '../../../store/useNotificationStore'; 
+import { useNotificationStore } from '../../../store/useNotificationStore';
 import GradientBox from '../../../components/GradientBox';
 import { Fonts } from '../../../constants/fonts';
 import { useTranslation } from 'react-i18next';
+import { useHaptic } from '../../../hooks/useHaptic';
+import { HapticFeedbackTypes } from 'react-native-haptic-feedback';
 
 const { height: SCREEN_HEIGHT, width: SCREEN_WIDTH } = Dimensions.get('screen');
 
@@ -39,15 +40,18 @@ const LoginScreen = () => {
   const colors = theme.colors;
   const [showPassword, setShowPassword] = useState(false);
   const login = useAuthStore(state => state.login); // Your login function from store
-    const { registerFcmToken } = useNotificationStore();
-const { t ,i18n} = useTranslation();
+  const { registerFcmToken } = useNotificationStore();
+  const { t, i18n } = useTranslation();
+  const { trigger: triggerHaptic } = useHaptic();
   const navigation =
     useNavigation<NativeStackNavigationProp<AuthStackParamsList>>();
 
-const validationSchema = Yup.object().shape({
-  email: Yup.string().email(t('validation_email_invalid')).required(t('validation_email_required')),
-  password: Yup.string().required(t('validation_password_required')),
-});
+  const validationSchema = Yup.object().shape({
+    email: Yup.string()
+      .email(t('validation_email_invalid'))
+      .required(t('validation_email_required')),
+    password: Yup.string().required(t('validation_password_required')),
+  });
 
   return (
     <ImageBackground
@@ -73,10 +77,10 @@ const validationSchema = Yup.object().shape({
             keyboardShouldPersistTaps="handled"
           >
             <Text style={[styles.heading, { color: colors.white }]}>
-                   {t('login_header')}
+              {t('login_header')}
             </Text>
             <Text style={[styles.subheading, { color: colors.primary }]}>
-               {t('login_subheader')}
+              {t('login_subheader')}
             </Text>
 
             {/* <Formik
@@ -133,88 +137,97 @@ const validationSchema = Yup.object().shape({
               //   }
               // }}
 
-//               onSubmit={async (values, { setSubmitting }) => {
-//     Vibration.vibrate([0, 35, 40, 35]); // Vibration add kar dein agar yahan bhi chahiye
-//     let fcmToken = 'no-token-found';
-//     try {
-//       const token = await messaging().getToken();
-//       if (token) {
-//         fcmToken = token;
-//         console.log('Obtained FCM Token:', fcmToken);
-//       } else {
-//         console.log('Could not get FCM token.');
-//       }
-//     } catch (error) {
-//       console.error('Error getting FCM token:', error);
-//     }
+              //               onSubmit={async (values, { setSubmitting }) => {
+              //     Vibration.vibrate([0, 35, 40, 35]); // Vibration add kar dein agar yahan bhi chahiye
+              //     let fcmToken = 'no-token-found';
+              //     try {
+              //       const token = await messaging().getToken();
+              //       if (token) {
+              //         fcmToken = token;
+              //         console.log('Obtained FCM Token:', fcmToken);
+              //       } else {
+              //         console.log('Could not get FCM token.');
+              //       }
+              //     } catch (error) {
+              //       console.error('Error getting FCM token:', error);
+              //     }
 
-//     // Attempt login
-//     const loginSuccess = await login(values.email, values.password, fcmToken);
+              //     // Attempt login
+              //     const loginSuccess = await login(values.email, values.password, fcmToken);
 
-//     // --- YEH HISSAY MEIN CHANGE HAI ---
-//     if (loginSuccess) {
-//       // Login successful AND email was already verified
-//       await registerFcmToken(fcmToken);
-//       // Navigation to AppStack (Home) will happen automatically
-//       // because useAuthStore's isLoggedIn state is now true.
-//       // We don't need to explicitly navigate here or call setSubmitting(false).
-//     } else {
-//       // Login failed. Check if it was due to verification needed.
-//       // Since our login function returns 'false' and shows an alert
-//       // specifically for 'Email Not Verified', we can assume 'false' means
-//       // we need to navigate to the verification screen.
+              //     // --- YEH HISSAY MEIN CHANGE HAI ---
+              //     if (loginSuccess) {
+              //       // Login successful AND email was already verified
+              //       await registerFcmToken(fcmToken);
+              //       // Navigation to AppStack (Home) will happen automatically
+              //       // because useAuthStore's isLoggedIn state is now true.
+              //       // We don't need to explicitly navigate here or call setSubmitting(false).
+              //     } else {
+              //       // Login failed. Check if it was due to verification needed.
+              //       // Since our login function returns 'false' and shows an alert
+              //       // specifically for 'Email Not Verified', we can assume 'false' means
+              //       // we need to navigate to the verification screen.
 
-//       // **Important:** This assumes `login` *only* returns `false` for verification needed.
-//       // If it can return `false` for wrong password too, you'll need to adjust
-//       // the `login` function in `useAuthStore` to return different values/codes.
-      
-//       // Navigate to the OTP screen for login verification
-//       navigation.navigate('VerifyLoginOtpScreen', { email: values.email });
-      
-//       // We are navigating away, so no need to call setSubmitting(false) here.
-//       // The form submission process effectively ends with navigation.
-//     }
-//     // --- CHANGE KHATAM ---
-// }}
+              //       // **Important:** This assumes `login` *only* returns `false` for verification needed.
+              //       // If it can return `false` for wrong password too, you'll need to adjust
+              //       // the `login` function in `useAuthStore` to return different values/codes.
 
-// LoginScreen.tsx ke andar onSubmit
+              //       // Navigate to the OTP screen for login verification
+              //       navigation.navigate('VerifyLoginOtpScreen', { email: values.email });
 
-     onSubmit={async (values, { setSubmitting, setFieldError }) => {
-                  Vibration.vibrate([0, 35, 40, 35]);
-                  let fcmToken = 'no-token-found';
-                  try {
-                    const token = await messaging().getToken();
-                    if (token) fcmToken = token;
-                  } catch (error) {
-                    console.error('Error getting FCM token:', error);
-                  }
-const currentLanguage = i18n.language;
-                  // Attempt login and get the result
-                  // --- IMPORTANT: Assume 'login' is updated to return strings ---
-                  const loginResult: string | boolean = await login(values.email, values.password, fcmToken,currentLanguage);
-                  // Using 'string | boolean' temporarily to satisfy TS until login is fixed
+              //       // We are navigating away, so no need to call setSubmitting(false) here.
+              //       // The form submission process effectively ends with navigation.
+              //     }
+              //     // --- CHANGE KHATAM ---
+              // }}
 
-                  // --- WARNING: This logic WILL NOT WORK correctly until ---
-                  // --- useAuthStore's login function returns strings ---
-                  if (loginResult === 'SUCCESS') {
-                    await registerFcmToken(fcmToken);
-                    // Automatic navigation
-                  } else if (loginResult === 'NOT_VERIFIED') {
-                    navigation.navigate('VerifyLoginOtpScreen', { email: values.email });
-                    // Automatic navigation
-                  } else if (loginResult === 'WRONG_CREDENTIALS') {
-                    // --- Use simple strings for errors ---
-                    setFieldError('email', '');
-                    setFieldError('password', 'Invalid email or password'); 
-                    setSubmitting(false); // Re-enable form
-                  } else {
-                    // --- Use simple strings for errors ---
-                    setFieldError('email', 'An unexpected error occurred. Please try again.'); // Show generic error
-                    setSubmitting(false); // Re-enable form
-                  }
+              // LoginScreen.tsx ke andar onSubmit
+
+              onSubmit={async (values, { setSubmitting, setFieldError }) => {
+                Vibration.vibrate([0, 35, 40, 35]);
+                let fcmToken = 'no-token-found';
+                try {
+                  const token = await messaging().getToken();
+                  if (token) fcmToken = token;
+                } catch (error) {
+                  console.error('Error getting FCM token:', error);
+                }
+                const currentLanguage = i18n.language;
+                // Attempt login and get the result
+                // --- IMPORTANT: Assume 'login' is updated to return strings ---
+                const loginResult: string | boolean = await login(
+                  values.email,
+                  values.password,
+                  fcmToken,
+                  currentLanguage,
+                );
+                // Using 'string | boolean' temporarily to satisfy TS until login is fixed
+
+                // --- WARNING: This logic WILL NOT WORK correctly until ---
+                // --- useAuthStore's login function returns strings ---
+                if (loginResult === 'SUCCESS') {
+                  await registerFcmToken(fcmToken);
+                  // Automatic navigation
+                } else if (loginResult === 'NOT_VERIFIED') {
+                  navigation.navigate('VerifyLoginOtpScreen', {
+                    email: values.email,
+                  });
+                  // Automatic navigation
+                } else if (loginResult === 'WRONG_CREDENTIALS') {
+                  // --- Use simple strings for errors ---
+                  setFieldError('email', '');
+                  setFieldError('password', 'Invalid email or password');
+                  setSubmitting(false); // Re-enable form
+                } else {
+                  // --- Use simple strings for errors ---
+                  setFieldError(
+                    'email',
+                    'An unexpected error occurred. Please try again.',
+                  ); // Show generic error
+                  setSubmitting(false); // Re-enable form
+                }
               }}
             >
-            
               {({
                 handleChange,
                 handleBlur,
@@ -226,10 +239,10 @@ const currentLanguage = i18n.language;
               }) => (
                 <>
                   <Text style={[styles.label, { color: colors.white }]}>
-                   {t('email_label')}
+                    {t('email_label')}
                   </Text>
                   <TextInput
-                     placeholder={t('email_placeholder')}
+                    placeholder={t('email_placeholder')}
                     placeholderTextColor="#ccc"
                     onChangeText={handleChange('email')}
                     onBlur={handleBlur('email')}
@@ -246,7 +259,7 @@ const currentLanguage = i18n.language;
                   )}
 
                   <Text style={[styles.label, { color: colors.white }]}>
-            {t('password_label')}
+                    {t('password_label')}
                   </Text>
                   <View
                     style={[
@@ -256,7 +269,7 @@ const currentLanguage = i18n.language;
                     ]}
                   >
                     <TextInput
-                     placeholder={t('password_placeholder')}
+                      placeholder={t('password_placeholder')}
                       placeholderTextColor="#ccc"
                       secureTextEntry={!showPassword}
                       onChangeText={handleChange('password')}
@@ -283,21 +296,23 @@ const currentLanguage = i18n.language;
                   )}
                   <TouchableOpacity
                     style={styles.forgotContainer}
-                    onPress={() =>
-                      
-                    {  
-                               Vibration.vibrate([0, 35, 40, 35]);
-                      navigation.navigate('ForgotPasswordScreen')}}
+                    onPress={() => {
+                      Vibration.vibrate([0, 35, 40, 35]);
+                      navigation.navigate('ForgotPasswordScreen');
+                    }}
                   >
-                    <Text style={styles.forgotText}>{t('forgot_password_link')}</Text>
+                    <Text style={styles.forgotText}>
+                      {t('forgot_password_link')}
+                    </Text>
                   </TouchableOpacity>
 
                   {/* --- CHANGE 2: Updated Button --- */}
                   <TouchableOpacity
                     activeOpacity={0.8}
                     onPress={() => {
-                               Vibration.vibrate([0, 35, 40, 35]);
-                      handleSubmit()}}
+                      triggerHaptic(HapticFeedbackTypes.impactLight);
+                      handleSubmit();
+                    }}
                     disabled={isSubmitting} // Disable button when submitting
                     style={{ width: '100%' }}
                   >
@@ -311,7 +326,9 @@ const currentLanguage = i18n.language;
                       {isSubmitting ? (
                         <ActivityIndicator color={colors.primary} />
                       ) : (
-                        <Text style={styles.signinText}>{t('signin_button')}</Text>
+                        <Text style={styles.signinText}>
+                          {t('signin_button')}
+                        </Text>
                       )}
                     </GradientBox>
                   </TouchableOpacity>
@@ -323,12 +340,13 @@ const currentLanguage = i18n.language;
               <Text style={styles.footerText}>{t('dont_have_account')}</Text>
               <TouchableOpacity
                 onPress={() => {
-                           Vibration.vibrate([0, 35, 40, 35]);
-                  navigation.navigate('SignUp')}}
+                  Vibration.vibrate([0, 35, 40, 35]);
+                  navigation.navigate('SignUp');
+                }}
               >
                 <Text style={[styles.signupLink, { color: colors.primary }]}>
                   {' '}
-              {t('signup_link')}
+                  {t('signup_link')}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -340,7 +358,6 @@ const currentLanguage = i18n.language;
 };
 
 export default LoginScreen;
-
 
 const styles = StyleSheet.create({
   bgImage: {

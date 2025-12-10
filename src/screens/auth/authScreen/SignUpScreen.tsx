@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import {
   View,
@@ -32,6 +31,8 @@ import tickIcon from '../../../assets/icons/tickIcon.png';
 import { useTranslation } from 'react-i18next';
 import * as RNLocalize from 'react-native-localize';
 import { useAuthStore } from '../../../store/useAuthStore';
+import { useHaptic } from '../../../hooks/useHaptic';
+import { HapticFeedbackTypes } from 'react-native-haptic-feedback';
 const { height: SCREEN_HEIGHT, width: SCREEN_WIDTH } = Dimensions.get('screen');
 
 const SignUpScreen = () => {
@@ -45,11 +46,16 @@ const SignUpScreen = () => {
   const navigation =
     useNavigation<NativeStackNavigationProp<AuthStackParamsList>>();
   const { t, i18n } = useTranslation();
+  const { trigger: triggerHaptic } = useHaptic();
 
   const validationSchema = Yup.object().shape({
     name: Yup.string().required(t('validation_name_required')),
-    email: Yup.string().email(t('validation_email_invalid')).required(t('validation_email_required')),
-    password: Yup.string().required(t('validation_password_required')).min(6, t('validation_password_min')),
+    email: Yup.string()
+      .email(t('validation_email_invalid'))
+      .required(t('validation_email_required')),
+    password: Yup.string()
+      .required(t('validation_password_required'))
+      .min(6, t('validation_password_min')),
     confirmPassword: Yup.string()
       .oneOf([Yup.ref('password')], t('validation_passwords_match'))
       .required(t('validation_confirm_password_required')),
@@ -104,7 +110,7 @@ const SignUpScreen = () => {
                   timezone: timezone,
                   app_language: app_language,
                 };
-               const registerResult = await register(payload);
+                const registerResult = await register(payload);
 
                 // 2. If registration is successful, send OTP
                 if (registerResult.success) {
@@ -112,12 +118,17 @@ const SignUpScreen = () => {
 
                   // 3. If OTP sent successfully, navigate
                   if (otpSent) {
-                    navigation.navigate('VerifyEmailScreen', { email: values.email });
+                    navigation.navigate('VerifyEmailScreen', {
+                      email: values.email,
+                    });
                     // No need to setSubmitting(false) because we are navigating away
                     return; // Exit onSubmit early
                   } else {
                     // Show error if OTP sending failed
-               Alert.alert("OTP Error", "Could not send verification email. Please try again or contact support.");
+                    Alert.alert(
+                      'OTP Error',
+                      'Could not send verification email. Please try again or contact support.',
+                    );
                   }
                 }
 
@@ -284,7 +295,10 @@ const SignUpScreen = () => {
                   {/* Create Account Button */}
                   <TouchableOpacity
                     activeOpacity={0.8}
-                    onPress={() => handleSubmit()}
+                    onPress={() => {
+                      triggerHaptic(HapticFeedbackTypes.impactLight);
+                      handleSubmit();
+                    }}
                     style={{ width: '100%' }}
                     disabled={!isValid || isSubmitting} // <-- **IMPROVEMENT 2**: DISABLED LOGIC UPDATED
                   >
@@ -310,9 +324,7 @@ const SignUpScreen = () => {
 
             {/* Footer */}
             <View style={styles.footer}>
-              <Text style={styles.footerText}>
-                {t('already_have_account')}
-              </Text>
+              <Text style={styles.footerText}>{t('already_have_account')}</Text>
               <TouchableOpacity onPress={() => navigation.navigate('Login')}>
                 <Text style={[styles.signupLink, { color: colors.primary }]}>
                   {' '}

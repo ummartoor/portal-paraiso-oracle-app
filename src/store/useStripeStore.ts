@@ -129,6 +129,11 @@ interface StripeState {
 
   isConfirmingPayment: boolean;
   confirmationError: string | null;
+  /**
+   * @deprecated This method is deprecated. With webhook-based architecture,
+   * payments are automatically processed via webhooks. Use polling after payment
+   * confirmation instead. See subscriptionPolling.ts for polling utilities.
+   */
   confirmPayment: (
     paymentIntentId: string,
   ) => Promise<{ success: boolean; subscription?: any }>;

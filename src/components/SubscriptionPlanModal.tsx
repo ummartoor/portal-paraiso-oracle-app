@@ -510,21 +510,16 @@ const SubscriptionPlanModal: React.FC<SubscriptionPlanModalProps> = ({
     isLoading,
     fetchStripePackages,
     createPaymentIntent,
-    confirmPayment,
     currentSubscription,
     fetchCurrentSubscription,
-    debugVerifyPayment,
   } = useStripeStore(
     useShallow(state => ({
       packages: state.packages,
       isLoading: state.isLoading,
       fetchStripePackages: state.fetchStripePackages,
       createPaymentIntent: state.createPaymentIntent,
-      confirmPayment: state.confirmPayment,
       currentSubscription: state.currentSubscription,
       fetchCurrentSubscription: state.fetchCurrentSubscription,
-      debugVerifyPayment: state.debugVerifyPayment,
-      // upgradeSubscription has been removed
     })),
   );
 
@@ -599,6 +594,7 @@ const SubscriptionPlanModal: React.FC<SubscriptionPlanModalProps> = ({
     setProcessingPackageId(item.id);
 
     try {
+      // Step 1: Create payment intent
       const paymentData = await createPaymentIntent(
         item.id,
         defaultPrice.stripe_price_id,
@@ -609,6 +605,7 @@ const SubscriptionPlanModal: React.FC<SubscriptionPlanModalProps> = ({
         return;
       }
 
+      // Step 2: Initialize payment sheet
       const { error: initError } = await initPaymentSheet({
         merchantDisplayName: 'Portal Paraiso, Inc.',
         paymentIntentClientSecret: paymentData.clientSecret,
@@ -623,6 +620,7 @@ const SubscriptionPlanModal: React.FC<SubscriptionPlanModalProps> = ({
         );
       }
 
+      // Step 3: Present payment sheet
       const { error: paymentError } = await presentPaymentSheet();
 
       if (paymentError) {
@@ -632,25 +630,65 @@ const SubscriptionPlanModal: React.FC<SubscriptionPlanModalProps> = ({
             paymentError.message,
           );
         }
-      } else {
-        const confirmationResult = await confirmPayment(
-          paymentData.paymentIntentId,
-        );
+        setProcessingPackageId(null);
+        return;
+      }
 
-        if (confirmationResult.success) {
-          Alert.alert(
-            'Success!',
-            'Your subscription has been activated successfully!',
-          );
-          setActivatedPackageId(item.id);
-          fetchCurrentSubscription();
-          onClose();
-        } else {
-          Alert.alert(
-            'Payment Verification Failed',
-            'There was an issue verifying your payment. Please contact support.',
-          );
-        }
+      // Step 4: Payment confirmed - show processing message and poll for webhook
+      Alert.alert(
+        'Payment Confirmed',
+        'Processing your payment. Please wait...',
+        [],
+        { cancelable: false },
+      );
+
+      // Poll for subscription status update (webhook will process payment)
+      const { pollSubscriptionStatus } = await import(
+        '../utils/subscriptionPolling'
+      );
+      const pollingResult = await pollSubscriptionStatus({
+        expectedPackageId: item.id,
+        maxDuration: 30000, // 30 seconds
+        interval: 2500, // 2.5 seconds
+      });
+
+      if (pollingResult.success && pollingResult.subscription) {
+        Alert.alert(
+          'Success!',
+          'Your subscription has been activated successfully!',
+        );
+        setActivatedPackageId(item.id);
+        fetchCurrentSubscription(true);
+        onClose();
+      } else if (pollingResult.timedOut) {
+        // Payment confirmed but webhook still processing
+        Alert.alert(
+          'Payment Received',
+          'Your payment has been received. Your subscription will be activated shortly. You can check your subscription status in your profile.',
+          [
+            {
+              text: 'OK',
+              onPress: () => {
+                fetchCurrentSubscription(true);
+                onClose();
+              },
+            },
+          ],
+        );
+      } else {
+        Alert.alert(
+          'Payment Processing',
+          'Your payment has been received. Please check your subscription status in a few moments.',
+          [
+            {
+              text: 'OK',
+              onPress: () => {
+                fetchCurrentSubscription(true);
+                onClose();
+              },
+            },
+          ],
+        );
       }
     } catch (error: any) {
       console.error('Payment processing failed:', error);

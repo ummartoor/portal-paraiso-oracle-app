@@ -12,10 +12,12 @@ import AuthNavigator from './AuthNavigator';
 import AppNavigator from './AppNavigator';
 import { useAuthStore } from '../store/useAuthStore';
 import { useThemeStore } from '../store/useThemeStore';
+import { useStripeStore } from '../store/useStripeStore';
 import { Fonts } from '../constants/fonts';
 
 const RouteNavigator: React.FC = () => {
   const { isLoggedIn, checkAuthStatus } = useAuthStore();
+  const { fetchCurrentSubscription } = useStripeStore();
   const [loading, setLoading] = useState(true);
   const { colors } = useThemeStore(s => s.theme);
 
@@ -26,6 +28,22 @@ const RouteNavigator: React.FC = () => {
     };
     init();
   }, [checkAuthStatus]);
+
+  // Refresh subscription status on app launch after login is confirmed
+  // (webhook may have processed payments while app was closed)
+  useEffect(() => {
+    if (!loading && isLoggedIn) {
+      // Small delay to ensure auth is fully initialized
+      const timer = setTimeout(() => {
+        fetchCurrentSubscription(true).catch(err => {
+          if (__DEV__) {
+            console.warn('Failed to refresh subscription on app launch:', err);
+          }
+        });
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [loading, isLoggedIn, fetchCurrentSubscription]);
 
   if (loading) {
     return (

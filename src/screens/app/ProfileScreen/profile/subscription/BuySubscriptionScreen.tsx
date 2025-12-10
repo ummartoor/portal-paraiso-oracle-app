@@ -43,20 +43,16 @@ const BuySubscriptionScreen = () => {
     isLoading,
     fetchStripePackages,
     createPaymentIntent,
-    confirmPayment,
     currentSubscription,
     fetchCurrentSubscription,
-    debugVerifyPayment,
   } = useStripeStore(
     useShallow(state => ({
       packages: state.packages,
       isLoading: state.isLoading,
       fetchStripePackages: state.fetchStripePackages,
       createPaymentIntent: state.createPaymentIntent,
-      confirmPayment: state.confirmPayment,
       currentSubscription: state.currentSubscription,
       fetchCurrentSubscription: state.fetchCurrentSubscription,
-      debugVerifyPayment: state.debugVerifyPayment,
     })),
   );
 
@@ -107,7 +103,7 @@ const BuySubscriptionScreen = () => {
     setProcessingPackageId(item.id);
 
     try {
-      // Step 1: Create a payment intent on your server
+      // Step 1: Create payment intent
       const paymentData = await createPaymentIntent(
         item.id,
         defaultPrice.stripe_price_id,
@@ -155,38 +151,65 @@ const BuySubscriptionScreen = () => {
             );
           }
         }
-      } else {
-        // Step 4: If payment is successful, confirm it with backend
-        const confirmationResult = await confirmPayment(
-          paymentData.paymentIntentId,
-        );
+        setProcessingPackageId(null);
+        return;
+      }
 
-        if (confirmationResult.success) {
-          Alert.alert(
-            'Success!',
-            'Your subscription has been activated successfully!',
-          );
-          setActivatedPackageId(item.id);
-          fetchCurrentSubscription();
-          navigation.goBack();
-        } else {
-          Alert.alert(
-            'Payment Verification Failed',
-            'There was an issue verifying your payment. Please contact support or run debug verification.',
-            [
-              {
-                text: 'Cancel',
-                style: 'cancel',
+      // Step 4: Payment confirmed - show processing message and poll for webhook
+      Alert.alert(
+        'Payment Confirmed',
+        'Processing your payment. Please wait...',
+        [],
+        { cancelable: false },
+      );
+
+      // Poll for subscription status update (webhook will process payment)
+      const { pollSubscriptionStatus } = await import(
+        '../../../../../utils/subscriptionPolling'
+      );
+      const pollingResult = await pollSubscriptionStatus({
+        expectedPackageId: item.id,
+        maxDuration: 30000, // 30 seconds
+        interval: 2500, // 2.5 seconds
+      });
+
+      if (pollingResult.success && pollingResult.subscription) {
+        Alert.alert(
+          'Success!',
+          'Your subscription has been activated successfully!',
+        );
+        setActivatedPackageId(item.id);
+        fetchCurrentSubscription(true);
+        navigation.goBack();
+      } else if (pollingResult.timedOut) {
+        // Payment confirmed but webhook still processing
+        Alert.alert(
+          'Payment Received',
+          'Your payment has been received. Your subscription will be activated shortly. You can check your subscription status in your profile.',
+          [
+            {
+              text: 'OK',
+              onPress: () => {
+                fetchCurrentSubscription(true);
+                navigation.goBack();
               },
-              {
-                text: 'Run Debug Verify',
-                onPress: () => {
-                  debugVerifyPayment(paymentData.paymentIntentId);
-                },
+            },
+          ],
+        );
+      } else {
+        Alert.alert(
+          'Payment Processing',
+          'Your payment has been received. Please check your subscription status in a few moments.',
+          [
+            {
+              text: 'OK',
+              onPress: () => {
+                fetchCurrentSubscription(true);
+                navigation.goBack();
               },
-            ],
-          );
-        }
+            },
+          ],
+        );
       }
     } catch (error: any) {
       if (__DEV__) {
