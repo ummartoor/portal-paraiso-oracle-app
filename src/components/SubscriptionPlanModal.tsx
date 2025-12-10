@@ -771,6 +771,22 @@ const SubscriptionPlanModal: React.FC<SubscriptionPlanModalProps> = ({
                 color={colors.primary}
                 style={{ height: 400 }}
               />
+            ) : paidPackages.length === 0 ? (
+              <View style={styles.emptyStateContainer}>
+                <Text style={[styles.emptyStateText, { color: colors.white }]}>
+                  {packages === null
+                    ? 'Loading packages...'
+                    : packages.length === 0
+                    ? 'No packages available at the moment.'
+                    : 'No paid packages found. Please contact support.'}
+                </Text>
+                {__DEV__ && (
+                  <Text style={[styles.debugText, { color: colors.primary }]}>
+                    Debug: packages={packages?.length || 0}, paidPackages=
+                    {paidPackages.length}
+                  </Text>
+                )}
+              </View>
             ) : (
               <View style={styles.carouselSection}>
                 <FlatList
@@ -866,6 +882,25 @@ const styles = StyleSheet.create({
     fontSize: 16,
     textAlign: 'center',
     marginBottom: 20,
+  },
+  emptyStateContainer: {
+    height: 400,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+  },
+  emptyStateText: {
+    fontSize: 16,
+    fontFamily: Fonts.aeonikRegular,
+    textAlign: 'center',
+    marginBottom: 10,
+  },
+  debugText: {
+    fontSize: 12,
+    fontFamily: Fonts.aeonikRegular,
+    textAlign: 'center',
+    marginTop: 10,
+    opacity: 0.7,
   },
   carouselSection: {
     marginTop: 20,

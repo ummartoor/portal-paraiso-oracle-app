@@ -14,9 +14,16 @@ import RouteNavigator from './src/navigation/RouteNavigator';
 import KeyboardVisibilityProvider from './src/components/KeyboardVisiblilityProvider';
 import ErrorBoundary from './src/components/ErrorBoundary';
 import { useNotification } from './src/store/useNotification';
+import { initializeApiInterceptors } from './src/utils/apiInterceptor';
+import NetworkStatusBanner from './src/components/NetworkStatusBanner';
 
 function App() {
   useNotification();
+
+  // Initialize API interceptors for global error handling
+  useEffect(() => {
+    initializeApiInterceptors();
+  }, []);
 
   useEffect(() => {
     const app = getApp();
@@ -40,6 +47,7 @@ function App() {
         <SafeAreaProvider>
           <GestureHandlerRootView style={styles.container}>
             <KeyboardVisibilityProvider>
+              <NetworkStatusBanner />
               <NavigationContainer>
                 <RouteNavigator />
               </NavigationContainer>

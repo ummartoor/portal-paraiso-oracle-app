@@ -113,7 +113,8 @@ interface StripeState {
   packages: StripePackage[] | null;
   isLoading: boolean;
   error: string | null;
-  fetchStripePackages: () => Promise<void>;
+  lastPackagesFetch: number | null;
+  fetchStripePackages: (force?: boolean) => Promise<void>;
 
   isCreatingIntent: boolean;
   intentError: string | null;
@@ -139,12 +140,14 @@ interface StripeState {
   purchaseHistory: Purchase[] | null;
   isFetchingHistory: boolean;
   historyError: string | null;
-  fetchPurchaseHistory: () => Promise<void>;
+  lastHistoryFetch: number | null;
+  fetchPurchaseHistory: (force?: boolean) => Promise<void>;
 
   currentSubscription: CurrentSubscriptionData | null;
   isFetchingSubscription: boolean;
   subscriptionError: string | null;
-  fetchCurrentSubscription: () => Promise<void>;
+  lastSubscriptionFetch: number | null;
+  fetchCurrentSubscription: (force?: boolean) => Promise<void>;
 
   isCancelling: boolean;
   cancelError: string | null;
@@ -160,24 +163,48 @@ const getAuthToken = async (): Promise<string> => {
   return token;
 };
 
-// Helper function to extract error message
+// Import centralized error handling
+import { parseError, handleError, ErrorType } from '../utils/errorHandler';
+
+// Helper function to extract error message (kept for backward compatibility)
 const getErrorMessage = (error: unknown): string => {
-  if (axios.isAxiosError(error)) {
-    return (
-      error.response?.data?.message ||
-      error.response?.data?.error ||
-      error.message ||
-      'An unknown error occurred.'
-    );
-  }
-  return error instanceof Error ? error.message : 'An unknown error occurred.';
+  const appError = parseError(error);
+  return appError.message;
 };
+
+// Retry helper for critical API calls
+const retryApiCall = async <T>(
+  apiCall: () => Promise<T>,
+  maxRetries: number = 3,
+  delay: number = 1000,
+): Promise<T> => {
+  let lastError: unknown;
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      return await apiCall();
+    } catch (error) {
+      lastError = error;
+      if (attempt < maxRetries) {
+        await new Promise<void>(resolve =>
+          setTimeout(() => resolve(), delay * attempt),
+        );
+      }
+    }
+  }
+  throw lastError;
+};
+
+// Cache duration constants (in milliseconds)
+const PACKAGES_CACHE_DURATION = 10 * 60 * 1000; // 10 minutes
+const SUBSCRIPTION_CACHE_DURATION = 2 * 60 * 1000; // 2 minutes
+const HISTORY_CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
 export const useStripeStore = create<StripeState>((set, get) => ({
   // Initial State
   packages: null,
   isLoading: false,
   error: null,
+  lastPackagesFetch: null,
   isCreatingIntent: false,
   intentError: null,
   isConfirmingPayment: false,
@@ -185,38 +212,102 @@ export const useStripeStore = create<StripeState>((set, get) => ({
   purchaseHistory: null,
   isFetchingHistory: false,
   historyError: null,
+  lastHistoryFetch: null,
   currentSubscription: null,
   isFetchingSubscription: false,
   subscriptionError: null,
+  lastSubscriptionFetch: null,
   isCancelling: false,
   cancelError: null,
   isVerifyingPayment: false,
   verificationError: null,
 
-  fetchStripePackages: async () => {
+  fetchStripePackages: async (force: boolean = false) => {
+    const state = get();
+    const now = Date.now();
+
+    // Check cache if not forcing refresh
+    if (
+      !force &&
+      state.packages &&
+      state.lastPackagesFetch &&
+      now - state.lastPackagesFetch < PACKAGES_CACHE_DURATION
+    ) {
+      return;
+    }
+
+    // Prevent concurrent fetches
+    if (state.isLoading) {
+      return;
+    }
+
     set({ isLoading: true, error: null });
     try {
       const token = await getAuthToken();
       const headers = { 'x-auth-token': token };
 
-      const response = await axios.get(`${API_BASEURL}/stripe/packages`, {
-        headers,
-      });
-
-      if (response.data?.success) {
-        set({
-          packages: response.data.data as StripePackage[],
-          isLoading: false,
+      const fetchData = async () => {
+        const response = await axios.get(`${API_BASEURL}/stripe/packages`, {
+          headers,
         });
-      } else {
-        throw new Error(
-          response.data.message || 'Failed to fetch Stripe packages.',
-        );
-      }
+
+        if (response.data?.success) {
+          // Handle different response structures
+          const packagesData =
+            response.data.data?.packages ||
+            response.data.data ||
+            response.data.packages ||
+            [];
+
+          if (__DEV__) {
+            console.log('Stripe packages API response:', {
+              success: response.data.success,
+              hasData: !!response.data.data,
+              packagesCount: Array.isArray(packagesData)
+                ? packagesData.length
+                : 0,
+              responseStructure: {
+                hasDataPackages: !!response.data.data?.packages,
+                hasData: !!response.data.data,
+                hasPackages: !!response.data.packages,
+              },
+            });
+          }
+
+          if (!Array.isArray(packagesData)) {
+            console.warn(
+              'Packages data is not an array:',
+              typeof packagesData,
+              packagesData,
+            );
+            set({
+              packages: [],
+              isLoading: false,
+              lastPackagesFetch: now,
+            });
+            return;
+          }
+
+          set({
+            packages: packagesData as StripePackage[],
+            isLoading: false,
+            lastPackagesFetch: now,
+          });
+        } else {
+          throw new Error(
+            response.data?.message || 'Failed to fetch Stripe packages.',
+          );
+        }
+      };
+
+      await retryApiCall(fetchData, 2, 500);
     } catch (error: unknown) {
       const errorMessage = getErrorMessage(error);
       set({ error: errorMessage, isLoading: false });
-      Alert.alert('Error', errorMessage);
+      // Only show alert if we don't have cached data
+      if (!state.packages) {
+        Alert.alert('Error', errorMessage);
+      }
       if (__DEV__) {
         console.log('Error fetching Stripe packages:', errorMessage);
       }
@@ -237,26 +328,30 @@ export const useStripeStore = create<StripeState>((set, get) => ({
       const headers = { 'x-auth-token': token };
       const payload = { packageId, priceId };
 
-      const response = await axios.post(
-        `${API_BASEURL}/stripe/payment-intent`,
-        payload,
-        { headers },
-      );
-
-      if (response.data?.success && response.data.clientSecret) {
-        set({ isCreatingIntent: false });
-        return {
-          clientSecret: response.data.clientSecret,
-          paymentIntentId: response.data.paymentIntentId,
-          subscriptionId: response.data.subscriptionId,
-        };
-      } else {
-        throw new Error(
-          response.data.message ||
-            response.data.error ||
-            'Failed to create payment intent.',
+      const fetchData = async () => {
+        const response = await axios.post(
+          `${API_BASEURL}/stripe/payment-intent`,
+          payload,
+          { headers },
         );
-      }
+
+        if (response.data?.success && response.data?.data?.client_secret) {
+          set({ isCreatingIntent: false });
+          return {
+            clientSecret: response.data.data.client_secret,
+            paymentIntentId: response.data.data.payment_intent_id,
+            subscriptionId: response.data.data.subscription_id,
+          };
+        } else {
+          throw new Error(
+            response.data?.message ||
+              response.data?.error ||
+              'Failed to create payment intent.',
+          );
+        }
+      };
+
+      return await retryApiCall(fetchData, 2, 1000);
     } catch (error: unknown) {
       const errorMessage = getErrorMessage(error);
       set({ intentError: errorMessage, isCreatingIntent: false });
@@ -312,63 +407,117 @@ export const useStripeStore = create<StripeState>((set, get) => ({
     }
   },
 
-  fetchPurchaseHistory: async () => {
+  fetchPurchaseHistory: async (force: boolean = false) => {
+    const state = get();
+    const now = Date.now();
+
+    // Check cache if not forcing refresh
+    if (
+      !force &&
+      state.purchaseHistory &&
+      state.lastHistoryFetch &&
+      now - state.lastHistoryFetch < HISTORY_CACHE_DURATION
+    ) {
+      return;
+    }
+
+    // Prevent concurrent fetches
+    if (state.isFetchingHistory) {
+      return;
+    }
+
     set({ isFetchingHistory: true, historyError: null });
     try {
       const token = await getAuthToken();
       const headers = { 'x-auth-token': token };
 
-      const response = await axios.get(`${API_BASEURL}/user/purchase-history`, {
-        headers,
-      });
-
-      if (response.data?.success) {
-        set({
-          purchaseHistory: response.data.data.purchases as Purchase[],
-          isFetchingHistory: false,
-        });
-      } else {
-        throw new Error(
-          response.data.message || 'Failed to fetch purchase history.',
+      const fetchData = async () => {
+        const response = await axios.get(
+          `${API_BASEURL}/user/purchase-history`,
+          {
+            headers,
+          },
         );
-      }
+
+        if (response.data?.success && response.data?.data?.purchases) {
+          set({
+            purchaseHistory: response.data.data.purchases as Purchase[],
+            isFetchingHistory: false,
+            lastHistoryFetch: now,
+          });
+        } else {
+          throw new Error(
+            response.data?.message || 'Failed to fetch purchase history.',
+          );
+        }
+      };
+
+      await retryApiCall(fetchData, 2, 500);
     } catch (error: unknown) {
       const errorMessage = getErrorMessage(error);
       set({ historyError: errorMessage, isFetchingHistory: false });
       if (__DEV__) {
         console.log('Error fetching purchase history:', errorMessage);
       }
-      Alert.alert('Error', errorMessage);
+      // Only show alert if we don't have cached data
+      if (!state.purchaseHistory) {
+        Alert.alert('Error', errorMessage);
+      }
     }
   },
 
-  fetchCurrentSubscription: async () => {
+  fetchCurrentSubscription: async (force: boolean = false) => {
+    const state = get();
+    const now = Date.now();
+
+    // Check cache if not forcing refresh
+    if (
+      !force &&
+      state.currentSubscription &&
+      state.lastSubscriptionFetch &&
+      now - state.lastSubscriptionFetch < SUBSCRIPTION_CACHE_DURATION
+    ) {
+      return;
+    }
+
+    // Prevent concurrent fetches
+    if (state.isFetchingSubscription) {
+      return;
+    }
+
     set({ isFetchingSubscription: true, subscriptionError: null });
     try {
       const token = await getAuthToken();
       const headers = { 'x-auth-token': token };
 
-      const response = await axios.get(
-        `${API_BASEURL}/stripe/current-subscription`,
-        { headers },
-      );
-
-      if (response.data?.success) {
-        set({
-          currentSubscription: response.data.data as CurrentSubscriptionData,
-          isFetchingSubscription: false,
-        });
-      } else {
-        throw new Error(
-          response.data.message || 'Failed to fetch subscription details.',
+      const fetchData = async () => {
+        const response = await axios.get(
+          `${API_BASEURL}/stripe/current-subscription`,
+          { headers },
         );
-      }
+
+        if (response.data?.success && response.data?.data) {
+          set({
+            currentSubscription: response.data.data as CurrentSubscriptionData,
+            isFetchingSubscription: false,
+            lastSubscriptionFetch: now,
+          });
+        } else {
+          throw new Error(
+            response.data?.message || 'Failed to fetch subscription details.',
+          );
+        }
+      };
+
+      await retryApiCall(fetchData, 3, 1000); // More retries for critical subscription endpoint
     } catch (error: unknown) {
       const errorMessage = getErrorMessage(error);
       set({ subscriptionError: errorMessage, isFetchingSubscription: false });
       if (__DEV__) {
         console.error('Fetch current subscription error:', errorMessage);
       }
+      // Don't show alert - subscription fetch failures should be handled gracefully
+      // Components can check subscriptionError if needed
     }
   },
 
@@ -393,11 +542,12 @@ export const useStripeStore = create<StripeState>((set, get) => ({
           'Success',
           response.data.message || 'Subscription cancelled successfully.',
         );
-        get().fetchCurrentSubscription();
+        // Force refresh subscription after cancellation
+        get().fetchCurrentSubscription(true);
         return true;
       } else {
         throw new Error(
-          response.data.message || 'Failed to cancel subscription.',
+          response.data?.message || 'Failed to cancel subscription.',
         );
       }
     } catch (error: unknown) {

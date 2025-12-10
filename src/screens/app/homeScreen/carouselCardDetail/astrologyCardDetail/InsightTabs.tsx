@@ -25,6 +25,31 @@ type InsightTabsProps = {
   style?: ViewStyle;
 };
 
+// Helper to get description from new API structure
+const getDescription = (horoscopeData: HoroscopeData, key: string): string => {
+  if (!horoscopeData?.horoscope) return '';
+
+  const horoscope = horoscopeData.horoscope;
+  switch (key) {
+    case 'morning':
+      // New API uses 'overview' instead of 'morning_vibe'
+      return horoscope.overview || '';
+    case 'career':
+      return horoscope.career || '';
+    case 'love':
+      return horoscope.love || '';
+    case 'money':
+      return horoscope.finance || '';
+    case 'health':
+      return horoscope.health || '';
+    case 'divine':
+      // New API doesn't have 'divine_guidance', use overview as fallback
+      return horoscope.overview || '';
+    default:
+      return '';
+  }
+};
+
 const TAB_SIZE = 47;
 
 const InsightTabs: React.FC<InsightTabsProps> = ({ horoscopeData, style }) => {
@@ -33,27 +58,44 @@ const InsightTabs: React.FC<InsightTabsProps> = ({ horoscopeData, style }) => {
   const [active, setActive] = useState<number>(0);
 
   const DEFAULT_TABS: Omit<InsightTab, 'description'>[] = [
-    { key: 'morning', title: t('insight_tabs_morning'), icon: require('../../../../../assets/icons/morningVibeIcon.png') },
-    { key: 'career', title: t('insight_tabs_career'), icon: require('../../../../../assets/icons/careerWorkIcon.png') },
-    { key: 'love', title: t('insight_tabs_love'), icon: require('../../../../../assets/icons/loveRelationshipIcon.png') },
-    { key: 'money', title: t('insight_tabs_money'), icon: require('../../../../../assets/icons/moneyFinanceIcon.png') },
-    { key: 'health', title: t('insight_tabs_health'), icon: require('../../../../../assets/icons/healthIcon.png') },
-    { key: 'divine', title: t('insight_tabs_divine'), icon: require('../../../../../assets/icons/divine.png') },
+    {
+      key: 'morning',
+      title: t('insight_tabs_morning'),
+      icon: require('../../../../../assets/icons/morningVibeIcon.png'),
+    },
+    {
+      key: 'career',
+      title: t('insight_tabs_career'),
+      icon: require('../../../../../assets/icons/careerWorkIcon.png'),
+    },
+    {
+      key: 'love',
+      title: t('insight_tabs_love'),
+      icon: require('../../../../../assets/icons/loveRelationshipIcon.png'),
+    },
+    {
+      key: 'money',
+      title: t('insight_tabs_money'),
+      icon: require('../../../../../assets/icons/moneyFinanceIcon.png'),
+    },
+    {
+      key: 'health',
+      title: t('insight_tabs_health'),
+      icon: require('../../../../../assets/icons/healthIcon.png'),
+    },
+    {
+      key: 'divine',
+      title: t('insight_tabs_divine'),
+      icon: require('../../../../../assets/icons/divine.png'),
+    },
   ];
 
   const tabs: InsightTab[] = useMemo(() => {
     if (!horoscopeData) return [];
-    return DEFAULT_TABS.map(tab => {
-      switch (tab.key) {
-        case 'morning': return { ...tab, description: horoscopeData.data.morning_vibe };
-        case 'career': return { ...tab, description: horoscopeData.data.career_and_work };
-        case 'love': return { ...tab, description: horoscopeData.data.love_and_relationship };
-        case 'money': return { ...tab, description: horoscopeData.data.money_and_finance };
-        case 'health': return { ...tab, description: horoscopeData.data.health_and_wellbeing };
-        case 'divine': return { ...tab, description: horoscopeData.data.divine_guidance };
-        default: return { ...tab, description: '' };
-      }
-    });
+    return DEFAULT_TABS.map(tab => ({
+      ...tab,
+      description: getDescription(horoscopeData, tab.key),
+    }));
   }, [horoscopeData, t]);
 
   if (tabs.length === 0) {
@@ -79,19 +121,41 @@ const InsightTabs: React.FC<InsightTabsProps> = ({ horoscopeData, style }) => {
               style={styles.tabTouchable}
             >
               {selected ? (
-                <GradientBox colors={[colors.black, colors.bgBox]} style={[styles.tabBox, { borderColor: colors.primary }]}>
-                  <Image source={tabItem.icon} style={[styles.tabIcon, { tintColor: colors.white }]} resizeMode="contain" />
+                <GradientBox
+                  colors={[colors.black, colors.bgBox]}
+                  style={[styles.tabBox, { borderColor: colors.primary }]}
+                >
+                  <Image
+                    source={tabItem.icon}
+                    style={[styles.tabIcon, { tintColor: colors.white }]}
+                    resizeMode="contain"
+                  />
                 </GradientBox>
               ) : (
-                <View style={[styles.tabBox, { backgroundColor: colors.bgBox, borderColor: 'transparent' }]}>
-                  <Image source={tabItem.icon} style={[styles.tabIcon, { tintColor: colors.white }]} resizeMode="contain" />
+                <View
+                  style={[
+                    styles.tabBox,
+                    {
+                      backgroundColor: colors.bgBox,
+                      borderColor: 'transparent',
+                    },
+                  ]}
+                >
+                  <Image
+                    source={tabItem.icon}
+                    style={[styles.tabIcon, { tintColor: colors.white }]}
+                    resizeMode="contain"
+                  />
                 </View>
               )}
             </TouchableOpacity>
           );
         })}
       </View>
-      <Text style={[styles.sectionTitle, { color: colors.primary }]} numberOfLines={2}>
+      <Text
+        style={[styles.sectionTitle, { color: colors.primary }]}
+        numberOfLines={2}
+      >
         {current.title}
       </Text>
       <Text style={[styles.sectionBody, { color: colors.white }]}>

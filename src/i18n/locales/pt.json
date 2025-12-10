@@ -7,33 +7,26 @@
   "onboarding3_subtitle": "Diversão sem fim, a um toque de distância.",
   "getStartedButton": "Começar",
 
-
-   "welcome_title": "Bem-vindo ao Portal\nParaíso Oracle",
+  "welcome_title": "Bem-vindo ao Portal\nParaíso Oracle",
   "welcome_subtitle": "Escolha o seu caminho para a orientação divina",
   "signup_button": "Inscrever-se",
   "login_button": "Entrar",
 
-
-
-   "login_header": "Entrar",
+  "login_header": "Entrar",
   "login_subheader": "Bem-vindo de volta ao Portal Paraíso",
   "forgot_password_link": "Esqueceu a senha?",
   "signin_button": "Entrar",
   "dont_have_account": "Não tem uma conta?",
   "signup_link": "Inscrever-se",
 
-
   "validation_question_min_length": "A pergunta deve ter pelo menos {{count}} caracteres.",
-"validation_question_max_length": "A pergunta não pode ter mais de {{count}} caracteres.",
-
+  "validation_question_max_length": "A pergunta não pode ter mais de {{count}} caracteres.",
 
   "forgot_password_header": "Esqueceu a Senha",
   "forgot_password_subheader": "Digite o email associado à sua conta e enviaremos um código.",
   "continue_button": "Continuar",
   "back_to_footer": "Voltar para",
   "signin_footer_link": "Entrar",
-
-
 
   "otp_header": "Verificação OTP",
   "otp_subheader": "Digite o código de 6 dígitos enviado para o seu email.",
@@ -42,10 +35,6 @@
   "alert_error_title": "Erro",
   "alert_otp_incomplete_message": "Por favor, digite o OTP completo de 6 dígitos.",
 
-
-
-
-
   "reset_password_header": "Redefinir Senha",
   "reset_password_subheader": "Defina uma nova senha para sua conta",
   "new_password_label": "Nova Senha",
@@ -53,7 +42,6 @@
   "confirm_password_placeholder_2": "Confirme a nova senha",
   "login_footer_link": "Entrar",
   "alert_email_missing_message": "O email do usuário está ausente. Por favor, reinicie o processo de redefinição de senha.",
-
 
   "signup_header": "Criar uma Conta",
   "signup_subheader": "Bem-vindo ao Portal Paraíso",
@@ -70,7 +58,7 @@
   "create_account_button": "Criar Conta",
   "already_have_account": "Já tem uma conta?",
   "login_link": "Entrar",
- "validation_name_required": "O nome é obrigatório",
+  "validation_name_required": "O nome é obrigatório",
   "validation_email_invalid": "Email inválido",
   "validation_email_required": "O email é obrigatório",
   "validation_password_required": "A senha é obrigatória",
@@ -78,9 +66,6 @@
   "validation_passwords_match": "As senhas devem ser iguais",
   "validation_confirm_password_required": "A confirmação da senha é obrigatória",
   "validation_agree_required": "Você deve concordar com os Termos & Condições",
-
-
-
 
   "gender_header": "Qual é o seu gênero?",
   "gender_subheader": "O gênero revela o equilíbrio da sua energia masculina e feminina",
@@ -90,10 +75,6 @@
   "next_button": "Próximo",
   "alert_selection_required_title": "Seleção Necessária",
   "alert_selection_required_message": "Por favor, selecione seu gênero para continuar.",
-
-
-
-
 
   "goals_header": "Quais são seus objetivos?",
   "goals_subheader": "Os objetivos revelam o equilíbrio entre sua ambição e paciência",
@@ -106,28 +87,17 @@
   "goal_others": "Outros",
   "alert_at_least_one_goal_message": "Por favor, selecione pelo menos um objetivo para continuar.",
 
-
-
-
   "dob_header": "Data de Nascimento",
   "dob_subheader": "Por favor, insira sua data de nascimento",
 
-
-
-
   "tob_header": "Hora de Nascimento",
   "tob_subheader": "Por favor, insira sua hora de nascimento",
-
-
-
 
   "pob_header": "Local de Nascimento",
   "pob_subheader": "Por favor, insira o seu local de nascimento",
   "pob_placeholder": "Digite o local de nascimento",
   "alert_input_required_title": "Entrada Necessária",
   "alert_input_required_message_pob": "Por favor, insira o seu local de nascimento.",
-
-
 
   "relationship_header": "Seu Estado Civil",
   "relationship_subheader": "Selecione seu estado civil?",
@@ -140,10 +110,7 @@
   "alert_relationship_status_message": "Por favor, selecione seu estado civil.",
   "finish_button": "Finalizar",
 
-
-
-
-   "zodiac_aries": "Áries",
+  "zodiac_aries": "Áries",
   "zodiac_taurus": "Touro",
   "zodiac_gemini": "Gêmeos",
   "zodiac_cancer": "Câncer",
@@ -156,27 +123,17 @@
   "zodiac_aquarius": "Aquário",
   "zodiac_pisces": "Peixes",
 
-
-
-
-
-
-
-
-"tab_home": "Início",
+  "tab_home": "Início",
   "tab_divine": "Divino",
   "tab_library": "Biblioteca",
   "tab_chat": "Bate-papo",
 
-
-
-
-"home_title": "PORTAL PARAÍSO",
+  "home_title": "PORTAL PARAÍSO",
   "home_subtitle": "Escolha o seu caminho para a orientação divina",
   "home_daily_wisdom_card": "Carta de Sabedoria Diária",
   "home_ritual_tip": "Dica de Ritual",
 
-"home_ai_chat_title": "FALE COM A IA DIVINA",
+  "home_ai_chat_title": "FALE COM A IA DIVINA",
   "home_ai_chat_subtitle": "Busque orientação, clareza ou conforto — seu guia cósmico está ouvindo.",
   "home_ai_chat_button": "Iniciar Conversa",
 
@@ -190,8 +147,7 @@
   "carousel_astrology_subtitle": "Decodifique as estrelas e seu projeto cósmico.",
   "carousel_no_image": "Sem imagem",
 
-
-     "main_title":"Guia do portal",
+  "main_title": "Guia do portal",
   "highlights_main_title": "Destaques de Hoje",
   "highlights_sun_title": "O Sol",
   "highlights_sun_subtitle": "Alegria e crescimento te rodeiam",
@@ -199,8 +155,7 @@
   "highlights_horoscope_subtitle": "Equilíbrio traz clareza às suas escolhas",
   "highlights_ritual_title": "Ritual",
   "highlights_ritual_subtitle": "Acenda uma vela para convidar a verdade e o calor",
-"video_player" :"Reprodutor de vídeo",
-
+  "video_player": "Reprodutor de vídeo",
 
   "ask_question_header": "Faça uma Pergunta",
   "ask_question_heading": "Que Orientação Você Procura?",
@@ -208,33 +163,26 @@
   "ask_question_placeholder": "Digite sua pergunta, ou peça orientação geral...",
   "alert_input_required_message_question": "Por favor, digite sua pergunta ou peça orientação geral.",
 
-
-
-
-
-"divine_screen": "Divino",
+  "divine_screen": "Divino",
   "divine_tarot_title": "Leitura de Tarô",
-     "divine_tarot_subtitle":"Deixe a IA revelar a mensagem por trás das suas cartas. Receba orientações claras inspiradas pela sabedoria do Tarô.",
-     "divine_tarot_btn" :"Comece o Tarô AI",
+  "divine_tarot_subtitle": "Deixe a IA revelar a mensagem por trás das suas cartas. Receba orientações claras inspiradas pela sabedoria do Tarô.",
+  "divine_tarot_btn": "Comece o Tarô AI",
   "divine_cauris_title": "Búzios",
-   "divine_cauris_subitle":"CConsulte a IA para uma leitura ancestral de búzios. Descubra o que as conchas revelam sobre o seu caminho na vida.",
-"divine_cauris_btn" :"Iniciar AI Cauris",
+  "divine_cauris_subitle": "CConsulte a IA para uma leitura ancestral de búzios. Descubra o que as conchas revelam sobre o seu caminho na vida.",
+  "divine_cauris_btn": "Iniciar AI Cauris",
   "divine_astrology_title": "Astrologia",
-"divine_astrology_subtitle": "Explore seus padrões cósmicos com IA. Obtenha insights personalizados com base nas energias astrológicas de hoje.",
-  "divine_astrology_btn" :"Comece a Astrologia AI",
-
+  "divine_astrology_subtitle": "Explore seus padrões cósmicos com IA. Obtenha insights personalizados com base nas energias astrológicas de hoje.",
+  "divine_astrology_btn": "Comece a Astrologia AI",
 
   "library_screen": "Biblioteca",
   "library_subtitle": "Todos os seus rituais, leituras\ne sabedorias favoritas.",
   "library_tab_tarot": "Tarô",
   "library_tab_astrology": "Astrologia",
-    "EMPTY_HOROSCOPE_ HISTORY_TEXT":"Você ainda não tem horóscopos salvos.",
+  "EMPTY_HOROSCOPE_ HISTORY_TEXT": "Você ainda não tem horóscopos salvos.",
   "library_tab_buzious": "Búzios",
-    "EMPTY_TEXT":"Você não tem nenhuma leitura salva ainda.",
+  "EMPTY_TEXT": "Você não tem nenhuma leitura salva ainda.",
   "library_tab_daily_wisdom": "Carta de Sabedoria Diária",
   "library_tab_ritual_tip": "Dica de Ritual",
-
-
 
   "profile_screen_title": "Perfil",
   "profile_user_name_fallback": "Nome de Usuário",
@@ -254,9 +202,6 @@
   "profile_support_button": "Suporte",
   "profile_logout_button": "Sair",
   "profile_delete_account_button": "Excluir Conta",
-
-
-
 
   "edit_profile_header": "Editar Perfil",
   "edit_profile_update_password_button": "Atualizar Senha",
@@ -278,8 +223,7 @@
   "edit_profile_zodiac_placeholder": "Selecione o Signo",
   "edit_profile_goals_more": "... e mais {{count}}",
 
-
-"notification_settings_header": "Configurações de Notificação",
+  "notification_settings_header": "Configurações de Notificação",
   "email_notifications": "Notificações por Email",
   "push_notifications": "Notificações Push",
   "daily_wisdom_card": "Cartão de Sabedoria Diário",
@@ -289,12 +233,11 @@
   "name_modal_label": "Digite seu nome completo",
   "name_modal_placeholder": "Digite seu nome",
 
-
   "email_modal_header": "Atualizar seu Email",
   "email_modal_label": "Digite seu endereço de email",
   "email_modal_placeholder": "Digite seu email",
 
-"gender_modal_header": "Selecione o Gênero",
+  "gender_modal_header": "Selecione o Gênero",
 
   "goals_modal_header": "Selecione Seus Objetivos",
   "cancel_button": "Cancelar",
@@ -304,7 +247,6 @@
 
   "tob_modal_header": "Selecione a Hora de Nascimento",
 
-
   "pob_modal_header": "Local de Nascimento",
   "pob_modal_label": "Digite o Local de Nascimento",
   "pob_modal_placeholder": "Digite seu local de nascimento",
@@ -312,7 +254,6 @@
   "relationship_modal_header": "Estado Civil",
 
   "zodiac_modal_header": "Selecione seu Signo do Zodíaco",
-
 
   "update_password_header": "Atualizar Senha",
   "old_password_label": "Senha Antiga",
@@ -343,7 +284,6 @@
   "delete_account_reason_required_title": "Motivo Necessário",
   "delete_account_reason_required_message": "Por favor, selecione ou especifique um motivo antes de excluir sua conta.",
 
-
   "support_screen_header": "Suporte",
   "support_question_label": "Pergunta para o Suporte",
   "support_question_placeholder": "Digite sua pergunta",
@@ -355,7 +295,7 @@
   "alert_missing_info_title": "Informação Faltando",
   "alert_missing_info_message": "Por favor, preencha todos os campos antes de enviar.",
 
- "subscription_plan_title": "Plano de Assinatura",
+  "subscription_plan_title": "Plano de Assinatura",
   "subscription_unlock_title": "Desbloqueie Seu Potencial Cósmico",
   "subscription_yearly": "Anual",
   "subscription_monthly": "Mensal",
@@ -379,18 +319,12 @@
   "daily_wisdom_save": "Salvar",
   "daily_wisdom_premium_button": "Obter Premium Para Leitura Completa",
 
-
-
   "library_your_reading": "Sua Leitura",
   "library_read_more": "Ler Mais",
   "library_share": "Compartilhar",
   "library_get_premium": "Obter Premium Para Leitura Completa",
   "library_your_ritual": "Seu Ritual",
   "library_buzious": "Búzios",
-
-
-
-
 
   "chat_screen_title": "Chat do Oráculo",
   "chat_start_new_chat": "Iniciar Novo Chat",
@@ -401,13 +335,7 @@
   "chat_detail_how_can_i_help": "Como posso ajudar?",
   "chat_detail_placeholder": "Pergunte ao Oráculo...",
 
-
-
-
-
-
-
-"tarot_reader_header": "Leitor de Tarô",
+  "tarot_reader_header": "Leitor de Tarô",
   "tarot_focus_question_title": "Concentre-se na Sua Pergunta",
   "tarot_focus_question_subtitle": "Toque nas cartas para selecioná-las.",
   "tarot_tap_to_select_hint": "toque para selecionar",
@@ -421,10 +349,6 @@
   "save_button": "Salvar",
   "get_premium_button": "Obtenha Premium para Leitura Completa",
 
-
-
-
-
   "cauris_header": "Búzios",
   "cauris_phase0_title": "Adivinhação com Búzios",
   "cauris_phase0_subtitle": "Desvende a sabedoria sagrada através da antiga prática espiritual africana.",
@@ -435,10 +359,6 @@
   "cauris_phase2_button": "Revelar Minha Leitura",
   "cauris_phase3_title": "Sua Mensagem Divina",
   "cauris_default_message": "Sua mensagem divina aguarda...",
-
-
-
-
 
   "astrology_screen_header": "Astrologia",
   "astrology_unlock_title": "Desbloqueie seu mapa celestial",
@@ -457,7 +377,6 @@
   "ritual_tip_subtitle": "Práticas simples para ancorar, curar e fortalecer sua energia",
   "alert_audio_play_error": "Não foi possível reproduzir o arquivo de áudio.",
 
-
   "notifications_screen_header": "Notificações",
   "notifications_delete_button": "Excluir",
   "notifications_empty_state": "Você ainda não tem notificações.",
@@ -465,10 +384,6 @@
   "time_ago_minutes": "há {{count}}m",
   "time_ago_hours": "há {{count}}h",
   "time_ago_days": "há {{count}}d",
-
-
-
-
 
   "privacy_policy_header": "Política de Privacidade",
   "privacy_policy_last_updated": "Última atualização: Outubro 2025",
@@ -530,12 +445,7 @@
   "privacy_policy_s12_title": "12. Contacto",
   "privacy_policy_s12_p1": "Para questões ou preocupações relativas a esta Política de Privacidade, por favor contacte: <1>portalparaiso25@gmail.com</1>",
 
-
-
-
-
-
-    "terms_header": "Termos e Condições",
+  "terms_header": "Termos e Condições",
   "terms_last_updated": "Última atualização: Outubro 2025",
   "terms_intro_1": "Bem-vindo ao Portal Paraíso, uma plataforma espiritual e digital que combina sabedoria antiga com inteligência artificial moderna.",
   "terms_intro_2": "Estes Termos e Condições (“Termos”) regem o seu uso do nosso website, aplicação móvel e todos os serviços relacionados fornecidos pelo Portal Paraíso.",
@@ -575,19 +485,28 @@
   "terms_s11_title": "11. Lei Aplicável e Jurisdição",
   "terms_s11_p1": "Estes Termos serão regidos e interpretados de acordo com as leis de Portugal. Quaisquer litígios decorrentes ou relacionados com estes Termos estarão sujeitos à jurisdição exclusiva dos tribunais portugueses.",
   "terms_s12_title": "Contacto",
-  "terms_s12_p1": "Para quaisquer questões relativas a estes Termos, por favor contacte-nos em: <1>portalparaiso25@gmail.com</1>"
+  "terms_s12_p1": "Para quaisquer questões relativas a estes Termos, por favor contacte-nos em: <1>portalparaiso25@gmail.com</1>",
 
-
-
-
-
-
-
-
-
-  
-
-
-
-
+  "errors": {
+    "network_connection": "Sem conexão à internet. Por favor, verifique a sua rede e tente novamente.",
+    "network_title": "Sem Conexão à Internet",
+    "session_expired": "A sua sessão expirou. Por favor, faça login novamente.",
+    "resource_not_found": "O recurso solicitado não foi encontrado.",
+    "validation_error": "Por favor, verifique os seus dados e tente novamente.",
+    "rate_limit": "Muitas solicitações. Por favor, aguarde um momento e tente novamente.",
+    "server_error": "Erro do servidor. Por favor, tente novamente em alguns momentos.",
+    "generic_error": "Ocorreu um erro. Por favor, tente novamente.",
+    "unexpected_error": "Ocorreu um erro inesperado. Por favor, tente novamente.",
+    "auth_title": "Erro de Autenticação",
+    "validation_title": "Erro de Validação",
+    "permission_title": "Acesso Negado",
+    "payment_title": "Erro de Pagamento",
+    "server_title": "Erro do Servidor",
+    "generic_title": "Erro",
+    "error_boundary_title": "Ops! Algo deu errado",
+    "error_boundary_message": "Encontramos um erro inesperado. Não se preocupe, os seus dados estão seguros. Por favor, tente novamente ou reinicie a aplicação.",
+    "error_boundary_try_again": "Tentar Novamente",
+    "connection_restored": "Conexão à internet restaurada",
+    "connection_lost": "Sem conexão à internet"
+  }
 }

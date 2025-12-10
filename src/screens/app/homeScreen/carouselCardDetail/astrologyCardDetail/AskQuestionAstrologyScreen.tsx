@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -14,6 +14,7 @@ import {
   Platform,
   ScrollView,
   Vibration,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useThemeStore } from '../../../../../store/useThemeStore';
@@ -23,6 +24,8 @@ import { Fonts } from '../../../../../constants/fonts';
 import GradientBox from '../../../../../components/GradientBox';
 import { AppStackParamList } from '../../../../../navigation/routeTypes';
 import { useTranslation } from 'react-i18next';
+import { useFeaturePermission } from '../../../../../store/useFeaturePermissionStore';
+import SubscriptionPlanModal from '../../../../../components/SubscriptionPlanModal';
 const { height: SCREEN_HEIGHT, width: SCREEN_WIDTH } = Dimensions.get('screen');
 
 const AskQuestionAstrologyScreen = () => {
@@ -32,9 +35,36 @@ const AskQuestionAstrologyScreen = () => {
     useNavigation<NativeStackNavigationProp<AppStackParamList>>();
   const { t } = useTranslation();
   const [question, setQuestion] = useState('');
+  const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleNext = () => {
-      Vibration.vibrate([0, 35, 40, 35]); 
+  // Check feature permissions
+  const {
+    isAllowed,
+    hasReachedLimit,
+    remainingUsage,
+    dailyLimit,
+    isUnlimited,
+    isLoading: isCheckingPermission,
+    refresh: refreshPermission,
+  } = useFeaturePermission('horoscope');
+
+  // Fetch permissions on mount (non-blocking - don't wait for it)
+  useEffect(() => {
+    // Fetch in background, don't block UI
+    refreshPermission().catch(err => {
+      console.log('Permission check failed (non-critical):', err);
+      // Don't show error to user, just log it
+    });
+  }, [refreshPermission]);
+
+  const handleNext = async () => {
+    // Prevent multiple submissions
+    if (isSubmitting) {
+      return;
+    }
+
+    Vibration.vibrate([0, 35, 40, 35]);
     if (!question.trim()) {
       Alert.alert(
         t('alert_input_required_title'),
@@ -43,9 +73,73 @@ const AskQuestionAstrologyScreen = () => {
       return;
     }
 
+    setIsSubmitting(true);
+
+    // If permissions are still loading, wait a bit and refresh
+    if (isCheckingPermission) {
+      // Wait for permission check to complete (with timeout)
+      try {
+        await Promise.race([
+          new Promise(resolve => {
+            const checkInterval = setInterval(() => {
+              if (!isCheckingPermission) {
+                clearInterval(checkInterval);
+                resolve(true);
+              }
+            }, 100);
+            setTimeout(() => {
+              clearInterval(checkInterval);
+              resolve(false);
+            }, 3000); // 3 second timeout
+          }),
+        ]);
+        // Refresh one more time to be sure
+        await refreshPermission();
+      } catch (err) {
+        console.log('Permission check timeout, proceeding anyway');
+      }
+    }
+
+    // Check permissions before navigating - show alert then upgrade modal if needed
+    if (!isAllowed) {
+      Alert.alert(
+        'Upgrade your package',
+        'This feature is not available in your current package. Please upgrade to access Horoscope readings.',
+        [
+          {
+            text: 'OK',
+            onPress: () => setShowSubscriptionModal(true),
+          },
+        ],
+        { cancelable: false },
+      );
+      return;
+    }
+
+    if (hasReachedLimit) {
+      Alert.alert(
+        'Daily Limit Reached',
+        `You have reached your daily limit of ${dailyLimit} Horoscope reading${
+          dailyLimit === 1 ? '' : 's'
+        }. Please upgrade to get unlimited access.`,
+        [
+          {
+            text: 'OK',
+            onPress: () => setShowSubscriptionModal(true),
+          },
+        ],
+        { cancelable: false },
+      );
+      setIsSubmitting(false);
+      return;
+    }
+
     navigation.navigate('AstrologyCardDetail', { userQuestion: question });
+    // Note: We don't reset isSubmitting here because we're navigating away
   };
-  const isButtonDisabled = !question.trim();
+
+  // Disable button if question is empty or if submitting
+  const isButtonDisabled = !question.trim() || isSubmitting;
   return (
     <ImageBackground
       source={require('../../../../../assets/images/bglinearImage.png')}
@@ -103,36 +197,66 @@ const AskQuestionAstrologyScreen = () => {
                 onChangeText={setQuestion}
                 multiline={true}
               />
+
+              {/* Permission Status Display */}
+              {!isCheckingPermission && (
+                <View style={styles.permissionStatus}>
+                  {!isAllowed ? (
+                    <Text style={styles.permissionText}>
+                      Feature not available in your package
+                    </Text>
+                  ) : hasReachedLimit ? (
+                    <Text style={styles.permissionText}>
+                      Daily limit reached ({dailyLimit} readings)
+                    </Text>
+                  ) : (
+                    <Text style={styles.permissionTextSuccess}>
+                      {isUnlimited
+                        ? 'Unlimited readings available'
+                        : `${remainingUsage} of ${dailyLimit} readings remaining today`}
+                    </Text>
+                  )}
+                </View>
+              )}
             </View>
-                <View style={styles.footer}>
-            <TouchableOpacity
-              activeOpacity={0.8}
-              onPress={handleNext}
-              style={{ width: '100%' }}
-              disabled={isButtonDisabled}
-            >
-              <GradientBox
-                colors={
-                  isButtonDisabled
-                    ? ['#a19a9aff', '#a19a9aff']
-                    : [colors.black, colors.bgBox]
-                }
-                style={[
-                  styles.nextBtn,
-
-                  isButtonDisabled
-                    ? { borderWidth: 0 }
-                    : { borderWidth: 1, borderColor: colors.primary },
-                ]}
+            <View style={styles.footer}>
+              <TouchableOpacity
+                activeOpacity={0.8}
+                onPress={handleNext}
+                style={{ width: '100%' }}
+                disabled={isButtonDisabled}
               >
-                <Text style={styles.nextText}>{t('continue_button')}</Text>
-              </GradientBox>
-            </TouchableOpacity>
-          </View>
+                <GradientBox
+                  colors={
+                    isButtonDisabled
+                      ? ['#a19a9aff', '#a19a9aff']
+                      : [colors.black, colors.bgBox]
+                  }
+                  style={[
+                    styles.nextBtn,
+                    isButtonDisabled
+                      ? { borderWidth: 0 }
+                      : { borderWidth: 1, borderColor: colors.primary },
+                  ]}
+                >
+                  {isSubmitting ? (
+                    <ActivityIndicator color={colors.white} size="small" />
+                  ) : (
+                    <Text style={styles.nextText}>{t('continue_button')}</Text>
+                  )}
+                </GradientBox>
+              </TouchableOpacity>
+            </View>
           </ScrollView>
-
-      
         </KeyboardAvoidingView>
+        <SubscriptionPlanModal
+          isVisible={showSubscriptionModal}
+          onClose={() => setShowSubscriptionModal(false)}
+          onConfirm={() => {
+            setShowSubscriptionModal(false);
+            refreshPermission();
+          }}
+        />
       </SafeAreaView>
     </ImageBackground>
   );
@@ -177,7 +301,6 @@ const styles = StyleSheet.create({
   content: {
     justifyContent: 'center', // Center vertically
     alignItems: 'center',
- 
   },
   heading: {
     fontSize: 32,
@@ -208,7 +331,7 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   footer: {
-marginTop:30,
+    marginTop: 30,
     paddingTop: 10,
   },
   nextBtn: {
@@ -223,5 +346,25 @@ marginTop:30,
     lineHeight: 20,
     color: '#fff',
     fontFamily: Fonts.aeonikRegular,
+  },
+  permissionStatus: {
+    marginTop: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    backgroundColor: 'rgba(74, 63, 80, 0.3)',
+    alignItems: 'center',
+  },
+  permissionText: {
+    fontSize: 13,
+    fontFamily: Fonts.aeonikRegular,
+    color: '#FF7070',
+    textAlign: 'center',
+  },
+  permissionTextSuccess: {
+    fontSize: 13,
+    fontFamily: Fonts.aeonikRegular,
+    color: '#4CAF50',
+    textAlign: 'center',
   },
 });

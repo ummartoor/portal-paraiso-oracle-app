@@ -1,4 +1,10 @@
-import React, { useMemo, useState, useEffect } from 'react';
+import React, {
+  useMemo,
+  useState,
+  useEffect,
+  useCallback,
+  useRef,
+} from 'react';
 import {
   View,
   Text,
@@ -25,6 +31,7 @@ import { useThemeStore } from '../../../../../store/useThemeStore';
 import { AppStackParamList } from '../../../../../navigation/routeTypes';
 import InsightTabs from './InsightTabs';
 import { useTranslation } from 'react-i18next';
+import { useShallow } from 'zustand/react/shallow';
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 import { useInterstitialAd } from '../../../../../hooks/useInterstitialAd';
 const DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -45,9 +52,6 @@ type ZodiacKey =
 
 type Zodiac = { key: ZodiacKey; name: string; icon: ImageSourcePropType };
 
-
-
-
 const ZODIAC_ICON_BOX = 160;
 const ZODIAC_ICON_INNER = 128;
 
@@ -60,27 +64,89 @@ const AstrologyCardDetailScreen: React.FC = () => {
   const { userQuestion } = route.params;
   const { t } = useTranslation();
   const { user, fetchCurrentUser } = useAuthStore();
+
+  // Use useShallow to prevent unnecessary re-renders
   const { horoscope, isLoading, createHoroscope, saveHoroscope, isSaving } =
-    useAstrologyStore();
+    useAstrologyStore(
+      useShallow(state => ({
+        horoscope: state.horoscope,
+        isLoading: state.isLoading,
+        createHoroscope: state.createHoroscope,
+        saveHoroscope: state.saveHoroscope,
+        isSaving: state.isSaving,
+      })),
+    );
 
+  const { showAd } = useInterstitialAd();
 
-    const { showAd } = useInterstitialAd();
+  // Memoize ZODIACS array to prevent recreation on every render
+  const ZODIACS: Zodiac[] = useMemo(
+    () => [
+      {
+        key: 'aries',
+        name: t('zodiac_aries'),
+        icon: require('../../../../../assets/icons/AriesIcon.png'),
+      },
+      {
+        key: 'taurus',
+        name: t('zodiac_taurus'),
+        icon: require('../../../../../assets/icons/TaurusIcon.png'),
+      },
+      {
+        key: 'gemini',
+        name: t('zodiac_gemini'),
+        icon: require('../../../../../assets/icons/GeminiIcon.png'),
+      },
+      {
+        key: 'cancer',
+        name: t('zodiac_cancer'),
+        icon: require('../../../../../assets/icons/CancerIcon.png'),
+      },
+      {
+        key: 'leo',
+        name: t('zodiac_leo'),
+        icon: require('../../../../../assets/icons/leoIcon.png'),
+      },
+      {
+        key: 'virgo',
+        name: t('zodiac_virgo'),
+        icon: require('../../../../../assets/icons/VirgoIcon.png'),
+      },
+      {
+        key: 'libra',
+        name: t('zodiac_libra'),
+        icon: require('../../../../../assets/icons/libraIcon.png'),
+      },
+      {
+        key: 'scorpio',
+        name: t('zodiac_scorpio'),
+        icon: require('../../../../../assets/icons/ScorpioIcon.png'),
+      },
+      {
+        key: 'sagittarius',
+        name: t('zodiac_sagittarius'),
+        icon: require('../../../../../assets/icons/SagittariusIcon.png'),
+      },
+      {
+        key: 'capricorn',
+        name: t('zodiac_capricorn'),
+        icon: require('../../../../../assets/icons/CapricornIcon.png'),
+      },
+      {
+        key: 'aquarius',
+        name: t('zodiac_aquarius'),
+        icon: require('../../../../../assets/icons/AquariusIcon.png'),
+      },
+      {
+        key: 'pisces',
+        name: t('zodiac_pisces'),
+        icon: require('../../../../../assets/icons/PiscesIcon.png'),
+      },
+    ],
+    [t],
+  );
 
-      const ZODIACS: Zodiac[] = [
-    { key: "aries", name: t('zodiac_aries'), icon: require('../../../../../assets/icons/AriesIcon.png') },
-    { key: "taurus", name: t('zodiac_taurus'), icon: require('../../../../../assets/icons/TaurusIcon.png') },
-    { key: "gemini", name: t('zodiac_gemini'), icon: require('../../../../../assets/icons/GeminiIcon.png') },
-    { key: "cancer", name: t('zodiac_cancer'), icon: require('../../../../../assets/icons/CancerIcon.png') },
-    { key: "leo", name: t('zodiac_leo'), icon: require('../../../../../assets/icons/leoIcon.png') },
-    { key: "virgo", name: t('zodiac_virgo'), icon: require('../../../../../assets/icons/VirgoIcon.png') },
-    { key: "libra", name: t('zodiac_libra'), icon: require('../../../../../assets/icons/libraIcon.png') },
-    { key: "scorpio", name: t('zodiac_scorpio'), icon: require('../../../../../assets/icons/ScorpioIcon.png') },
-    { key: "sagittarius", name: t('zodiac_sagittarius'), icon: require('../../../../../assets/icons/SagittariusIcon.png') },
-    { key: "capricorn", name: t('zodiac_capricorn'), icon: require('../../../../../assets/icons/CapricornIcon.png') },
-    { key: "aquarius", name: t('zodiac_aquarius'), icon: require('../../../../../assets/icons/AquariusIcon.png') },
-    { key: "pisces", name: t('zodiac_pisces'), icon: require('../../../../../assets/icons/PiscesIcon.png') },
-  ];
-const wrapIndex = (i: number) => (i + ZODIACS.length) % ZODIACS.length;
+  const wrapIndex = (i: number) => (i + ZODIACS.length) % ZODIACS.length;
   const days = useMemo(() => {
     const today = new Date();
     return Array.from({ length: 7 }).map((_, i) => {
@@ -97,30 +163,37 @@ const wrapIndex = (i: number) => (i + ZODIACS.length) % ZODIACS.length;
 
   const [selectedIdx, setSelectedIdx] = useState(0);
   const [zIndex, setZIndex] = useState(0);
+  const hasFetchedInitial = useRef(false);
 
   useEffect(() => {
     fetchCurrentUser();
-  }, []);
+  }, [fetchCurrentUser]);
 
   useEffect(() => {
-    if (user?.sign_in_zodiac) {
+    if (user?.sign_in_zodiac && !hasFetchedInitial.current) {
       const userSignIndex = ZODIACS.findIndex(
         z => z.key === user.sign_in_zodiac,
       );
       if (userSignIndex !== -1) {
         setZIndex(userSignIndex);
+        hasFetchedInitial.current = true;
       }
     }
-  }, [user]);
+  }, [user, ZODIACS]);
 
-  useEffect(() => {
+  // Memoize the create horoscope function to prevent infinite loops
+  const fetchHoroscope = useCallback(() => {
     const selectedSign = ZODIACS[zIndex]?.key;
     const selectedDate = days[selectedIdx]?.date;
     if (selectedSign && selectedDate && userQuestion) {
       const dateISO = selectedDate.toISOString();
       createHoroscope(selectedSign, dateISO, userQuestion);
     }
-  }, [zIndex, selectedIdx, createHoroscope, userQuestion]);
+  }, [zIndex, selectedIdx, userQuestion, ZODIACS, days, createHoroscope]);
+
+  useEffect(() => {
+    fetchHoroscope();
+  }, [fetchHoroscope]);
 
   const current = ZODIACS[zIndex];
   const prevZ = ZODIACS[wrapIndex(zIndex - 1)];
@@ -130,7 +203,7 @@ const wrapIndex = (i: number) => (i + ZODIACS.length) % ZODIACS.length;
   const goNext = () => setZIndex(i => wrapIndex(i + 1));
 
   // const handleSave = async () => {
-  //      Vibration.vibrate([0, 35, 40, 35]); 
+  //      Vibration.vibrate([0, 35, 40, 35]);
   //   if (!horoscope || isSaving || !userQuestion) return;
 
   //   const selectedSign = ZODIACS[zIndex]?.key;
@@ -139,30 +212,44 @@ const wrapIndex = (i: number) => (i + ZODIACS.length) % ZODIACS.length;
   //   if (selectedSign && selectedDate) {
   //     const dateISO = selectedDate.toISOString();
 
-   
   //     await saveHoroscope(selectedSign, dateISO, horoscope, userQuestion);
   //     navigation.navigate('MainTabs');
   //   }
   // };
 
-// --- ADD THIS NEW FUNCTION (for the ad callback) ---
-  const performSaveAndNavigate = async () => {
+  // --- ADD THIS NEW FUNCTION (for the ad callback) ---
+  const performSaveAndNavigate = useCallback(async () => {
     // Check conditions again, just in case
-    if (!horoscope || isSaving || !userQuestion) return;
+    if (!horoscope?.horoscope || isSaving || !userQuestion) return;
 
     const selectedSign = ZODIACS[zIndex]?.key;
     const selectedDate = days[selectedIdx]?.date;
 
     if (selectedSign && selectedDate) {
       const dateISO = selectedDate.toISOString();
-      await saveHoroscope(selectedSign, dateISO, horoscope, userQuestion);
+      await saveHoroscope(
+        selectedSign,
+        dateISO,
+        horoscope.horoscope,
+        userQuestion,
+      );
       navigation.navigate('MainTabs');
     }
-  };
+  }, [
+    horoscope,
+    isSaving,
+    userQuestion,
+    ZODIACS,
+    zIndex,
+    days,
+    selectedIdx,
+    saveHoroscope,
+    navigation,
+  ]);
 
   // --- UPDATE THIS FUNCTION (for the button press) ---
   const handleSave = () => {
-    Vibration.vibrate([0, 35, 40, 35]); 
+    Vibration.vibrate([0, 35, 40, 35]);
     if (isSaving) return; // Don't show ad if already saving
 
     // Show the ad.
@@ -196,7 +283,11 @@ const wrapIndex = (i: number) => (i + ZODIACS.length) % ZODIACS.length;
             />
           </TouchableOpacity>
           <View style={styles.headerTitleWrap} pointerEvents="none">
-           <Text numberOfLines={1} ellipsizeMode="tail" style={[styles.headerTitle, { color: colors.white }]}>
+            <Text
+              numberOfLines={1}
+              ellipsizeMode="tail"
+              style={[styles.headerTitle, { color: colors.white }]}
+            >
               {t('astrology_screen_header')}
             </Text>
           </View>
@@ -208,10 +299,20 @@ const wrapIndex = (i: number) => (i + ZODIACS.length) % ZODIACS.length;
         >
           {/* Title */}
           <View style={styles.contentHeader}>
-         <Text style={[styles.contentTitle, { color: colors.primary, textAlign: 'center' }]}>
+            <Text
+              style={[
+                styles.contentTitle,
+                { color: colors.primary, textAlign: 'center' },
+              ]}
+            >
               {t('astrology_unlock_title')}
             </Text>
-          <Text style={[styles.contentSubtitle, { color: colors.white, textAlign: 'center' }]}>
+            <Text
+              style={[
+                styles.contentSubtitle,
+                { color: colors.white, textAlign: 'center' },
+              ]}
+            >
               {t('astrology_explore_subtitle')}
             </Text>
           </View>
@@ -316,7 +417,9 @@ const wrapIndex = (i: number) => (i + ZODIACS.length) % ZODIACS.length;
             <InsightTabs horoscopeData={horoscope} />
           ) : (
             <View style={styles.errorContainer}>
-             <Text style={styles.errorText}>{t('astrology_horoscope_not_available')}</Text>
+              <Text style={styles.errorText}>
+                {t('astrology_horoscope_not_available')}
+              </Text>
             </View>
           )}
 
@@ -340,9 +443,6 @@ const wrapIndex = (i: number) => (i + ZODIACS.length) % ZODIACS.length;
               </GradientBox>
             </TouchableOpacity> */}
 
-
-        
-
             <TouchableOpacity
               activeOpacity={0.7}
               style={styles.actionTouchable}
@@ -362,7 +462,9 @@ const wrapIndex = (i: number) => (i + ZODIACS.length) % ZODIACS.length;
                       style={[styles.actionIcon, { tintColor: colors.white }]}
                       resizeMode="contain"
                     />
-                           <Text style={[styles.actionLabel, { color: colors.white }]}>{t('save_button')}</Text>
+                    <Text style={[styles.actionLabel, { color: colors.white }]}>
+                      {t('save_button')}
+                    </Text>
                   </>
                 )}
               </GradientBox>
@@ -531,8 +633,6 @@ const styles = StyleSheet.create({
 });
 
 export default AstrologyCardDetailScreen;
-
-
 
 // import React, { useMemo, useState } from 'react';
 // import {

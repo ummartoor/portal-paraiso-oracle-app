@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -13,6 +13,8 @@ import {
   Platform,
   ScrollView,
   Vibration,
+  Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useThemeStore } from '../../../../../store/useThemeStore';
@@ -22,6 +24,8 @@ import { Fonts } from '../../../../../constants/fonts';
 import GradientBox from '../../../../../components/GradientBox';
 import { AppStackParamList } from '../../../../../navigation/routeTypes';
 import { useTranslation } from 'react-i18next';
+import { useFeaturePermission } from '../../../../../store/useFeaturePermissionStore';
+import SubscriptionPlanModal from '../../../../../components/SubscriptionPlanModal';
 // --- NEW: Import Formik and Yup ---
 import { Formik } from 'formik';
 import * as Yup from 'yup';
@@ -35,6 +39,29 @@ const AskQuestionCariusScreen = () => {
     useNavigation<NativeStackNavigationProp<AppStackParamList>>();
   const { t } = useTranslation();
 
+  // Check feature permissions
+  const {
+    isAllowed,
+    hasReachedLimit,
+    remainingUsage,
+    dailyLimit,
+    isUnlimited,
+    isLoading: isCheckingPermission,
+    refresh: refreshPermission,
+  } = useFeaturePermission('buzios');
+
+  const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Fetch permissions on mount (non-blocking - don't wait for it)
+  useEffect(() => {
+    // Fetch in background, don't block UI
+    refreshPermission().catch(err => {
+      console.log('Permission check failed (non-critical):', err);
+      // Don't show error to user, just log it
+    });
+  }, [refreshPermission]);
+
   const requiredError = t('alert_input_required_message_question');
   const minLengthError = t('validation_question_min_length', { count: 10 });
   const maxLengthError = t('validation_question_max_length', { count: 500 });
@@ -45,6 +72,68 @@ const AskQuestionCariusScreen = () => {
       .min(10, minLengthError)
       .max(500, maxLengthError),
   });
+
+  const handlePermissionCheck = async (question: string) => {
+    // If permissions are still loading, wait a bit and refresh
+    if (isCheckingPermission) {
+      // Wait for permission check to complete (with timeout)
+      try {
+        await Promise.race([
+          new Promise(resolve => {
+            const checkInterval = setInterval(() => {
+              if (!isCheckingPermission) {
+                clearInterval(checkInterval);
+                resolve(true);
+              }
+            }, 100);
+            setTimeout(() => {
+              clearInterval(checkInterval);
+              resolve(false);
+            }, 3000); // 3 second timeout
+          }),
+        ]);
+        // Refresh one more time to be sure
+        await refreshPermission();
+      } catch (err) {
+        console.log('Permission check timeout, proceeding anyway');
+      }
+    }
+
+    // Check permissions and show alert then upgrade modal if needed
+    if (!isAllowed) {
+      Alert.alert(
+        'Upgrade your package',
+        'This feature is not available in your current package. Please upgrade to access Búzios readings.',
+        [
+          {
+            text: 'OK',
+            onPress: () => setShowSubscriptionModal(true),
+          },
+        ],
+        { cancelable: false },
+      );
+      return false;
+    }
+
+    if (hasReachedLimit) {
+      Alert.alert(
+        'Daily Limit Reached',
+        `You have reached your daily limit of ${dailyLimit} Búzios reading${
+          dailyLimit === 1 ? '' : 's'
+        }. Please upgrade to get unlimited access.`,
+        [
+          {
+            text: 'OK',
+            onPress: () => setShowSubscriptionModal(true),
+          },
+        ],
+        { cancelable: false },
+      );
+      return false;
+    }
+
+    return true;
+  };
 
   return (
     <ImageBackground
@@ -82,9 +171,24 @@ const AskQuestionCariusScreen = () => {
           <Formik
             initialValues={{ question: '' }}
             validationSchema={validationSchema}
-            onSubmit={(values) => {
+            onSubmit={async values => {
+              // Prevent multiple submissions
+              if (isSubmitting) {
+                return;
+              }
+
+              setIsSubmitting(true);
               Vibration.vibrate([0, 35, 40, 35]);
-              navigation.navigate('CaurisCardDetail', { userQuestion: values.question });
+              // Check permissions before navigating
+              const canProceed = await handlePermissionCheck(values.question);
+              if (canProceed) {
+                navigation.navigate('CaurisCardDetail', {
+                  userQuestion: values.question,
+                });
+                // Note: We don't reset isSubmitting here because we're navigating away
+              } else {
+                setIsSubmitting(false);
+              }
             }}
           >
             {({
@@ -108,7 +212,7 @@ const AskQuestionCariusScreen = () => {
                   <Text style={[styles.subheading, { color: colors.primary }]}>
                     {t('ask_question_subheading')}
                   </Text>
-                  
+
                   <TextInput
                     style={styles.inputField}
                     placeholder={t('ask_question_placeholder')}
@@ -122,39 +226,81 @@ const AskQuestionCariusScreen = () => {
                     <Text style={styles.errorText}>{errors.question}</Text>
                   )}
 
-                    <View style={styles.footer}>
-                  <TouchableOpacity
-                    activeOpacity={0.8}
-                    onPress={() => handleSubmit()}
-                    style={{ width: '100%' }}
-                 
-                    disabled={!isValid || !dirty} 
-                  >
-                    <GradientBox
-                      colors={
-                        !isValid || !dirty // <-- 3. MATCH THE DISABLED LOGIC FOR STYLING
-                          ? ['#a19a9aff', '#a19a9aff']
-                          : [colors.black, colors.bgBox]
-                      }
-                      style={[
-                        styles.nextBtn,
-                        !isValid || !dirty // <-- 4. MATCH THE DISABLED LOGIC FOR STYLING
-                          ? { borderWidth: 0 }
-                          : { borderWidth: 1, borderColor: colors.primary },
-                      ]}
-                    >
-                      <Text style={styles.nextText}>{t('continue_button')}</Text>
-                    </GradientBox>
-                  </TouchableOpacity>
-                </View>
-                </ScrollView>
+                  {/* Permission Status Display */}
+                  {!isCheckingPermission && (
+                    <View style={styles.permissionStatus}>
+                      {!isAllowed ? (
+                        <Text style={styles.permissionText}>
+                          Feature not available in your package
+                        </Text>
+                      ) : hasReachedLimit ? (
+                        <Text style={styles.permissionText}>
+                          Daily limit reached ({dailyLimit} readings)
+                        </Text>
+                      ) : (
+                        <Text style={styles.permissionTextSuccess}>
+                          {isUnlimited
+                            ? 'Unlimited readings available'
+                            : `${remainingUsage} of ${dailyLimit} readings remaining today`}
+                        </Text>
+                      )}
+                    </View>
+                  )}
 
-          
-              
+                  <View style={styles.footer}>
+                    <TouchableOpacity
+                      activeOpacity={0.8}
+                      onPress={() => handleSubmit()}
+                      style={{ width: '100%' }}
+                      disabled={!isValid || !dirty || isSubmitting}
+                    >
+                      <GradientBox
+                        colors={
+                          !isValid ||
+                          !dirty ||
+                          isSubmitting ||
+                          (isCheckingPermission === false &&
+                            (!isAllowed || hasReachedLimit))
+                            ? ['#a19a9aff', '#a19a9aff']
+                            : [colors.black, colors.bgBox]
+                        }
+                        style={[
+                          styles.nextBtn,
+                          !isValid ||
+                          !dirty ||
+                          isSubmitting ||
+                          (isCheckingPermission === false &&
+                            (!isAllowed || hasReachedLimit))
+                            ? { borderWidth: 0 }
+                            : { borderWidth: 1, borderColor: colors.primary },
+                        ]}
+                      >
+                        {isSubmitting ? (
+                          <ActivityIndicator
+                            color={colors.white}
+                            size="small"
+                          />
+                        ) : (
+                          <Text style={styles.nextText}>
+                            {t('continue_button')}
+                          </Text>
+                        )}
+                      </GradientBox>
+                    </TouchableOpacity>
+                  </View>
+                </ScrollView>
               </>
             )}
           </Formik>
         </KeyboardAvoidingView>
+        <SubscriptionPlanModal
+          isVisible={showSubscriptionModal}
+          onClose={() => setShowSubscriptionModal(false)}
+          onConfirm={() => {
+            setShowSubscriptionModal(false);
+            refreshPermission();
+          }}
+        />
       </SafeAreaView>
     </ImageBackground>
   );
@@ -199,7 +345,7 @@ const styles = StyleSheet.create({
   // --- FIX: Updated styles for better layout ---
   scrollContent: {
     flexGrow: 1,
- 
+
     paddingHorizontal: 20,
   },
   heading: {
@@ -217,7 +363,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
   },
   inputField: {
-  height: 120,
+    height: 120,
     borderRadius: 20,
     backgroundColor: 'rgba(74, 63, 80, 0.5)',
     paddingHorizontal: 20,
@@ -239,10 +385,9 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   footer: {
-
-marginTop:30,
+    marginTop: 30,
     paddingTop: 10,
-    backgroundColor: 'transparent', 
+    backgroundColor: 'transparent',
   },
   nextBtn: {
     height: 56,
@@ -257,5 +402,24 @@ marginTop:30,
     color: '#fff',
     fontFamily: Fonts.aeonikRegular,
   },
+  permissionStatus: {
+    marginTop: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    backgroundColor: 'rgba(74, 63, 80, 0.3)',
+    alignItems: 'center',
+  },
+  permissionText: {
+    fontSize: 13,
+    fontFamily: Fonts.aeonikRegular,
+    color: '#FF7070',
+    textAlign: 'center',
+  },
+  permissionTextSuccess: {
+    fontSize: 13,
+    fontFamily: Fonts.aeonikRegular,
+    color: '#4CAF50',
+    textAlign: 'center',
+  },
 });
-

@@ -13,6 +13,7 @@ import {
   Vibration,
   ActivityIndicator,
   ScrollView,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
@@ -43,6 +44,8 @@ import SoundPlayer from 'react-native-sound-player';
 // --- UPDATED: Import preloadSpeech as well ---
 import { useOpenAiStore } from '../../../../../store/useOpenAiStore';
 import { useInterstitialAd } from '../../../../../hooks/useInterstitialAd';
+import { useStripeStore } from '../../../../../store/useStripeStore';
+import { useShallow } from 'zustand/react/shallow';
 
 const { height: SCREEN_HEIGHT, width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -118,11 +121,27 @@ const TarotCardDetailScreen: React.FC = () => {
     generateReading,
     readingData,
     isReadingLoading,
+    readingError,
     saveReading,
     isSavingLoading,
   } = useTarotCardStore();
 
   const { preloadSpeech } = useOpenAiStore();
+
+  // Subscription and package management
+  const {
+    packages,
+    currentSubscription,
+    fetchStripePackages,
+    fetchCurrentSubscription,
+  } = useStripeStore(
+    useShallow(state => ({
+      packages: state.packages,
+      currentSubscription: state.currentSubscription,
+      fetchStripePackages: state.fetchStripePackages,
+      fetchCurrentSubscription: state.fetchCurrentSubscription,
+    })),
+  );
 
   const [fullDeck, setFullDeck] = useState<DeckCard[]>([]);
   const [selectedCards, setSelectedCards] = useState<DeckCard[]>([]);
@@ -174,9 +193,51 @@ const TarotCardDetailScreen: React.FC = () => {
   const maxIndex = availableDeck.length > 0 ? availableDeck.length - 1 : 0;
   const progress = useSharedValue(0);
 
+  // Helper function to get tarot card limit from subscription
+  const getTarotCardLimit = useMemo(() => {
+    if (!currentSubscription?.vipSubscription || !packages) {
+      // Default limit for free users (typically 1-3 cards)
+      return 3;
+    }
+
+    const activePackageId = currentSubscription.vipSubscription.packageId;
+    const activePackage = packages.find(pkg => pkg.id === activePackageId);
+
+    if (!activePackage) {
+      return 3; // Default limit
+    }
+
+    // Check if there's a tarot card limit in features.games
+    // The structure might be: features.games.tarot?.max_cards or similar
+    // For now, we'll check common patterns
+    const games = activePackage.features?.games;
+    if (games && typeof games === 'object') {
+      // Check for tarot limit in various possible formats
+      const tarotLimit =
+        (games as any)?.tarot?.max_cards ||
+        (games as any)?.tarot?.card_limit ||
+        (games as any)?.tarot_card_limit ||
+        (games as any)?.max_tarot_cards;
+
+      if (typeof tarotLimit === 'number' && tarotLimit > 0) {
+        return tarotLimit;
+      }
+    }
+
+    // Fallback: Use tier-based limits
+    // Higher tier = more cards allowed
+    const tier = activePackage.tier || 0;
+    if (tier >= 3) return 10; // Premium tier
+    if (tier >= 2) return 7; // Mid tier
+    if (tier >= 1) return 5; // Basic tier
+    return 3; // Free/default
+  }, [currentSubscription, packages]);
+
   useEffect(() => {
     fetchTarotCards();
-  }, [fetchTarotCards]);
+    fetchStripePackages();
+    fetchCurrentSubscription();
+  }, [fetchTarotCards, fetchStripePackages, fetchCurrentSubscription]);
 
   useEffect(() => {
     if (apiCards.length > 0) {
@@ -276,6 +337,27 @@ const TarotCardDetailScreen: React.FC = () => {
   };
 
   const handleSelect = (card: DeckCard) => {
+    // Check if user has reached their card limit
+    if (selectedCards.length >= getTarotCardLimit) {
+      triggerHaptic();
+      // Show alert first, then upgrade modal when user presses OK
+      Alert.alert(
+        'Card Limit Reached',
+        `Your current package allows only ${getTarotCardLimit} card${
+          getTarotCardLimit > 1 ? 's' : ''
+        }. Please upgrade to select more cards.`,
+        [
+          {
+            text: 'OK',
+            onPress: () => {
+              setShowSubscriptionModal(true);
+            },
+          },
+        ],
+      );
+      return;
+    }
+
     setSelectedCards(prev => [...prev, card]);
     triggerHaptic();
   };
@@ -292,8 +374,56 @@ const TarotCardDetailScreen: React.FC = () => {
   const handleRevealMeaning = async () => {
     Vibration.vibrate([0, 35, 40, 35]);
     if (isReadingLoading || selectedCards.length === 0 || !userQuestion) return;
+
+    // Check frontend limit before API call
+    if (selectedCards.length > getTarotCardLimit) {
+      Alert.alert(
+        'Card Limit Reached',
+        `Your current package allows only ${getTarotCardLimit} card${
+          getTarotCardLimit > 1 ? 's' : ''
+        }. Please upgrade to select more cards.`,
+        [
+          {
+            text: 'OK',
+            onPress: () => {
+              setShowSubscriptionModal(true);
+            },
+          },
+        ],
+      );
+      return;
+    }
+
     const card_ids = selectedCards.map(card => card._id);
     const result = await generateReading(card_ids, userQuestion);
+
+    // Check if there was an error related to card limit from API
+    // Get the latest error state after the API call
+    const currentError = useTarotCardStore.getState().readingError;
+    if (!result && currentError) {
+      const errorLower = currentError.toLowerCase();
+      if (
+        errorLower.includes('card') &&
+        (errorLower.includes('limit') ||
+          errorLower.includes('allowed') ||
+          errorLower.includes('package') ||
+          errorLower.includes('upgrade') ||
+          errorLower.includes('only 1 card') ||
+          errorLower.includes('update package'))
+      ) {
+        // Show alert for card limit error, then show upgrade modal
+        Alert.alert('Card Limit Reached', currentError, [
+          {
+            text: 'OK',
+            onPress: () => {
+              setShowSubscriptionModal(true);
+            },
+          },
+        ]);
+        return;
+      }
+    }
+
     if (result) {
       setShowRevealGrid(false);
       setShowReading(true);
@@ -604,6 +734,42 @@ const TarotCardDetailScreen: React.FC = () => {
                   <Text style={[styles.paragraph, { color: colors.white }]}>
                     {t('tarot_focus_question_subtitle')}
                   </Text>
+                  {/* Card selection limit indicator - Always visible */}
+                  <View style={styles.cardLimitIndicator}>
+                    <View style={styles.cardLimitBadge}>
+                      <Text
+                        style={[styles.cardLimitText, { color: colors.white }]}
+                      >
+                        You can select up to {getTarotCardLimit} card
+                        {getTarotCardLimit > 1 ? 's' : ''}
+                      </Text>
+                    </View>
+                    {selectedCards.length > 0 && (
+                      <Text
+                        style={[
+                          styles.cardLimitCounter,
+                          {
+                            color:
+                              selectedCards.length >= getTarotCardLimit
+                                ? colors.primary
+                                : colors.white,
+                          },
+                        ]}
+                      >
+                        {selectedCards.length} / {getTarotCardLimit} selected
+                      </Text>
+                    )}
+                    {selectedCards.length >= getTarotCardLimit && (
+                      <Text
+                        style={[
+                          styles.cardLimitWarning,
+                          { color: colors.primary },
+                        ]}
+                      >
+                        Upgrade to select more cards
+                      </Text>
+                    )}
+                  </View>
                 </View>
                 {selectedCards.length > 0 && (
                   <View style={styles.selectedArea}>
@@ -684,7 +850,9 @@ const TarotCardDetailScreen: React.FC = () => {
                 )}
                 {!isDeckLoading && (
                   <Text style={styles.hint}>
-                    {t('tarot_tap_to_select_hint')}
+                    {selectedCards.length >= getTarotCardLimit
+                      ? 'Upgrade to select more cards'
+                      : t('tarot_tap_to_select_hint')}
                   </Text>
                 )}
               </View>
@@ -692,9 +860,14 @@ const TarotCardDetailScreen: React.FC = () => {
           )}
           <SubscriptionPlanModal
             isVisible={showSubscriptionModal}
-            onClose={() => setShowSubscriptionModal(false)}
-            onConfirm={plan => {
-              console.log('Selected:', plan);
+            onClose={async () => {
+              // Refresh subscription when modal closes (in case user upgraded)
+              await fetchCurrentSubscription();
+              setShowSubscriptionModal(false);
+            }}
+            onConfirm={async plan => {
+              // Refresh subscription after upgrade
+              await fetchCurrentSubscription();
               setShowSubscriptionModal(false);
             }}
           />
@@ -831,6 +1004,38 @@ const styles = StyleSheet.create({
     marginTop: 5,
     marginBottom: 8,
     lineHeight: 20,
+  },
+  cardLimitIndicator: {
+    marginTop: 12,
+    marginBottom: 8,
+    alignItems: 'center',
+    width: '100%',
+  },
+  cardLimitBadge: {
+    backgroundColor: 'rgba(217, 182, 153, 0.15)',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(217, 182, 153, 0.3)',
+    marginBottom: 8,
+  },
+  cardLimitText: {
+    fontFamily: Fonts.aeonikBold,
+    fontSize: 14,
+    textAlign: 'center',
+  },
+  cardLimitCounter: {
+    fontFamily: Fonts.aeonikRegular,
+    fontSize: 13,
+    textAlign: 'center',
+    marginTop: 4,
+  },
+  cardLimitWarning: {
+    fontFamily: Fonts.aeonikBold,
+    fontSize: 12,
+    textAlign: 'center',
+    marginTop: 6,
   },
   selectedArea: {
     flex: 1,

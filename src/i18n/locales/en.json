@@ -7,13 +7,10 @@
   "onboarding3_subtitle": "Endless fun, just a swipe away.",
   "getStartedButton": "Get Started",
 
-
-   "welcome_title": "Welcome to Portal\nParaíso Oracle",
+  "welcome_title": "Welcome to Portal\nParaíso Oracle",
   "welcome_subtitle": "Choose your path to divine guidance",
   "signup_button": "Sign up",
   "login_button": "Log in",
-
-
 
   "login_header": "Sign in",
   "login_subheader": "Welcome back Portal Paraiso",
@@ -22,18 +19,14 @@
   "dont_have_account": "Don’t have an account?",
   "signup_link": "Sign up",
 
-
-    "validation_question_min_length": "Question must be at least {{count}} characters.",
+  "validation_question_min_length": "Question must be at least {{count}} characters.",
   "validation_question_max_length": "Question cannot be more than {{count}} characters.",
-
 
   "forgot_password_header": "Forgot Password",
   "forgot_password_subheader": "Enter the email associated with your account and we’ll send you a code.",
   "continue_button": "Continue",
   "back_to_footer": "Back to",
   "signin_footer_link": "Sign In",
-
-
 
   "otp_header": "OTP Verification",
   "otp_subheader": "Enter the 6-digit code sent to your email.",
@@ -42,19 +35,13 @@
   "alert_error_title": "Error",
   "alert_otp_incomplete_message": "Please enter the complete 6-digit OTP.",
 
-
-
-
-"reset_password_header": "Reset Password",
+  "reset_password_header": "Reset Password",
   "reset_password_subheader": "Set a new password for your account",
   "new_password_label": "New Password",
   "new_password_placeholder": "Enter new password",
   "confirm_password_placeholder_2": "Confirm new password",
   "login_footer_link": "Login",
   "alert_email_missing_message": "User email is missing. Please restart the password reset process.",
-
-
-  
 
   "signup_header": "Create an Account",
   "signup_subheader": "Welcome to Portal Paraíso",
@@ -71,7 +58,7 @@
   "create_account_button": "Create Account",
   "already_have_account": "Already have an account?",
   "login_link": "Log in",
-   "validation_name_required": "Name is required",
+  "validation_name_required": "Name is required",
   "validation_email_invalid": "Invalid email",
   "validation_email_required": "Email is required",
   "validation_password_required": "Password is required",
@@ -79,10 +66,6 @@
   "validation_passwords_match": "Passwords must match",
   "validation_confirm_password_required": "Confirm Password is required",
   "validation_agree_required": "You must agree to Terms & Conditions",
-
-
-
-
 
   "gender_header": "What's your gender?",
   "gender_subheader": "Gender reveals the balance of your masculine and feminine energy",
@@ -92,9 +75,6 @@
   "next_button": "Next",
   "alert_selection_required_title": "Selection Required",
   "alert_selection_required_message": "Please select your gender to continue.",
-
-
-
 
   "goals_header": "What are your goals?",
   "goals_subheader": "Goals reveal the balance between your ambition and patience",
@@ -107,26 +87,17 @@
   "goal_others": "Others",
   "alert_at_least_one_goal_message": "Please select at least one goal to continue.",
 
-
   "dob_header": "Date of Birth",
   "dob_subheader": "Please enter your date of birth",
 
-
-
-
   "tob_header": "Time of Birth",
   "tob_subheader": "Please enter your time of birth",
-
-
-
 
   "pob_header": "Place of Birth",
   "pob_subheader": "Please enter your Place of birth",
   "pob_placeholder": "Enter the place of birth",
   "alert_input_required_title": "Input Required",
   "alert_input_required_message_pob": "Please enter your place of birth.",
-
-
 
   "relationship_header": "Your Relationship Status",
   "relationship_subheader": "Select your relationship status?",
@@ -137,12 +108,9 @@
   "status_complicated": "Complicated",
   "status_divorced": "Divorced",
   "alert_relationship_status_message": "Please select your relationship status.",
-   "finish_button": "Finish",
+  "finish_button": "Finish",
 
-
-
-
-     "zodiac_aries": "Aries",
+  "zodiac_aries": "Aries",
   "zodiac_taurus": "Taurus",
   "zodiac_gemini": "Gemini",
   "zodiac_cancer": "Cancer",
@@ -155,24 +123,16 @@
   "zodiac_aquarius": "Aquarius",
   "zodiac_pisces": "Pisces",
 
-
-
-
-
-
-"tab_home": "Home",
+  "tab_home": "Home",
   "tab_divine": "Divine",
   "tab_library": "Library",
   "tab_chat": "Chat",
-
-
-
 
   "home_title": "PORTAL PARAISO",
   "home_subtitle": "Choose your path to divine guidance",
   "home_daily_wisdom_card": "Daily Wisdom Card",
   "home_ritual_tip": "Ritual Tip",
-"home_ai_chat_title": "TALK WITH DIVINE AI",
+  "home_ai_chat_title": "TALK WITH DIVINE AI",
   "home_ai_chat_subtitle": "Seek guidance, clarity, or comfort — your cosmic guide is listening.",
   "home_ai_chat_button": "Begin Conversation",
 
@@ -186,7 +146,7 @@
   "carousel_astrology_subtitle": "Decode the stars and your cosmic blueprint.",
   "carousel_no_image": "No image",
 
-        "main_title":"Portal Guide",
+  "main_title": "Portal Guide",
   "highlights_main_title": "Today's Highlights",
   "highlights_sun_title": "The Sun",
   "highlights_sun_subtitle": "Joy and growth surround you",
@@ -194,28 +154,24 @@
   "highlights_horoscope_subtitle": "Balance brings clarity to your choices",
   "highlights_ritual_title": "Ritual",
   "highlights_ritual_subtitle": "Light a candle to invite truth and warmth",
-"video_player" :"Video Player",
+  "video_player": "Video Player",
 
-"ask_question_header": "Ask a Question",
+  "ask_question_header": "Ask a Question",
   "ask_question_heading": "What Guidance Do You Seek?",
   "ask_question_subheading": "Type your question below.",
   "ask_question_placeholder": "Type your question, or ask for general guidance...",
   "alert_input_required_message_question": "Please enter your question or ask for general guidance.",
 
-
-
-
   "divine_screen": "Divine",
   "divine_tarot_title": "Tarot Reading",
-  "divine_tarot_subtitle":"Let AI uncover the message behind your cards. Receive clear guidance inspired by the Tarot’s wisdom.",
-  "divine_tarot_btn" :"Start AI Tarot",
+  "divine_tarot_subtitle": "Let AI uncover the message behind your cards. Receive clear guidance inspired by the Tarot’s wisdom.",
+  "divine_tarot_btn": "Start AI Tarot",
   "divine_cauris_title": "Buzios",
-    "divine_cauris_subitle":"Consult AI for an ancestral cowrie reading.  Discover what the shells reveal for your path in life.",
-    "divine_cauris_btn" :"Start AI Cauris",
+  "divine_cauris_subitle": "Consult AI for an ancestral cowrie reading.  Discover what the shells reveal for your path in life.",
+  "divine_cauris_btn": "Start AI Cauris",
   "divine_astrology_title": "Astrology",
   "divine_astrology_subtitle": "Explore your cosmic patterns with AI. Get personalized insights based on today’s astrological energies.",
-    "divine_astrology_btn" :"Start AI Astrology",
-
+  "divine_astrology_btn": "Start AI Astrology",
 
   "library_screen": "Library",
   "library_subtitle": "All your favorite rituals, readings,\nand wisdom.",
@@ -223,20 +179,15 @@
   "library_tab_astrology": "Astrology",
   "EMPTY_HOROSCOPE_ HISTORY_TEXT": "You have no saved horoscopes yet.",
   "library_tab_buzious": "Buzios",
-  "EMPTY_TEXT":"You have no saved readings yet.",
+  "EMPTY_TEXT": "You have no saved readings yet.",
   "library_tab_daily_wisdom": "Daily Wisdom Card",
   "library_tab_ritual_tip": "Ritual Tip",
 
-
-
-
-
-
-"profile_screen_title": "Profile",
+  "profile_screen_title": "Profile",
   "profile_user_name_fallback": "User Name",
   "profile_zodiac_sign_label": "Zodiac Sign",
   "profile_notification_title": "Notification",
-  "profile_notification_status_enabled" :"Enable",
+  "profile_notification_status_enabled": "Enable",
   "profile_notification_status_disabled": "Disabled",
   "profile_subscription_header": "Subscription",
   "profile_buy_subscription_button": "Buy Subscription",
@@ -250,8 +201,6 @@
   "profile_support_button": "Support",
   "profile_logout_button": "Log Out",
   "profile_delete_account_button": "Delete Account",
-
-
 
   "edit_profile_header": "Edit Profile",
   "edit_profile_update_password_button": "Update Password",
@@ -279,18 +228,17 @@
   "daily_wisdom_card": "Daily Wisdom Card",
   "ritual_tip": "Ritual Tip",
 
-"name_modal_header": "Name",
+  "name_modal_header": "Name",
   "name_modal_label": "Enter your full name",
   "name_modal_placeholder": "Type your name",
 
-"email_modal_header": "Update Your Email",
+  "email_modal_header": "Update Your Email",
   "email_modal_label": "Enter your email address",
   "email_modal_placeholder": "Type your email",
 
+  "gender_modal_header": "Select Gender",
 
-"gender_modal_header": "Select Gender",
-
-"goals_modal_header": "Select Your Goals",
+  "goals_modal_header": "Select Your Goals",
   "cancel_button": "Cancel",
   "update_button": "Update",
 
@@ -298,14 +246,13 @@
 
   "tob_modal_header": "Select Time of Birth",
 
-"pob_modal_header": "Place of Birth",
+  "pob_modal_header": "Place of Birth",
   "pob_modal_label": "Enter Place of Birth",
   "pob_modal_placeholder": "Type your place of birth",
 
   "relationship_modal_header": "Relationship Status",
 
   "zodiac_modal_header": "Select Your Zodiac Symbol",
-
 
   "update_password_header": "Update Password",
   "old_password_label": "Old Password",
@@ -336,8 +283,6 @@
   "delete_account_reason_required_title": "Reason Required",
   "delete_account_reason_required_message": "Please select or specify a reason before deleting your account.",
 
-
-
   "support_screen_header": "Support",
   "support_question_label": "Question for Support",
   "support_question_placeholder": "Type your question",
@@ -349,7 +294,7 @@
   "alert_missing_info_title": "Missing Information",
   "alert_missing_info_message": "Please fill out all fields before sending.",
 
-"subscription_plan_title": "Subscription Plan",
+  "subscription_plan_title": "Subscription Plan",
   "subscription_unlock_title": "Unlock Your Cosmic Potential",
   "subscription_yearly": "Yearly",
   "subscription_monthly": "Monthly",
@@ -360,7 +305,7 @@
   "subscription_save_55": "Save 55%",
   "subscription_per_week": "per week",
   "subscription_start_now": "Start Now",
-  
+
   "logout_modal_title": "Log out",
   "logout_modal_message": "Are you sure you want to logout?",
   "logout_button": "Log Out",
@@ -373,17 +318,12 @@
   "daily_wisdom_save": "Save",
   "daily_wisdom_premium_button": "Get Premium For Full Reading",
 
-
   "library_your_reading": "Your Reading",
   "library_read_more": "Read More",
   "library_share": "Share",
   "library_get_premium": "Get Premium For Full Reading",
   "library_your_ritual": "Your Ritual",
   "library_buzious": "Buzious",
-
-
-
-
 
   "chat_screen_title": "Oracle Chat",
   "chat_start_new_chat": "Start New Chat",
@@ -393,9 +333,6 @@
   "chat_no_recent_chats_subtitle": "Tap 'Start New Chat' to begin your journey.",
   "chat_detail_how_can_i_help": "How can I help you?",
   "chat_detail_placeholder": "Ask the Oracle...",
-
-
-
 
   "tarot_reader_header": "Tarot Reader",
   "tarot_focus_question_title": "Focus on Your Question",
@@ -411,8 +348,6 @@
   "save_button": "Save",
   "get_premium_button": "Get Premium For Full Reading",
 
-
-
   "cauris_header": "Buzios",
   "cauris_phase0_title": "Cowrie Shells Divination",
   "cauris_phase0_subtitle": "Unveil sacred wisdom through ancient African spiritual practice.",
@@ -423,9 +358,6 @@
   "cauris_phase2_button": "Reveal My Reading",
   "cauris_phase3_title": "Your Divine Message",
   "cauris_default_message": "Your divine message awaits...",
-
-
-
 
   "astrology_screen_header": "Astrology",
   "astrology_unlock_title": "Unlock your celestial blueprint",
@@ -438,15 +370,11 @@
   "insight_tabs_health": "Health & Well-being",
   "insight_tabs_divine": "Divine Guidance",
 
-
-
-
-"ritual_tip_header": "Ritual Tip",
+  "ritual_tip_header": "Ritual Tip",
   "ritual_tip_error_loading": "Could not load today's ritual tip.",
   "ritual_tip_title": "Today's Ritual",
   "ritual_tip_subtitle": "Simple practices to ground, heal and empower your energy",
   "alert_audio_play_error": "Could not play audio file.",
-
 
   "notifications_screen_header": "Notifications",
   "notifications_delete_button": "Delete",
@@ -456,14 +384,6 @@
   "time_ago_hours": "{{count}}h ago",
   "time_ago_days": "{{count}}d ago",
 
-
-
-
-
-
-
-
-  
   "privacy_policy_header": "Privacy Policy",
   "privacy_policy_last_updated": "Last updated: October 2025",
   "privacy_policy_intro_1": "Portal Paraíso (“we”, “our”, or “us”) respects your privacy and is committed to protecting your personal data.",
@@ -524,10 +444,7 @@
   "privacy_policy_s12_title": "12. Contact",
   "privacy_policy_s12_p1": "For questions or concerns regarding this Privacy Policy, please contact: <1>portalparaiso25@gmail.com</1>",
 
-
-
-
-    "terms_header": "Terms & Conditions",
+  "terms_header": "Terms & Conditions",
   "terms_last_updated": "Last updated: October 2025",
   "terms_intro_1": "Welcome to Portal Paraíso, a spiritual and digital platform that combines ancient wisdom with modern artificial intelligence.",
   "terms_intro_2": "These Terms and Conditions (“Terms”) govern your use of our website, mobile app, and all related services provided by Portal Paraíso.",
@@ -567,8 +484,28 @@
   "terms_s11_title": "11. Governing Law and Jurisdiction",
   "terms_s11_p1": "These Terms shall be governed by and interpreted in accordance with the laws of Portugal. Any disputes arising under or related to these Terms shall be subject to the exclusive jurisdiction of the Portuguese courts.",
   "terms_s12_title": "Contact",
-  "terms_s12_p1": "For any questions regarding these Terms, please contact us at: <1>portalparaiso25@gmail.com</1>"
+  "terms_s12_p1": "For any questions regarding these Terms, please contact us at: <1>portalparaiso25@gmail.com</1>",
 
-
+  "errors": {
+    "network_connection": "No internet connection. Please check your network and try again.",
+    "network_title": "No Internet Connection",
+    "session_expired": "Your session has expired. Please log in again.",
+    "resource_not_found": "The requested resource was not found.",
+    "validation_error": "Please check your input and try again.",
+    "rate_limit": "Too many requests. Please wait a moment and try again.",
+    "server_error": "Server error. Please try again in a few moments.",
+    "generic_error": "An error occurred. Please try again.",
+    "unexpected_error": "An unexpected error occurred. Please try again.",
+    "auth_title": "Authentication Error",
+    "validation_title": "Validation Error",
+    "permission_title": "Access Denied",
+    "payment_title": "Payment Error",
+    "server_title": "Server Error",
+    "generic_title": "Error",
+    "error_boundary_title": "Oops! Something went wrong",
+    "error_boundary_message": "We encountered an unexpected error. Don't worry, your data is safe. Please try again or restart the app.",
+    "error_boundary_try_again": "Try Again",
+    "connection_restored": "Internet connection restored",
+    "connection_lost": "No internet connection"
+  }
 }
-

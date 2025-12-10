@@ -25,6 +25,11 @@ import Animated, {
   withTiming,
   withSpring,
   withDelay,
+  Easing,
+  FadeIn,
+  FadeOut,
+  SlideInDown,
+  SlideOutDown,
 } from 'react-native-reanimated';
 
 import Video from 'react-native-video';
@@ -40,6 +45,7 @@ import { useOpenAiStore } from '../../../../../store/useOpenAiStore';
 import SoundPlayer from 'react-native-sound-player';
 import { useInterstitialAd } from '../../../../../hooks/useInterstitialAd';
 import Pressable from '../../../../../components/Pressable';
+import { useFeaturePermission } from '../../../../../store/useFeaturePermissionStore';
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const CONTAINER_W = SCREEN_WIDTH - 40;
 
@@ -128,12 +134,23 @@ const CaurisCardDetailScreen: React.FC = () => {
 
   const {
     reading,
+    userQuestion: storeUserQuestion,
     isLoadingReading,
     readingError,
     getBuziosReading,
     isSaving,
     saveBuziosReading,
   } = useBuziosStore();
+
+  // Check feature permissions
+  const {
+    isAllowed,
+    hasReachedLimit,
+    remainingUsage,
+    dailyLimit,
+    isLoading: isCheckingPermission,
+    refresh: refreshPermission,
+  } = useFeaturePermission('buzios');
 
   const { preloadSpeech } = useOpenAiStore();
   const { showAd } = useInterstitialAd();
@@ -152,9 +169,37 @@ const CaurisCardDetailScreen: React.FC = () => {
     transform: [{ scale: circleScale.value }],
   }));
 
+  // Animation values for content fade-ins
+  const titleOpacity = useSharedValue(1);
+  const subtitleOpacity = useSharedValue(1);
+  const contentOpacity = useSharedValue(1);
+  const buttonOpacity = useSharedValue(1);
+  const messageOpacity = useSharedValue(0);
+  const playButtonScale = useSharedValue(1);
+
+  // Animated styles for content
+  const titleAnimStyle = useAnimatedStyle(() => ({
+    opacity: titleOpacity.value,
+  }));
+  const subtitleAnimStyle = useAnimatedStyle(() => ({
+    opacity: subtitleOpacity.value,
+  }));
+  const contentAnimStyle = useAnimatedStyle(() => ({
+    opacity: contentOpacity.value,
+  }));
+  const buttonAnimStyle = useAnimatedStyle(() => ({
+    opacity: buttonOpacity.value,
+  }));
+  const messageAnimStyle = useAnimatedStyle(() => ({
+    opacity: messageOpacity.value,
+  }));
+  const playButtonAnimStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: playButtonScale.value }],
+  }));
+
   const shell2Set = useMemo(() => {
-    if (reading) {
-      const upCount = reading.buzios_result.mouth_up_count;
+    if (reading?.reading?.shells) {
+      const upCount = reading.reading.shells.mouth_up || 0;
       const indices = shuffle(Array.from({ length: SHELL_COUNT }, (_, i) => i));
       return new Set(indices.slice(0, upCount));
     }
@@ -247,30 +292,115 @@ const CaurisCardDetailScreen: React.FC = () => {
   const onActionPress = async () => {
     Vibration.vibrate([0, 35, 40, 35]);
     if (phase === 0) {
+      // Check permissions before throwing shells
+      await refreshPermission();
+
+      if (!isAllowed) {
+        Alert.alert(
+          t('alert_error_title') || 'Upgrade your package',
+          'This feature is not available in your current package. Please upgrade to access Búzios readings.',
+          [
+            { text: t('cancel_button') || 'Cancel', style: 'cancel' },
+            {
+              text: t('get_premium_button') || 'Get Premium',
+              onPress: () => setShowSubscriptionModal(true),
+            },
+          ],
+        );
+        return;
+      }
+
+      if (hasReachedLimit) {
+        Alert.alert(
+          t('alert_error_title') || 'Daily Limit Reached',
+          `You have reached your daily limit of ${dailyLimit} Búzios readings. Please upgrade to get unlimited access.`,
+          [
+            { text: t('cancel_button') || 'Cancel', style: 'cancel' },
+            {
+              text: t('get_premium_button') || 'Get Premium',
+              onPress: () => setShowSubscriptionModal(true),
+            },
+          ],
+        );
+        return;
+      }
+
       setPhase(1);
       getBuziosReading(userQuestion);
+
+      // Softer circle animation with better easing and subtle pulse
       circleScale.value = withSpring(
-        0.98,
-        { damping: 20, stiffness: 240 },
+        0.96,
+        {
+          damping: 18,
+          stiffness: 200,
+          mass: 0.8,
+        },
         () => {
-          circleScale.value = withSpring(1);
+          circleScale.value = withSpring(1, {
+            damping: 15,
+            stiffness: 180,
+            mass: 0.9,
+          });
+          // Add a subtle pulse after shells settle
+          setTimeout(() => {
+            circleScale.value = withSpring(
+              1.02,
+              {
+                damping: 12,
+                stiffness: 150,
+              },
+              () => {
+                circleScale.value = withSpring(1, {
+                  damping: 15,
+                  stiffness: 180,
+                });
+              },
+            );
+          }, 1200);
         },
       );
+
+      // Improved shell animations with smoother easing
       shellConfigs.forEach((c, i) => {
         xSV[i].value = withDelay(
           c.delay,
-          withSpring(c.targetX, { damping: 14, stiffness: 170 }),
+          withSpring(c.targetX, {
+            damping: 12,
+            stiffness: 150,
+            mass: 0.8,
+          }),
         );
         ySV[i].value = withDelay(
           c.delay,
-          withSpring(c.targetY, { damping: 14, stiffness: 170 }),
+          withSpring(c.targetY, {
+            damping: 12,
+            stiffness: 150,
+            mass: 0.8,
+          }),
         );
-        rSV[i].value = withDelay(c.delay, withTiming(c.rot, { duration: 650 }));
+        rSV[i].value = withDelay(
+          c.delay,
+          withTiming(c.rot, {
+            duration: 900,
+            easing: Easing.out(Easing.cubic),
+          }),
+        );
         sSV[i].value = withDelay(
           c.delay,
-          withSpring(1, { damping: 14, stiffness: 200 }),
+          withSpring(1, {
+            damping: 12,
+            stiffness: 180,
+            mass: 0.7,
+          }),
         );
-        oSV[i].value = withDelay(c.delay, withTiming(1, { duration: 260 }));
+        oSV[i].value = withDelay(
+          c.delay,
+          withTiming(1, {
+            duration: 400,
+            easing: Easing.out(Easing.quad),
+          }),
+        );
       });
     } else if (phase === 2) {
       // Phase 2 button now transitions to the video screen (phase 3)
@@ -282,20 +412,54 @@ const CaurisCardDetailScreen: React.FC = () => {
 
   useEffect(() => {
     if (phase === 1 && !isLoadingReading && reading) {
-      setPhase(2);
+      // Smooth fade transition to phase 2
+      contentOpacity.value = withTiming(0.7, { duration: 200 }, () => {
+        setPhase(2);
+        contentOpacity.value = withTiming(1, {
+          duration: 400,
+          easing: Easing.out(Easing.quad),
+        });
+      });
     }
-  }, [isLoadingReading, reading, phase]);
+  }, [isLoadingReading, reading, phase, contentOpacity]);
+
+  // Animate content when phase changes
+  useEffect(() => {
+    if (phase === 4) {
+      // Fade in message and play button
+      messageOpacity.value = withDelay(
+        200,
+        withTiming(1, {
+          duration: 600,
+          easing: Easing.out(Easing.quad),
+        }),
+      );
+      playButtonScale.value = withDelay(
+        100,
+        withSpring(1, {
+          damping: 10,
+          stiffness: 150,
+        }),
+      );
+    } else {
+      messageOpacity.value = 0;
+      playButtonScale.value = 0.8;
+    }
+  }, [phase, messageOpacity, playButtonScale]);
 
   useEffect(() => {
     const prepareReadingAudio = async () => {
-      if (reading?.ai_reading && reading?.buzios_result?.overall_polarity) {
+      if (reading?.reading?.interpretation && reading?.reading?.odu?.polarity) {
         setIsPreloadingAudio(true);
         const readingId =
-          `${userQuestion}_${reading.buzios_result.overall_polarity}`.replace(
+          `${userQuestion}_${reading.reading.odu.polarity}`.replace(
             /[^a-zA-Z0-9]/g,
             '_',
           );
-        const audioPath = await preloadSpeech(reading.ai_reading, readingId);
+        const audioPath = await preloadSpeech(
+          reading.reading.interpretation,
+          readingId,
+        );
         if (audioPath) {
           setPreloadedAudioPath(audioPath);
         }
@@ -332,9 +496,10 @@ const CaurisCardDetailScreen: React.FC = () => {
   // --- ADD THIS NEW FUNCTION ---
   // This contains the actual logic we want to run AFTER the ad.
   const performSaveAndNavigate = async () => {
-    if (reading && !isSaving) {
-      // We run the save logic here
-      const success = await saveBuziosReading(reading);
+    const questionToUse = storeUserQuestion || userQuestion;
+    if (reading?.reading && questionToUse && !isSaving) {
+      // We run the save logic here - pass userQuestion and reading object separately
+      const success = await saveBuziosReading(questionToUse, reading.reading);
       if (success) {
         navigation.navigate('MainTabs');
       }
@@ -407,7 +572,8 @@ const CaurisCardDetailScreen: React.FC = () => {
       : ''; // No label needed for phase 3, as the button is in the modal
 
   const showShells = phase >= 1;
-  const divineMessage = reading?.ai_reading ?? t('cauris_default_message');
+  const divineMessage =
+    reading?.reading?.interpretation ?? t('cauris_default_message');
 
   return (
     <ImageBackground
@@ -482,31 +648,42 @@ const CaurisCardDetailScreen: React.FC = () => {
           ]}
           showsVerticalScrollIndicator={false}
         >
-          <View style={styles.contentHeader}>
-            <Text
+          <Animated.View style={[styles.contentHeader, contentAnimStyle]}>
+            <Animated.Text
+              entering={FadeIn.duration(600).easing(Easing.out(Easing.quad))}
               style={[
                 styles.contentTitle,
                 { color: colors.primary, textAlign: 'center' },
+                titleAnimStyle,
               ]}
             >
               {titleTop}
-            </Text>
+            </Animated.Text>
             {subtitle ? (
-              <Text
+              <Animated.Text
+                entering={FadeIn.delay(200)
+                  .duration(500)
+                  .easing(Easing.out(Easing.quad))}
                 style={[
                   styles.contentSubtitle,
                   { color: colors.white, textAlign: 'center' },
+                  subtitleAnimStyle,
                 ]}
               >
                 {subtitle}
-              </Text>
+              </Animated.Text>
             ) : null}
             {(phase === 2 || phase === 4) && reading && (
-              <Text style={[styles.patternName, { color: colors.white }]}>
-                {reading.buzios_result.overall_polarity}
-              </Text>
+              <Animated.Text
+                entering={FadeIn.delay(300)
+                  .duration(600)
+                  .easing(Easing.out(Easing.quad))}
+                style={[styles.patternName, { color: colors.white }]}
+              >
+                {reading?.reading?.odu?.polarity || ''}
+              </Animated.Text>
             )}
-          </View>
+          </Animated.View>
 
           <View style={styles.centerImageWrap}>
             <Image
@@ -555,10 +732,15 @@ const CaurisCardDetailScreen: React.FC = () => {
           {/* --- UPDATED: Show final content only in phase 4 --- */}
           {phase === 4 && (
             <>
-              <View style={styles.playWrapper}>
+              <Animated.View
+                style={[styles.playWrapper, playButtonAnimStyle]}
+                entering={FadeIn.delay(100)
+                  .duration(500)
+                  .easing(Easing.out(Easing.quad))}
+              >
                 <TouchableOpacity
                   onPress={onPressPlayToggle}
-                  activeOpacity={0.7}
+                  activeOpacity={0.6}
                   disabled={isPreloadingAudio || !preloadedAudioPath}
                   style={styles.playBtnContainer}
                 >
@@ -580,13 +762,27 @@ const CaurisCardDetailScreen: React.FC = () => {
                     />
                   )}
                 </TouchableOpacity>
-              </View>
+              </Animated.View>
 
-              <Text style={[styles.messageText, { color: colors.white }]}>
+              <Animated.Text
+                style={[
+                  styles.messageText,
+                  { color: colors.white },
+                  messageAnimStyle,
+                ]}
+                entering={FadeIn.delay(200)
+                  .duration(600)
+                  .easing(Easing.out(Easing.quad))}
+              >
                 {divineMessage}
-              </Text>
+              </Animated.Text>
 
-              <View style={styles.shareRow}>
+              <Animated.View
+                style={styles.shareRow}
+                entering={FadeIn.delay(400)
+                  .duration(600)
+                  .easing(Easing.out(Easing.quad))}
+              >
                 {/* <GradientBox
                   colors={[colors.black, colors.bgBox]}
                   style={[styles.smallBtn, { borderColor: colors.primary }]}
@@ -596,7 +792,11 @@ const CaurisCardDetailScreen: React.FC = () => {
                     {t('share_button')}
                   </Text>
                 </GradientBox> */}
-                <TouchableOpacity onPress={handleSave} disabled={isSaving}>
+                <TouchableOpacity
+                  onPress={handleSave}
+                  disabled={isSaving}
+                  activeOpacity={0.7}
+                >
                   <GradientBox
                     colors={[colors.black, colors.bgBox]}
                     style={[styles.smallBtn, { borderColor: colors.primary }]}
@@ -619,25 +819,56 @@ const CaurisCardDetailScreen: React.FC = () => {
                     )}
                   </GradientBox>
                 </TouchableOpacity>
-              </View>
+              </Animated.View>
             </>
           )}
 
           {/* --- MOVED: This is the main action button, now outside ScrollView and at the bottom --- */}
-          <View style={styles.actionsRow}>
+          <Animated.View
+            style={[styles.actionsRow, buttonAnimStyle]}
+            entering={FadeIn.delay(100)
+              .duration(500)
+              .easing(Easing.out(Easing.quad))}
+          >
             <Pressable
               style={styles.actionTouchable}
               onPress={onActionPress}
-              disabled={(phase === 1 && isLoadingReading) || phase === 3}
+              disabled={
+                (phase === 1 && isLoadingReading) ||
+                phase === 3 ||
+                (phase === 0 &&
+                  (isCheckingPermission || !isAllowed || hasReachedLimit))
+              }
               hapticType="medium"
-              haptic={!((phase === 1 && isLoadingReading) || phase === 3)}
+              haptic={
+                !(
+                  (phase === 1 && isLoadingReading) ||
+                  phase === 3 ||
+                  (phase === 0 &&
+                    (isCheckingPermission || !isAllowed || hasReachedLimit))
+                )
+              }
             >
               <GradientBox
-                colors={[colors.black, colors.bgBox]}
-                style={[styles.actionButton, { borderColor: colors.primary }]}
+                colors={
+                  phase === 0 && (!isAllowed || hasReachedLimit)
+                    ? ['#a19a9aff', '#a19a9aff']
+                    : [colors.black, colors.bgBox]
+                }
+                style={[
+                  styles.actionButton,
+                  {
+                    borderColor:
+                      phase === 0 && (!isAllowed || hasReachedLimit)
+                        ? 'transparent'
+                        : colors.primary,
+                  },
+                ]}
               >
                 {phase === 1 && isLoadingReading ? (
                   <ActivityIndicator color={colors.primary} />
+                ) : phase === 0 && isCheckingPermission ? (
+                  <ActivityIndicator color={colors.white} size="small" />
                 ) : (
                   <Text style={[styles.actionLabel, { color: colors.white }]}>
                     {actionLabel}
@@ -645,7 +876,26 @@ const CaurisCardDetailScreen: React.FC = () => {
                 )}
               </GradientBox>
             </Pressable>
-          </View>
+
+            {/* Show permission status for phase 0 */}
+            {phase === 0 && !isCheckingPermission && (
+              <View style={styles.permissionStatus}>
+                {!isAllowed ? (
+                  <Text style={styles.permissionText}>
+                    Feature not available in your package
+                  </Text>
+                ) : hasReachedLimit ? (
+                  <Text style={styles.permissionText}>
+                    Daily limit reached ({dailyLimit} readings)
+                  </Text>
+                ) : (
+                  <Text style={styles.permissionTextSuccess}>
+                    {remainingUsage} of {dailyLimit} readings remaining today
+                  </Text>
+                )}
+              </View>
+            )}
+          </Animated.View>
         </ScrollView>
         <SubscriptionPlanModal
           isVisible={showSubscriptionModal}
@@ -679,10 +929,12 @@ const styles = StyleSheet.create({
   backBtn: {
     position: 'absolute',
     left: 20,
-    height: 40,
-    width: 40,
+    height: 44,
+    width: 44,
     justifyContent: 'center',
     alignItems: 'center',
+    borderRadius: 22,
+    backgroundColor: 'rgba(0, 0, 0, 0.15)',
   },
   backIcon: { width: 22, height: 22 },
   headerTitleWrap: {
@@ -697,26 +949,34 @@ const styles = StyleSheet.create({
     textTransform: 'capitalize',
   },
   scrollContent: { alignItems: 'center', paddingHorizontal: 20 },
-  contentHeader: { marginTop: 16, width: '100%', alignItems: 'center' },
+  contentHeader: {
+    marginTop: 20,
+    width: '100%',
+    alignItems: 'center',
+    paddingVertical: 8,
+  },
   contentTitle: {
     fontFamily: Fonts.aeonikRegular,
-    fontSize: 18,
-    letterSpacing: 0.5,
+    fontSize: 19,
+    letterSpacing: 0.6,
+    lineHeight: 26,
   },
   contentSubtitle: {
-    marginTop: 6,
+    marginTop: 8,
     fontFamily: Fonts.aeonikRegular,
-    fontSize: 14,
-    lineHeight: 18,
-    opacity: 0.9,
+    fontSize: 15,
+    lineHeight: 20,
+    opacity: 0.85,
+    paddingHorizontal: 20,
   },
   patternName: {
-    marginTop: 8,
+    marginTop: 12,
     fontFamily: Fonts.cormorantSCBold,
-    fontSize: 28,
-    letterSpacing: 1,
+    fontSize: 30,
+    letterSpacing: 1.2,
     textTransform: 'capitalize',
     textAlign: 'center',
+    paddingHorizontal: 20,
   },
   centerImageWrap: {
     width: '100%',
@@ -732,10 +992,15 @@ const styles = StyleSheet.create({
     width: BOWL_SIZE,
     height: BOWL_SIZE,
     borderRadius: BOWL_SIZE / 2,
-    borderWidth: 2,
+    borderWidth: 2.5,
     overflow: 'hidden',
     alignItems: 'center',
     justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.25,
+    shadowRadius: 16,
+    elevation: 8,
   },
   circleGradient: {
     position: 'absolute',
@@ -754,61 +1019,112 @@ const styles = StyleSheet.create({
     top: 0,
   },
   messageText: {
-    marginTop: 18,
-    paddingHorizontal: 8,
+    marginTop: 24,
+    paddingHorizontal: 16,
     textAlign: 'center',
     fontFamily: Fonts.aeonikRegular,
-    fontSize: 16,
-    lineHeight: 24,
-    opacity: 0.95,
+    fontSize: 17,
+    lineHeight: 26,
+    opacity: 0.92,
+    letterSpacing: 0.3,
   },
   playWrapper: {
     width: '100%',
     alignItems: 'center',
     justifyContent: 'center',
+    marginTop: 8,
+    marginBottom: 8,
   },
-  playIcon: { width: 40, height: 40 },
+  playIcon: { width: 44, height: 44 },
   shareRow: {
-    marginTop: 16,
+    marginTop: 24,
     width: '100%',
     flexDirection: 'row',
-    gap: 12,
+    gap: 16,
     justifyContent: 'center',
+    paddingHorizontal: 8,
   },
   smallBtn: {
-    minWidth: 120,
-    height: 46,
-    borderRadius: 22,
-    // paddingHorizontal: 16,
-    // borderWidth: 1.1,
+    minWidth: 130,
+    height: 50,
+    borderRadius: 25,
+    paddingHorizontal: 20,
+    borderWidth: 1.5,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  smallIcon: { width: 15, height: 15, marginRight: 8, resizeMode: 'contain' },
-  smallBtnText: { fontFamily: Fonts.aeonikRegular, fontSize: 14 },
-
-  actionsRow: { width: '100%', marginTop: 24, marginBottom: 12 },
-  actionTouchable: { flex: 1 },
-  actionButton: {
-    height: 57,
-    borderRadius: 28.5,
-    // paddingHorizontal: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexDirection: 'row',
-    borderWidth: 1,
-    shadowOpacity: 0.2,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 6 },
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
     elevation: 3,
   },
-  actionLabel: { fontFamily: Fonts.aeonikRegular, fontSize: 14 },
-  playBtnContainer: {
-    width: 60,
+  smallIcon: { width: 16, height: 16, marginRight: 10, resizeMode: 'contain' },
+  smallBtnText: {
+    fontFamily: Fonts.aeonikRegular,
+    fontSize: 15,
+    letterSpacing: 0.3,
+  },
+
+  actionsRow: {
+    width: '100%',
+    marginTop: 28,
+    marginBottom: 16,
+    paddingHorizontal: 20,
+  },
+  actionTouchable: { flex: 1 },
+  actionButton: {
     height: 60,
+    borderRadius: 30,
+    paddingHorizontal: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'row',
+    borderWidth: 1.5,
+    shadowColor: '#000',
+    shadowOpacity: 0.25,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 5,
+  },
+  actionLabel: {
+    fontFamily: Fonts.aeonikRegular,
+    fontSize: 16,
+    letterSpacing: 0.5,
+    fontWeight: '600',
+  },
+  permissionStatus: {
+    marginTop: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    backgroundColor: 'rgba(74, 63, 80, 0.3)',
+    alignItems: 'center',
+  },
+  permissionText: {
+    fontSize: 13,
+    fontFamily: Fonts.aeonikRegular,
+    color: '#FF7070',
+    textAlign: 'center',
+  },
+  permissionTextSuccess: {
+    fontSize: 13,
+    fontFamily: Fonts.aeonikRegular,
+    color: '#4CAF50',
+    textAlign: 'center',
+  },
+  playBtnContainer: {
+    width: 72,
+    height: 72,
     justifyContent: 'center',
     alignItems: 'center',
+    borderRadius: 36,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 12,
+    elevation: 4,
   },
   // --- NEW: Styles for the full screen video modal ---
   videoContainer: {
@@ -822,11 +1138,12 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
     justifyContent: 'flex-end', // Aligns children (the button) to the bottom
     alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.1)',
   },
   videoContinueTouchable: {
     width: '100%',
     paddingHorizontal: 20,
-    marginBottom: 50, // Position button up from the very bottom edge
+    marginBottom: 60, // Position button up from the very bottom edge
   },
 });
 

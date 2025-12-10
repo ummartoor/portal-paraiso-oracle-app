@@ -21,21 +21,34 @@ export interface ThrownOdu {
   _id?: string; // This is present in history/save responses
 }
 
-// For the /throw-buzios API response
-export interface BuziosThrowResult {
-  total_odus_thrown: number;
-  mouth_up_count: number;
-  mouth_down_count: number;
-  overall_polarity: string;
-  thrown_odus_details: ThrownOdu[];
+// For the /throw-buzios API response (matching API docs)
+export interface OduData {
+  name: string;
+  number: number;
+  meaning: string;
+  story: string;
+  guidance: string;
+  polarity: 'ire' | 'osogbo';
+}
+
+export interface BuziosReading {
+  odu: OduData;
+  shells: {
+    total: number;
+    mouth_up: number;
+    mouth_down: number;
+  };
+  interpretation: string;
 }
 
 export interface ThrowBuziosData {
-  reading_id: string;
-  user_question: string;
-  buzios_result: BuziosThrowResult;
-  ai_reading: string;
-  reading_date: string;
+  reading: BuziosReading;
+  can_save?: boolean;
+  usage?: {
+    daily_limit: number;
+    used_today: number;
+    remaining: number;
+  };
 }
 
 // For the /save-buzios-odu-history API response
@@ -72,6 +85,7 @@ export interface BuziosHistoryItem {
 interface BuziosState {
   // States for getting a reading
   reading: ThrowBuziosData | null;
+  userQuestion: string | null;
   isLoadingReading: boolean;
   readingError: string | null;
   getBuziosReading: (user_question: string) => Promise<ThrowBuziosData | null>;
@@ -80,27 +94,68 @@ interface BuziosState {
   isSaving: boolean;
   savingError: string | null;
   saveBuziosReading: (
-    readingData: ThrowBuziosData,
+    user_question: string,
+    reading: BuziosReading,
   ) => Promise<boolean>;
 
   // States for fetching reading history
   history: BuziosHistoryItem[] | null;
   isLoadingHistory: boolean;
   historyError: string | null;
-  getBuziosHistory: () => Promise<void>;
+  lastHistoryFetch: number | null;
+  getBuziosHistory: (force?: boolean) => Promise<void>;
 
-    historyItem: BuziosHistoryItem | null;
+  historyItem: BuziosHistoryItem | null;
   isLoadingHistoryItem: boolean;
   historyItemError: string | null;
   getBuziosHistoryItem: (history_uid: string) => Promise<void>;
 }
 
+// Helper function to extract error message
+const getErrorMessage = (error: unknown): string => {
+  if (axios.isAxiosError(error)) {
+    return (
+      error.response?.data?.message ||
+      error.response?.data?.error ||
+      error.message ||
+      'An unknown error occurred.'
+    );
+  }
+  return error instanceof Error ? error.message : 'An unknown error occurred.';
+};
+
+// Retry helper for critical API calls
+const retryApiCall = async <T>(
+  apiCall: () => Promise<T>,
+  maxRetries: number = 2,
+  delay: number = 500,
+): Promise<T> => {
+  let lastError: unknown;
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      return await apiCall();
+    } catch (error) {
+      lastError = error;
+      if (attempt < maxRetries) {
+        await new Promise<void>(resolve =>
+          setTimeout(() => resolve(), delay * attempt),
+        );
+      }
+    }
+  }
+  throw lastError;
+};
+
+// Cache duration constants
+const HISTORY_CACHE_DURATION = 2 * 60 * 1000; // 2 minutes
+
 /**
  * Zustand store for managing Buzios ODU reading data.
  */
-export const useBuziosStore = create<BuziosState>(set => ({
+export const useBuziosStore = create<BuziosState>((set, get) => ({
   // --- INITIAL STATE ---
   reading: null,
+  userQuestion: null,
   isLoadingReading: false,
   readingError: null,
 
@@ -110,16 +165,20 @@ export const useBuziosStore = create<BuziosState>(set => ({
   history: null,
   isLoadingHistory: false,
   historyError: null,
+  lastHistoryFetch: null,
 
-
-   historyItem: null,
+  historyItem: null,
   isLoadingHistoryItem: false,
   historyItemError: null,
-  // --- ACTIONS ---
 
- 
+  // --- ACTIONS ---
   getBuziosReading: async (user_question: string) => {
-    set({ isLoadingReading: true, readingError: null, reading: null });
+    set({
+      isLoadingReading: true,
+      readingError: null,
+      reading: null,
+      userQuestion: null,
+    });
     try {
       const token = await AsyncStorage.getItem('x-auth-token');
       if (!token) {
@@ -129,38 +188,42 @@ export const useBuziosStore = create<BuziosState>(set => ({
       const body = { user_question };
       const headers = { 'x-auth-token': token };
 
-      const response = await axios.post(
-        `${API_BASEURL}/buzios/throw-buzios`,
-        body,
-        { headers },
-      );
+      const fetchData = async () => {
+        const response = await axios.post(
+          `${API_BASEURL}/buzios/throw-buzios`,
+          body,
+          { headers },
+        );
 
-      console.log('GET BUZIOS READING RESPONSE:', response.data);
+        if (response.data?.success && response.data?.data) {
+          const readingData: ThrowBuziosData = {
+            reading: response.data.data.reading,
+            can_save: response.data.data.can_save ?? true,
+            usage: response.data.data.usage,
+          };
+          set({
+            reading: readingData,
+            userQuestion: user_question,
+            isLoadingReading: false,
+          });
+          return readingData;
+        } else {
+          throw new Error(
+            response.data?.message || 'Failed to get Buzios reading.',
+          );
+        }
+      };
 
-      if (response.data && response.data.success) {
-        const readingData = response.data.data as ThrowBuziosData;
-        set({ reading: readingData, isLoadingReading: false });
-        return readingData;
-      } else {
-        throw new Error(response.data.message || 'Failed to get Buzios reading.');
-      }
-    } catch (error: any) {
-      console.log(
-        'GET BUZIOS READING ERROR:',
-        error.response?.data || error.message,
-      );
-      const errorMessage =
-        error.response?.data?.message ||
-        error.message ||
-        'An unknown error occurred.';
+      return await retryApiCall(fetchData);
+    } catch (error: unknown) {
+      const errorMessage = getErrorMessage(error);
       set({ readingError: errorMessage, isLoadingReading: false });
-      Alert.alert('Error', errorMessage);
+      // Don't auto-show Alert - let component handle based on error type
       return null;
     }
   },
 
-  
-  saveBuziosReading: async (readingData) => {
+  saveBuziosReading: async (user_question: string, reading: BuziosReading) => {
     set({ isSaving: true, savingError: null });
     try {
       const token = await AsyncStorage.getItem('x-auth-token');
@@ -168,12 +231,11 @@ export const useBuziosStore = create<BuziosState>(set => ({
         throw new Error('Authentication token not found.');
       }
 
-      // Construct the body from the reading data
+      // Construct the body matching API documentation
       const body = {
-        user_question: readingData.user_question,
-        ai_response: readingData.ai_reading,
-        reading_date: readingData.reading_date,
-        thrown_odus: readingData.buzios_result.thrown_odus_details,
+        user_question: user_question,
+        reading: reading,
+        odu_data: reading.odu,
       };
 
       const headers = { 'x-auth-token': token };
@@ -184,23 +246,19 @@ export const useBuziosStore = create<BuziosState>(set => ({
         { headers },
       );
 
-      console.log('SAVE BUZIOS READING RESPONSE:', response.data);
-
-      if (response.data && response.data.success) {
+      if (response.data?.success) {
         set({ isSaving: false });
+        // Invalidate history cache
+        set({ lastHistoryFetch: null });
         Alert.alert('Success', 'Reading saved to your history!');
         return true;
       } else {
-        throw new Error(response.data.message || 'Failed to save the reading.');
+        throw new Error(
+          response.data?.message || 'Failed to save the reading.',
+        );
       }
-    } catch (error: any) {
-      console.log(
-        'SAVE BUZIOS READING ERROR:',
-        error.response?.data || error.message,
-      );
-      const errorMessage =
-        error.response?.data?.message ||
-        'An unknown error occurred while saving.';
+    } catch (error: unknown) {
+      const errorMessage = getErrorMessage(error);
       set({ savingError: errorMessage, isSaving: false });
       Alert.alert('Error', errorMessage);
       return false;
@@ -208,9 +266,27 @@ export const useBuziosStore = create<BuziosState>(set => ({
   },
 
   /**
-   * Fetches the user's Buzios reading history.
+   * Fetches the user's Buzios reading history (with caching).
    */
-  getBuziosHistory: async () => {
+  getBuziosHistory: async (force: boolean = false) => {
+    const state = get();
+    const now = Date.now();
+
+    // Check cache if not forcing refresh
+    if (
+      !force &&
+      state.history &&
+      state.lastHistoryFetch &&
+      now - state.lastHistoryFetch < HISTORY_CACHE_DURATION
+    ) {
+      return;
+    }
+
+    // Prevent concurrent fetches
+    if (state.isLoadingHistory) {
+      return;
+    }
+
     set({ isLoadingHistory: true, historyError: null });
     try {
       const token = await AsyncStorage.getItem('x-auth-token');
@@ -220,38 +296,40 @@ export const useBuziosStore = create<BuziosState>(set => ({
 
       const headers = { 'x-auth-token': token };
 
-      const response = await axios.get(
-        `${API_BASEURL}/buzios/get-buzios-odu-history`,
-        { headers },
-      );
+      const fetchData = async () => {
+        const response = await axios.get(
+          `${API_BASEURL}/buzios/get-buzios-odu-history`,
+          { headers },
+        );
 
-      console.log('GET BUZIOS HISTORY RESPONSE:', response.data);
+        if (response.data?.success && response.data?.data?.readings) {
+          set({
+            history: response.data.data.readings as BuziosHistoryItem[],
+            isLoadingHistory: false,
+            lastHistoryFetch: now,
+          });
+        } else {
+          throw new Error(response.data?.message || 'Failed to fetch history.');
+        }
+      };
 
-      if (response.data && response.data.success) {
-        set({
-          history: response.data.data as BuziosHistoryItem[],
-          isLoadingHistory: false,
-        });
-      } else {
-        throw new Error(response.data.message || 'Failed to fetch history.');
-      }
-    } catch (error: any) {
-      console.log(
-        'GET BUZIOS HISTORY ERROR:',
-        error.response?.data || error.message,
-      );
-      const errorMessage =
-        error.response?.data?.message ||
-        error.message ||
-        'An unknown error occurred while fetching history.';
+      await retryApiCall(fetchData);
+    } catch (error: unknown) {
+      const errorMessage = getErrorMessage(error);
       set({ historyError: errorMessage, isLoadingHistory: false });
-      Alert.alert('Error', errorMessage);
+      // Only show alert if we don't have cached data
+      if (!state.history) {
+        Alert.alert('Error', errorMessage);
+      }
     }
   },
 
- 
-  getBuziosHistoryItem: async (_id: string) => {
-    set({ isLoadingHistoryItem: true, historyItemError: null, historyItem: null });
+  getBuziosHistoryItem: async (history_uid: string) => {
+    set({
+      isLoadingHistoryItem: true,
+      historyItemError: null,
+      historyItem: null,
+    });
     try {
       const token = await AsyncStorage.getItem('x-auth-token');
       if (!token) {
@@ -260,29 +338,27 @@ export const useBuziosStore = create<BuziosState>(set => ({
 
       const headers = { 'x-auth-token': token };
 
-      const response = await axios.get(
-        `${API_BASEURL}/buzios/get-buzios-odu-history-by-id/${_id}`, 
-        { headers },
-      );
+      const fetchData = async () => {
+        const response = await axios.get(
+          `${API_BASEURL}/buzios/get-buzios-odu-history-by-id/${history_uid}`,
+          { headers },
+        );
 
-      console.log('GET SINGLE BUZIOS HISTORY ITEM RESPONSE:', response.data);
+        if (response.data?.success && response.data?.data?.reading) {
+          set({
+            historyItem: response.data.data.reading as BuziosHistoryItem,
+            isLoadingHistoryItem: false,
+          });
+        } else {
+          throw new Error(
+            response.data?.message || 'Failed to fetch history item.',
+          );
+        }
+      };
 
-      if (response.data && response.data.success) {
-        set({
-          historyItem: response.data.data as BuziosHistoryItem,
-          isLoadingHistoryItem: false,
-        });
-      } else {
-        throw new Error(response.data.message || 'Failed to fetch history item.');
-      }
-    } catch (error: any) {
-      console.log(
-        'GET SINGLE BUZIOS HISTORY ITEM ERROR:',
-        error.response?.data || error.message,
-      );
-      const errorMessage =
-        error.response?.data?.message ||
-        'An unknown error occurred while fetching the history item.';
+      await retryApiCall(fetchData);
+    } catch (error: unknown) {
+      const errorMessage = getErrorMessage(error);
       set({ historyItemError: errorMessage, isLoadingHistoryItem: false });
       Alert.alert('Error', errorMessage);
     }
