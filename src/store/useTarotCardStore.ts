@@ -3,8 +3,15 @@ import axios from 'axios';
 import { Alert } from 'react-native';
 import { API_BASEURL } from '@env';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { TimerData } from '../utils/timerUtils';
+import {
+  parseApiError,
+  getErrorMessageWithContext,
+  isCardLimitError,
+  isDailyLimitError,
+} from '../utils/apiErrorHandler';
 
-// --- Interfaces matching API documentation ---
+// --- Interfaces matching API v2.0 documentation ---
 
 export interface LocalizedString {
   en: string;
@@ -14,57 +21,64 @@ export interface LocalizedString {
 
 export interface TarotCard {
   _id: string;
-  card_image: {
-    url: string;
-    key: string;
-  };
-  card_name: LocalizedString | string; // API returns localized or string
-  card_meaning?: LocalizedString | string;
-  card_description?: string;
-  card_keywords: string[];
+  card_name: LocalizedString;
+  card_meaning?: LocalizedString;
+  card_keywords?: LocalizedString | string[];
+  card_image: string; // URL string from API
+  card_number?: number;
+  card_suit?: string;
+  reversed?: boolean;
+  created_at?: string;
 }
 
-export interface Reading {
-  reading: string; // API returns single reading string
+export interface SelectedCard {
+  _id: string;
+  card_name: LocalizedString;
+  card_meaning?: LocalizedString;
+  card_image: string;
+  [key: string]: any;
 }
 
-export interface SelectedCardDetail {
-  card_id: string;
-  name: string;
-  description: string;
-  meaning: string;
-  keywords: string[];
-  image: {
-    url: string;
-    key: string;
-  };
+export interface ReadingUsage {
+  readings_used: number;
+  readings_limit: number;
+  readings_remaining: number;
+  cards_min: number;
+  cards_max: number;
+  timer?: TimerData;
+  show_timer?: boolean;
 }
 
 export interface GenerateReadingData {
+  reading_id: string;
+  user_question: string;
+  selected_cards: SelectedCard[];
   reading: string;
-  selected_cards: SelectedCardDetail[];
-  can_save?: boolean;
-  usage?: {
-    daily_limit: number;
-    used_today: number;
-    remaining: number;
-  };
-}
-
-export interface FullReading {
-  reading: string;
+  created_at: string;
+  usage?: ReadingUsage;
 }
 
 export interface TarotReadingHistoryItem {
   _id: string;
-  user_id: string;
   user_question: string;
-  card_ids: string[];
-  selected_cards: SelectedCardDetail[];
+  selected_cards: SelectedCard[];
   reading: string;
-  reading_date: string;
-  createdAt: string;
-  updatedAt: string;
+  created_at: string;
+  saved?: boolean;
+}
+
+export interface PaginationInfo {
+  page: number;
+  limit: number;
+  total: number;
+  pages: number;
+  hasNext: boolean;
+  hasPrev: boolean;
+}
+
+export interface ReadingHistoryResponse {
+  readings: TarotReadingHistoryItem[];
+  pagination: PaginationInfo;
 }
 
 interface TarotCardState {
@@ -79,8 +93,15 @@ interface TarotCardState {
   readingData: GenerateReadingData | null;
   isReadingLoading: boolean;
   readingError: string | null;
-  userQuestion: string | null;
-  selectedCardIds: string[];
+  readingErrorDetails: {
+    isPremiumRequired: boolean;
+    timer: TimerData | null;
+    showTimer: boolean;
+    isCardLimitError: boolean;
+    minCards?: number;
+    maxCards?: number;
+    cardsSelected?: number;
+  } | null;
   generateReading: (
     card_ids: string[],
     user_question: string,
@@ -89,7 +110,7 @@ interface TarotCardState {
   // State for saving a reading
   isSavingLoading: boolean;
   savingError: string | null;
-  saveReading: () => Promise<boolean>;
+  saveReading: (reading_id: string, title: string) => Promise<boolean>;
 
   // State for selected cards (temporary selection before generating reading)
   selectedCards: TarotCard[];
@@ -98,10 +119,15 @@ interface TarotCardState {
 
   // State for reading history
   history: TarotReadingHistoryItem[];
+  pagination: PaginationInfo | null;
   isHistoryLoading: boolean;
   historyError: string | null;
   lastHistoryFetch: number | null;
-  fetchReadingHistory: (force?: boolean) => Promise<void>;
+  fetchReadingHistory: (
+    page?: number,
+    limit?: number,
+    force?: boolean,
+  ) => Promise<void>;
 }
 
 // Helper function to get auth token
@@ -113,17 +139,10 @@ const getAuthToken = async (): Promise<string> => {
   return token;
 };
 
-// Helper function to extract error message
+// Helper function to extract error message (kept for backward compatibility)
 const getErrorMessage = (error: unknown): string => {
-  if (axios.isAxiosError(error)) {
-    return (
-      error.response?.data?.message ||
-      error.response?.data?.error ||
-      error.message ||
-      'An unknown error occurred.'
-    );
-  }
-  return error instanceof Error ? error.message : 'An unknown error occurred.';
+  const errorInfo = getErrorMessageWithContext(error);
+  return errorInfo.message;
 };
 
 // Retry helper for critical API calls
@@ -163,8 +182,7 @@ export const useTarotCardStore = create<TarotCardState>((set, get) => ({
   readingData: null,
   isReadingLoading: false,
   readingError: null,
-  userQuestion: null,
-  selectedCardIds: [],
+  readingErrorDetails: null,
 
   // Initial state for saving reading
   isSavingLoading: false,
@@ -175,6 +193,7 @@ export const useTarotCardStore = create<TarotCardState>((set, get) => ({
 
   // Initial state for history
   history: [],
+  pagination: null,
   isHistoryLoading: false,
   historyError: null,
   lastHistoryFetch: null,
@@ -207,6 +226,12 @@ export const useTarotCardStore = create<TarotCardState>((set, get) => ({
           headers: { 'x-auth-token': token },
         });
 
+        console.log('📜 [API Response] GET /user/purchase-history:', {
+          url: `${API_BASEURL}/user/purchase-history`,
+          status: response.status,
+          data: response.data,
+        });
+
         if (response.data?.success && response.data?.data?.cards) {
           set({
             cards: response.data.data.cards as TarotCard[],
@@ -236,9 +261,8 @@ export const useTarotCardStore = create<TarotCardState>((set, get) => ({
     set({
       isReadingLoading: true,
       readingError: null,
+      readingErrorDetails: null,
       readingData: null,
-      userQuestion: null,
-      selectedCardIds: [],
     });
 
     try {
@@ -250,61 +274,88 @@ export const useTarotCardStore = create<TarotCardState>((set, get) => ({
         { headers: { 'x-auth-token': token } },
       );
 
+      console.log('📜 [API Response] POST /tarotcard/select-cards:', {
+        url: `${API_BASEURL}/tarotcard/select-cards`,
+        status: response.status,
+        requestPayload: { user_question, card_ids },
+        data: response.data,
+      });
+
       if (response.data?.success && response.data?.data) {
+        const data = response.data.data;
         const responseData: GenerateReadingData = {
-          reading: response.data.data.reading || '',
-          selected_cards: response.data.data.selected_cards || [],
-          can_save: response.data.data.can_save ?? true,
-          usage: response.data.data.usage,
+          reading_id: data.reading_id || '',
+          user_question: data.user_question || user_question,
+          selected_cards: data.selected_cards || [],
+          reading: data.reading || '',
+          created_at: data.created_at || new Date().toISOString(),
+          usage: data.usage,
         };
 
         set({
           readingData: responseData,
-          userQuestion: user_question,
-          selectedCardIds: card_ids,
           isReadingLoading: false,
+          readingError: null,
+          readingErrorDetails: null,
         });
         return responseData;
       }
 
       throw new Error(response.data?.message || 'Failed to generate reading.');
     } catch (error: unknown) {
-      const errorMessage = getErrorMessage(error);
-      set({ readingError: errorMessage, isReadingLoading: false });
+      const errorInfo = getErrorMessageWithContext(error);
+      const apiError = parseApiError(error);
+
+      set({
+        readingError: errorInfo.message,
+        readingErrorDetails: {
+          isPremiumRequired: errorInfo.isPremiumRequired,
+          timer: errorInfo.timer,
+          showTimer: errorInfo.showTimer,
+          isCardLimitError: isCardLimitError(error),
+          minCards: apiError?.minCardsAllowed,
+          maxCards: apiError?.maxCardsAllowed,
+          cardsSelected: apiError?.cardsSelected,
+        },
+        isReadingLoading: false,
+      });
+
       // Don't auto-show Alert - let the component handle it based on error type
       return null;
     }
   },
 
   // --- SAVE TAROT READING ---
-  saveReading: async () => {
+  saveReading: async (reading_id: string, title: string) => {
     set({ isSavingLoading: true, savingError: null });
 
     try {
       const token = await getAuthToken();
-      const { readingData, userQuestion, selectedCardIds } = get();
+      const { readingData } = get();
 
-      if (!readingData?.selected_cards || !readingData?.reading) {
-        throw new Error('No complete reading data found to save.');
+      if (!readingData) {
+        throw new Error('No reading data found to save.');
       }
 
-      if (!userQuestion) {
-        throw new Error('No user question found to save.');
+      if (!reading_id) {
+        throw new Error('Reading ID is required to save.');
       }
 
       const response = await axios.post(
         `${API_BASEURL}/tarotcard/save-reading`,
         {
-          user_question: userQuestion,
-          card_ids:
-            selectedCardIds.length > 0
-              ? selectedCardIds
-              : readingData.selected_cards.map(c => c.card_id),
-          selected_cards: readingData.selected_cards,
-          reading: readingData.reading,
+          reading_id,
+          title,
         },
         { headers: { 'x-auth-token': token } },
       );
+
+      console.log('📜 [API Response] POST /tarotcard/save-reading:', {
+        url: `${API_BASEURL}/tarotcard/save-reading`,
+        status: response.status,
+        requestPayload: { reading_id, title },
+        data: response.data,
+      });
 
       if (response.data?.success) {
         set({ isSavingLoading: false });
@@ -314,11 +365,24 @@ export const useTarotCardStore = create<TarotCardState>((set, get) => ({
         return true;
       }
 
+      // Check if upgrade required
+      if (response.data?.upgrade_required) {
+        throw new Error(
+          response.data?.message || 'Upgrade to VIP to save readings',
+        );
+      }
+
       throw new Error(response.data?.message || 'Failed to save the reading.');
     } catch (error: unknown) {
-      const errorMessage = getErrorMessage(error);
-      set({ savingError: errorMessage, isSavingLoading: false });
-      Alert.alert('Error', errorMessage);
+      const errorInfo = getErrorMessageWithContext(error);
+      set({ savingError: errorInfo.message, isSavingLoading: false });
+
+      // Check if it's an upgrade required error
+      if (errorInfo.isPremiumRequired) {
+        Alert.alert('Upgrade Required', 'Upgrade to VIP to save readings');
+      } else {
+        Alert.alert('Error', errorInfo.message);
+      }
       return false;
     }
   },
@@ -333,14 +397,19 @@ export const useTarotCardStore = create<TarotCardState>((set, get) => ({
     set({ selectedCards: [] });
   },
 
-  // --- FETCH READING HISTORY (with caching) ---
-  fetchReadingHistory: async (force: boolean = false) => {
+  // --- FETCH READING HISTORY (with caching and pagination) ---
+  fetchReadingHistory: async (
+    page: number = 1,
+    limit: number = 20,
+    force: boolean = false,
+  ) => {
     const state = get();
     const now = Date.now();
 
-    // Check cache if not forcing refresh
+    // Check cache if not forcing refresh and fetching first page
     if (
       !force &&
+      page === 1 &&
       state.history.length > 0 &&
       state.lastHistoryFetch &&
       now - state.lastHistoryFetch < HISTORY_CACHE_DURATION
@@ -359,13 +428,26 @@ export const useTarotCardStore = create<TarotCardState>((set, get) => ({
       const fetchData = async () => {
         const token = await getAuthToken();
         const response = await axios.get(
-          `${API_BASEURL}/tarotcard/get-tarot-reading-history`,
+          `${API_BASEURL}/tarotcard/get-tarot-reading-history?page=${page}&limit=${limit}`,
           { headers: { 'x-auth-token': token } },
         );
 
-        if (response.data?.success && response.data?.data?.readings) {
+        console.log(
+          '📜 [API Response] GET /tarotcard/get-tarot-reading-history:',
+          {
+            url: `${API_BASEURL}/tarotcard/get-tarot-reading-history?page=${page}&limit=${limit}`,
+            status: response.status,
+            requestPayload: { page, limit },
+            data: response.data,
+          },
+        );
+
+        if (response.data?.success && response.data?.data) {
+          const data = response.data.data as ReadingHistoryResponse;
           set({
-            history: response.data.data.readings as TarotReadingHistoryItem[],
+            history:
+              page === 1 ? data.readings : [...state.history, ...data.readings],
+            pagination: data.pagination,
             isHistoryLoading: false,
             lastHistoryFetch: now,
           });

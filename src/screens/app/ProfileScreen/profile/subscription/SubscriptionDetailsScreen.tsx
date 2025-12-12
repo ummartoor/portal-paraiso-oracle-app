@@ -410,10 +410,7 @@ const SubscriptionDetailsScreen = () => {
 
     return (
       <View style={styles.contentContainer}>
-        <View
-       
-          style={styles.currentPlanCard}
-        >
+        <View style={styles.currentPlanCard}>
           <View style={styles.planHeader}>
             <Text style={[styles.currentPlanName, { color: colors.primary }]}>
               {vipSubscription?.packageName || 'Active Plan'}
@@ -428,6 +425,32 @@ const SubscriptionDetailsScreen = () => {
           </View>
 
           <View style={styles.divider} />
+
+          {/* Status indicator */}
+          {vipSubscription?.status && (
+            <View style={styles.dateInfoRow}>
+              <Text style={styles.dateLabel}>Status</Text>
+              <Text
+                style={[
+                  styles.dateValue,
+                  {
+                    color:
+                      vipSubscription.status === 'active'
+                        ? '#4CAF50'
+                        : vipSubscription.status === 'past_due'
+                        ? '#FF9800'
+                        : vipSubscription.status === 'canceled' ||
+                          vipSubscription.status === 'cancelled'
+                        ? '#F44336'
+                        : '#fff',
+                    textTransform: 'capitalize',
+                  },
+                ]}
+              >
+                {vipSubscription.status.replace('_', ' ')}
+              </Text>
+            </View>
+          )}
 
           <View style={styles.dateInfoRow}>
             <Text style={styles.dateLabel}>Price</Text>
@@ -447,30 +470,107 @@ const SubscriptionDetailsScreen = () => {
           <View style={styles.dateInfoRow}>
             <Text style={styles.dateLabel}>Expires on</Text>
             <Text style={styles.dateValue}>
-              {formatDate(vipSubscription?.currentPeriodEnd)}
+              {(() => {
+                // Try currentPeriodEnd first (for active subscriptions), then endedAt (for cancelled)
+                const expiryDate =
+                  vipSubscription?.currentPeriodEnd || vipSubscription?.endedAt;
+
+                // Handle special cases
+                if (!expiryDate) {
+                  const status = vipSubscription?.status?.toLowerCase();
+
+                  // For past_due subscriptions, show appropriate message
+                  if (status === 'past_due') {
+                    return 'Past Due - Please update payment method';
+                  }
+
+                  // For other statuses without expiry date
+                  if (status === 'canceled' || status === 'cancelled') {
+                    return 'Cancelled';
+                  }
+
+                  if (status === 'unpaid') {
+                    return 'Unpaid';
+                  }
+
+                  if (__DEV__) {
+                    console.warn('Subscription expiry date not found:', {
+                      currentPeriodEnd: vipSubscription?.currentPeriodEnd,
+                      endedAt: vipSubscription?.endedAt,
+                      status: vipSubscription?.status,
+                      fullSubscription: vipSubscription,
+                    });
+                  }
+
+                  return 'N/A';
+                }
+
+                return formatDate(expiryDate);
+              })()}
             </Text>
           </View>
         </View>
 
-        {/* --- CHANGE 3: Cancel button ya status message --- */}
-        {vipSubscription?.cancelAtPeriodEnd ? (
-          <Text style={styles.cancellationStatus}>
-            Your subscription will be cancelled at the end of the current
-            period.
-          </Text>
-        ) : (
-          <TouchableOpacity
-            style={styles.cancelButton}
-            onPress={handleCancelSubscription}
-            disabled={isCancelling}
-          >
-            {isCancelling ? (
-              <ActivityIndicator color="#FFFFFF" />
-            ) : (
-              <Text style={styles.cancelButtonText}>Cancel Subscription</Text>
-            )}
-          </TouchableOpacity>
-        )}
+        {/* --- Cancel button or status message --- */}
+        {(() => {
+          const status = vipSubscription?.status?.toLowerCase();
+
+          // Don't show cancel button for already cancelled or past_due subscriptions
+          if (status === 'canceled' || status === 'cancelled') {
+            return (
+              <Text style={styles.cancellationStatus}>
+                Your subscription has been cancelled.
+              </Text>
+            );
+          }
+
+          if (status === 'past_due') {
+            return (
+              <View>
+                <Text style={styles.cancellationStatus}>
+                  Your subscription is past due. Please update your payment
+                  method to continue your subscription.
+                </Text>
+                <TouchableOpacity
+                  style={[styles.cancelButton, { marginTop: 12 }]}
+                  onPress={handleCancelSubscription}
+                  disabled={isCancelling}
+                >
+                  {isCancelling ? (
+                    <ActivityIndicator color="#FFFFFF" />
+                  ) : (
+                    <Text style={styles.cancelButtonText}>
+                      Cancel Subscription
+                    </Text>
+                  )}
+                </TouchableOpacity>
+              </View>
+            );
+          }
+
+          if (vipSubscription?.cancelAtPeriodEnd) {
+            return (
+              <Text style={styles.cancellationStatus}>
+                Your subscription will be cancelled at the end of the current
+                period.
+              </Text>
+            );
+          }
+
+          return (
+            <TouchableOpacity
+              style={styles.cancelButton}
+              onPress={handleCancelSubscription}
+              disabled={isCancelling}
+            >
+              {isCancelling ? (
+                <ActivityIndicator color="#FFFFFF" />
+              ) : (
+                <Text style={styles.cancelButtonText}>Cancel Subscription</Text>
+              )}
+            </TouchableOpacity>
+          );
+        })()}
       </View>
     );
   };
@@ -560,12 +660,11 @@ const styles = StyleSheet.create({
     paddingBottom: 30,
   },
   currentPlanCard: {
-
     borderRadius: 16,
     // padding: 20,
   },
   planHeader: {
-    marginTop:20,
+    marginTop: 20,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',

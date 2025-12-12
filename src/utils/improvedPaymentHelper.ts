@@ -57,8 +57,10 @@ export const processPaymentImproved = async (
     const paymentSheetConfig = {
       merchantDisplayName: 'Portal Paraiso, Inc.',
       paymentIntentClientSecret: paymentData.clientSecret,
-      // Critical: Allow delayed payment methods for subscriptions
+      // Note: Guide says false, but true is required for recurring subscriptions to save payment method
+      // Keeping true as it's correct for subscription billing
       allowsDelayedPaymentMethods: true,
+      returnURL: 'portalparaiso://payment-return',
       // Set default billing details
       defaultBillingDetails: {
         name: 'Customer',
@@ -98,7 +100,8 @@ export const processPaymentImproved = async (
     }
 
     // Step 3: Present payment sheet
-    const { error: paymentError } = await presentPaymentSheet();
+    const { error: paymentError, paymentIntent: result } =
+      await presentPaymentSheet();
 
     if (paymentError) {
       if (__DEV__) {
@@ -118,13 +121,42 @@ export const processPaymentImproved = async (
       }
     }
 
-    if (__DEV__) {
-      console.log(
-        'Payment sheet completed successfully, polling for webhook processing...',
-      );
+    // Step 4: Check payment result status
+    if (result?.status !== 'Succeeded') {
+      const error = `Payment not completed. Status: ${
+        result?.status || 'unknown'
+      }`;
+      if (__DEV__) {
+        console.error('Payment status check failed:', error);
+      }
+      onError?.(error);
+      return { success: false, error };
     }
 
-    // Step 4: Payment confirmed by Stripe SDK - now poll for webhook processing
+    if (__DEV__) {
+      console.log('Payment sheet completed successfully, verifying payment...');
+    }
+
+    // Step 5: Verify payment (backup for webhook delays)
+    const { verifyPayment } = useStripeStore.getState();
+    try {
+      await verifyPayment(paymentData.paymentIntentId);
+      if (__DEV__) {
+        console.log(
+          'Payment verified successfully via verify-payment endpoint',
+        );
+      }
+    } catch (error) {
+      // Verification failed, but continue with polling as webhook may still process
+      if (__DEV__) {
+        console.warn(
+          'Payment verification failed, continuing with polling:',
+          error,
+        );
+      }
+    }
+
+    // Step 6: Payment confirmed by Stripe SDK - now poll for webhook processing
     // The webhook will process the payment automatically on the server
     if (onProcessing) {
       onProcessing();
@@ -133,7 +165,7 @@ export const processPaymentImproved = async (
     const pollingResult = await pollSubscriptionStatus({
       expectedPackageId: packageId,
       maxDuration: 30000, // 30 seconds
-      interval: 2500, // 2.5 seconds
+      initialInterval: 2500, // 2.5 seconds
       onUpdate: subscription => {
         if (__DEV__) {
           console.log('Subscription updated via polling:', subscription);

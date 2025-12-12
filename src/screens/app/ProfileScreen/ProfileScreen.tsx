@@ -39,6 +39,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { useShallow } from 'zustand/react/shallow';
+import { useStripeStore } from '../../../store/useStripeStore';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -84,8 +85,25 @@ const ProfileScreen: React.FC = () => {
       notificationSettings: state.notificationSettings,
     })),
   );
+
+  const {
+    fetchStripePackages,
+    fetchCurrentSubscription,
+    packages,
+    currentSubscription,
+  } = useStripeStore(
+    useShallow(state => ({
+      fetchStripePackages: state.fetchStripePackages,
+      fetchCurrentSubscription: state.fetchCurrentSubscription,
+      packages: state.packages,
+      currentSubscription: state.currentSubscription,
+    })),
+  );
   const [notificationModalVisible, setNotificationModalVisible] =
     useState(false);
+
+  // Track if we've fetched data to prevent unnecessary refetches
+  const hasFetchedRef = useRef(false);
 
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [selectedLanguage, setSelectedLanguage] = useState(
@@ -174,15 +192,44 @@ const ProfileScreen: React.FC = () => {
     [t],
   );
 
-  // Fetch user only once on mount to prevent blinking on focus
-  const hasFetchedUser = useRef(false);
+  // Fetch profile data on mount and when screen is focused (stores handle caching)
   useEffect(() => {
-    if (!hasFetchedUser.current && !user) {
-      hasFetchedUser.current = true;
-      fetchCurrentUser();
+    // Initial fetch on mount
+    if (!hasFetchedRef.current) {
+      hasFetchedRef.current = true;
+
+      const fetchProfileData = async () => {
+        try {
+          // Fetch in parallel - stores will use cache if available
+          await Promise.all([
+            user ? Promise.resolve() : fetchCurrentUser(), // Only fetch if missing
+            fetchStripePackages(), // Store handles cache internally (10min cache)
+            fetchCurrentSubscription(), // Store handles cache internally (2min cache)
+          ]);
+        } catch (error) {
+          // Errors are handled by individual store functions
+          console.error('Error fetching profile data:', error);
+        }
+      };
+
+      fetchProfileData();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Only run once on mount
+
+  // Silently refresh data on focus (stores check cache, won't cause re-renders if cache valid)
+  useFocusEffect(
+    useCallback(() => {
+      // Only refresh if we've already fetched once
+      // Stores will check their cache and skip if still valid
+      if (hasFetchedRef.current) {
+        // These calls are safe - stores check cache internally and won't update state if cache is valid
+        fetchStripePackages(); // Will skip if cache is still valid (< 10min)
+        fetchCurrentSubscription(); // Will skip if cache is still valid (< 2min)
+        // Don't fetch user again to prevent unnecessary re-renders
+      }
+    }, [fetchStripePackages, fetchCurrentSubscription]),
+  );
 
   // Memoize language sync to prevent unnecessary re-renders
   useEffect(() => {

@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
   View,
   Text,
@@ -18,12 +18,17 @@ import { useShallow } from 'zustand/react/shallow';
 import { Fonts } from '../../../../../constants/fonts';
 import { useThemeStore } from '../../../../../store/useThemeStore';
 import { useStripeStore, Purchase } from '../../../../../store/useStripeStore';
+import PurchaseDetailModal from '../../../../../components/PurchaseDetailModal';
 // REMOVED: No longer importing GradientBox
 // import GradientBox from '../../../../../components/GradientBox';
 
 const PurchaseHistoryScreen = () => {
   const { colors } = useThemeStore(s => s.theme);
   const navigation = useNavigation<any>();
+  const [selectedPurchase, setSelectedPurchase] = useState<Purchase | null>(
+    null,
+  );
+  const [isModalVisible, setIsModalVisible] = useState(false);
 
   const { purchaseHistory, isFetchingHistory, fetchPurchaseHistory } =
     useStripeStore(
@@ -39,6 +44,22 @@ const PurchaseHistoryScreen = () => {
       fetchPurchaseHistory();
     }, [fetchPurchaseHistory]),
   );
+
+  const handleItemPress = (item: Purchase) => {
+    if (__DEV__) {
+      console.log('Purchase item pressed:', {
+        itemId: item.id,
+        item: JSON.stringify(item, null, 2),
+      });
+    }
+    setSelectedPurchase(item);
+    setIsModalVisible(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalVisible(false);
+    setSelectedPurchase(null);
+  };
 
   const HistoryItem = ({ item }: { item: Purchase }) => {
     const status = item.payment_status.toLowerCase();
@@ -59,8 +80,11 @@ const PurchaseHistoryScreen = () => {
     );
 
     return (
-      // --- CHANGED: Replaced GradientBox with a standard View ---
-      <View style={[styles.card, { backgroundColor: colors.bgBox }]}>
+      <TouchableOpacity
+        activeOpacity={0.7}
+        onPress={() => handleItemPress(item)}
+        style={[styles.card, { backgroundColor: colors.bgBox }]}
+      >
         <View style={styles.cardHeader}>
           <Image
             source={require('../../../../../assets/icons/AquariusIcon.png')}
@@ -87,7 +111,7 @@ const PurchaseHistoryScreen = () => {
             </Text>
           </View>
         </View>
-      </View>
+      </TouchableOpacity>
     );
   };
 
@@ -149,6 +173,13 @@ const PurchaseHistoryScreen = () => {
             />
           </View>
         )}
+
+        {/* Purchase Detail Modal */}
+        <PurchaseDetailModal
+          isVisible={isModalVisible}
+          onClose={handleCloseModal}
+          purchase={selectedPurchase}
+        />
       </SafeAreaView>
     </ImageBackground>
   );

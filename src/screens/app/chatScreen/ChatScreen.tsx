@@ -90,7 +90,7 @@ const ChatScreen: React.FC = () => {
 
     if (
       sessionsPagination &&
-      sessionsPagination.current_page < sessionsPagination.total_pages
+      sessionsPagination.page < sessionsPagination.pages
     ) {
       loadMoreSessions();
     }
@@ -144,9 +144,9 @@ const ChatScreen: React.FC = () => {
           <Text style={styles.sessionTitle} numberOfLines={1}>
             {item.title}
           </Text>
-          {item.last_message && (
+          {item.last_message_at && (
             <Text style={styles.sessionSubtitle} numberOfLines={1}>
-              {item.last_message.content}
+              {new Date(item.last_message_at).toLocaleDateString()}
             </Text>
           )}
         </View>

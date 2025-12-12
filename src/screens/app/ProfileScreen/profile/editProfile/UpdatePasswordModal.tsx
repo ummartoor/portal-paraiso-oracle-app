@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -14,7 +14,6 @@ import { Fonts } from '../../../../../constants/fonts';
 import GradientBox from '../../../../../components/GradientBox';
 import { useTranslation } from 'react-i18next';
 
-
 const eyeIcon = require('../../../../../assets/icons/eye.png');
 const eyeOffIcon = require('../../../../../assets/icons/eyeOff.png');
 
@@ -29,7 +28,7 @@ const UpdatePasswordModal: React.FC<UpdatePasswordModalProps> = ({
   onClose,
   onConfirm,
 }) => {
-  const colors = useThemeStore((state) => state.theme.colors);
+  const colors = useThemeStore(state => state.theme.colors);
   const { t } = useTranslation();
 
   const [oldPassword, setOldPassword] = useState('');
@@ -40,11 +39,95 @@ const UpdatePasswordModal: React.FC<UpdatePasswordModalProps> = ({
   const [showNew, setShowNew] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
 
-const handleUpdate = () => {
-    Vibration.vibrate([0, 35, 40, 35]); 
-  onConfirm(oldPassword, newPassword, confirmPassword);
-};
+  const [focusedField, setFocusedField] = useState<string | null>(null);
+  const [errors, setErrors] = useState<{
+    oldPassword?: string;
+    newPassword?: string;
+    confirmPassword?: string;
+  }>({});
 
+  const validateForm = (): boolean => {
+    const newErrors: {
+      oldPassword?: string;
+      newPassword?: string;
+      confirmPassword?: string;
+    } = {};
+
+    if (!oldPassword.trim()) {
+      newErrors.oldPassword = t('validation_password_required');
+    }
+
+    if (!newPassword.trim()) {
+      newErrors.newPassword = t('validation_password_required');
+    } else if (newPassword.length < 6) {
+      newErrors.newPassword = t('validation_password_min');
+    }
+
+    if (!confirmPassword.trim()) {
+      newErrors.confirmPassword = t('validation_confirm_password_required');
+    } else if (newPassword !== confirmPassword) {
+      newErrors.confirmPassword = t('validation_passwords_match');
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleUpdate = async () => {
+    Vibration.vibrate([0, 35, 40, 35]);
+
+    // Clear previous errors
+    setErrors({});
+
+    // Validate form
+    if (!validateForm()) {
+      return;
+    }
+
+    // If validation passes, call onConfirm
+    onConfirm(oldPassword, newPassword, confirmPassword);
+  };
+
+  // Clear errors when user starts typing
+  const handleOldPasswordChange = (text: string) => {
+    setOldPassword(text);
+    if (errors.oldPassword) {
+      setErrors(prev => ({ ...prev, oldPassword: undefined }));
+    }
+  };
+
+  const handleNewPasswordChange = (text: string) => {
+    setNewPassword(text);
+    if (errors.newPassword) {
+      setErrors(prev => ({ ...prev, newPassword: undefined }));
+    }
+    // Also clear confirm password error if passwords now match
+    if (errors.confirmPassword && text === confirmPassword) {
+      setErrors(prev => ({ ...prev, confirmPassword: undefined }));
+    }
+  };
+
+  const handleConfirmPasswordChange = (text: string) => {
+    setConfirmPassword(text);
+    // Clear error when user starts typing
+    if (errors.confirmPassword) {
+      setErrors(prev => ({ ...prev, confirmPassword: undefined }));
+    }
+  };
+
+  // Reset form when modal opens
+  useEffect(() => {
+    if (isVisible) {
+      setOldPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+      setErrors({});
+      setFocusedField(null);
+      setShowOld(false);
+      setShowNew(false);
+      setShowConfirm(false);
+    }
+  }, [isVisible]);
 
   return (
     <Modal visible={isVisible} animationType="slide" transparent>
@@ -52,18 +135,35 @@ const handleUpdate = () => {
         <View style={styles(colors).overlay}>
           <View style={styles(colors).modal}>
             {/* Heading */}
-         <Text style={styles(colors).heading}>{t('update_password_header')}</Text>
+            <Text style={styles(colors).heading}>
+              {t('update_password_header')}
+            </Text>
 
             {/* Old Password */}
             <View style={styles(colors).fieldContainer}>
-                    <Text style={styles(colors).label}>{t('old_password_label')}</Text>
-              <View style={styles(colors).inputWrapper}>
+              <Text style={styles(colors).label}>
+                {t('old_password_label')}
+              </Text>
+              <View
+                style={[
+                  styles(colors).inputWrapper,
+                  {
+                    borderColor: errors.oldPassword
+                      ? '#FF4444'
+                      : focusedField === 'oldPassword'
+                      ? colors.primary
+                      : 'rgba(255,255,255,0.6)',
+                  },
+                ]}
+              >
                 <TextInput
-                 placeholder={t('old_password_placeholder')}
+                  placeholder={t('old_password_placeholder')}
                   placeholderTextColor="rgba(255,255,255,0.6)"
                   secureTextEntry={!showOld}
                   value={oldPassword}
-                  onChangeText={setOldPassword}
+                  onChangeText={handleOldPasswordChange}
+                  onFocus={() => setFocusedField('oldPassword')}
+                  onBlur={() => setFocusedField(null)}
                   style={[
                     styles(colors).input,
                     { backgroundColor: colors.bgBox, color: colors.white },
@@ -79,18 +179,38 @@ const handleUpdate = () => {
                   />
                 </TouchableOpacity>
               </View>
+              {errors.oldPassword && (
+                <Text style={styles(colors).errorText}>
+                  {errors.oldPassword}
+                </Text>
+              )}
             </View>
 
             {/* New Password */}
             <View style={styles(colors).fieldContainer}>
-               <Text style={styles(colors).label}>{t('new_password_modal_label')}</Text>
-              <View style={styles(colors).inputWrapper}>
+              <Text style={styles(colors).label}>
+                {t('new_password_modal_label')}
+              </Text>
+              <View
+                style={[
+                  styles(colors).inputWrapper,
+                  {
+                    borderColor: errors.newPassword
+                      ? '#FF4444'
+                      : focusedField === 'newPassword'
+                      ? colors.primary
+                      : 'rgba(255,255,255,0.6)',
+                  },
+                ]}
+              >
                 <TextInput
-                   placeholder={t('new_password_modal_placeholder')}
+                  placeholder={t('new_password_modal_placeholder')}
                   placeholderTextColor="rgba(255,255,255,0.6)"
                   secureTextEntry={!showNew}
                   value={newPassword}
-                  onChangeText={setNewPassword}
+                  onChangeText={handleNewPasswordChange}
+                  onFocus={() => setFocusedField('newPassword')}
+                  onBlur={() => setFocusedField(null)}
                   style={[
                     styles(colors).input,
                     { backgroundColor: colors.bgBox, color: colors.white },
@@ -106,18 +226,38 @@ const handleUpdate = () => {
                   />
                 </TouchableOpacity>
               </View>
+              {errors.newPassword && (
+                <Text style={styles(colors).errorText}>
+                  {errors.newPassword}
+                </Text>
+              )}
             </View>
 
             {/* Confirm Password */}
             <View style={styles(colors).fieldContainer}>
-              <Text style={styles(colors).label}>{t('confirm_password_modal_label')}</Text>
-              <View style={styles(colors).inputWrapper}>
+              <Text style={styles(colors).label}>
+                {t('confirm_password_modal_label')}
+              </Text>
+              <View
+                style={[
+                  styles(colors).inputWrapper,
+                  {
+                    borderColor: errors.confirmPassword
+                      ? '#FF4444'
+                      : focusedField === 'confirmPassword'
+                      ? colors.primary
+                      : 'rgba(255,255,255,0.6)',
+                  },
+                ]}
+              >
                 <TextInput
                   placeholder={t('confirm_password_modal_placeholder')}
                   placeholderTextColor="rgba(255,255,255,0.6)"
                   secureTextEntry={!showConfirm}
                   value={confirmPassword}
-                  onChangeText={setConfirmPassword}
+                  onChangeText={handleConfirmPasswordChange}
+                  onFocus={() => setFocusedField('confirmPassword')}
+                  onBlur={() => setFocusedField(null)}
                   style={[
                     styles(colors).input,
                     { backgroundColor: colors.bgBox, color: colors.white },
@@ -133,20 +273,27 @@ const handleUpdate = () => {
                   />
                 </TouchableOpacity>
               </View>
+              {errors.confirmPassword && (
+                <Text style={styles(colors).errorText}>
+                  {errors.confirmPassword}
+                </Text>
+              )}
             </View>
 
             {/* Buttons */}
             <View style={styles(colors).buttonRow}>
               {/* Cancel */}
               <TouchableOpacity
-            onPress={() => {
-                           Vibration.vibrate([0, 35, 40, 35]); 
-                           onClose();                          
-                         }}
+                onPress={() => {
+                  Vibration.vibrate([0, 35, 40, 35]);
+                  onClose();
+                }}
                 activeOpacity={0.85}
                 style={styles(colors).cancelButton}
               >
-            <Text style={styles(colors).cancelText}>{t('cancel_button')}</Text>
+                <Text style={styles(colors).cancelText}>
+                  {t('cancel_button')}
+                </Text>
               </TouchableOpacity>
 
               {/* Update (Gradient) */}
@@ -159,7 +306,9 @@ const handleUpdate = () => {
                   colors={[colors.black, colors.bgBox]}
                   style={styles(colors).gradientFill}
                 >
-              <Text style={styles(colors).updateText}>{t('update_button')}</Text>
+                  <Text style={styles(colors).updateText}>
+                    {t('update_button')}
+                  </Text>
                 </GradientBox>
               </TouchableOpacity>
             </View>
@@ -256,8 +405,8 @@ const styles = (colors: any) =>
       flexGrow: 1,
       flexBasis: 0,
       height: 50,
-           borderWidth:1.7,
-      borderColor:'#D9B699',
+      borderWidth: 1.7,
+      borderColor: '#D9B699',
       borderRadius: 200,
       overflow: 'hidden',
     },
@@ -272,5 +421,12 @@ const styles = (colors: any) =>
       fontFamily: Fonts.aeonikRegular,
       fontSize: 14,
       color: colors.white,
+    },
+    errorText: {
+      fontFamily: Fonts.aeonikRegular,
+      fontSize: 12,
+      color: '#FF4444',
+      marginTop: 4,
+      marginLeft: 4,
     },
   });

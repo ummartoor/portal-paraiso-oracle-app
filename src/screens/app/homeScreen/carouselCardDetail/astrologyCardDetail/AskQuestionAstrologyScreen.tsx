@@ -47,7 +47,7 @@ const AskQuestionAstrologyScreen = () => {
     isUnlimited,
     isLoading: isCheckingPermission,
     refresh: refreshPermission,
-  } = useFeaturePermission('horoscope');
+  } = useFeaturePermission('astrology');
 
   // Fetch permissions on mount (non-blocking - don't wait for it)
   useEffect(() => {

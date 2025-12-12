@@ -130,11 +130,14 @@
 
   "home_title": "PORTAL PARAÍSO",
   "home_subtitle": "Escolha o seu caminho para a orientação divina",
+  "profile_incomplete_warning": "Complete seu perfil para ter uma melhor experiência no aplicativo",
+  "update_profile_button": "Atualizar Perfil",
   "home_daily_wisdom_card": "Carta de Sabedoria Diária",
   "home_ritual_tip": "Dica de Ritual",
 
   "home_ai_chat_title": "FALE COM A IA DIVINA",
   "home_ai_chat_subtitle": "Busque orientação, clareza ou conforto — seu guia cósmico está ouvindo.",
+  "refreshing": "Atualizando...",
   "home_ai_chat_button": "Iniciar Conversa",
 
   "carousel_header_title": "EXPLORE OS REINOS",

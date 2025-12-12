@@ -36,7 +36,6 @@ import { useBuziosStore } from '../../../store/useBuziousStore';
 import { useOpenAiStore } from '../../../store/useOpenAiStore';
 import SoundPlayer from 'react-native-sound-player';
 
-
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const CONTAINER_W = SCREEN_WIDTH - 40;
 
@@ -119,7 +118,9 @@ const BuziosHistoryDetail: React.FC = () => {
 
   // --- NEW: State for audio playback ---
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
-  const [preloadedAudioPath, setPreloadedAudioPath] = useState<string | null>(null);
+  const [preloadedAudioPath, setPreloadedAudioPath] = useState<string | null>(
+    null,
+  );
   const [isPreloadingAudio, setIsPreloadingAudio] = useState(false);
 
   // --- NEW: Get preload function from store ---
@@ -146,9 +147,13 @@ const BuziosHistoryDetail: React.FC = () => {
   // --- NEW: useEffect to preload audio when history data is ready ---
   useEffect(() => {
     const prepareAudio = async () => {
-      if (historyItem?.ai_response) {
+      const interpretationText =
+        historyItem?.odu?.interpretation?.meaning ||
+        historyItem?.odu?.interpretation?.guidance ||
+        '';
+      if (interpretationText) {
         setIsPreloadingAudio(true);
-        const audioPath = await preloadSpeech(historyItem.ai_response, history_uid);
+        const audioPath = await preloadSpeech(interpretationText, history_uid);
         if (audioPath) {
           setPreloadedAudioPath(audioPath);
           console.log('History audio preloaded successfully.');
@@ -160,12 +165,15 @@ const BuziosHistoryDetail: React.FC = () => {
     };
     prepareAudio();
   }, [historyItem, history_uid, preloadSpeech]);
-  
+
   // --- NEW: useEffect for SoundPlayer events ---
   useEffect(() => {
-    const onFinishedPlayingSubscription = SoundPlayer.addEventListener('FinishedPlaying', () => {
-      setIsPlayingAudio(false);
-    });
+    const onFinishedPlayingSubscription = SoundPlayer.addEventListener(
+      'FinishedPlaying',
+      () => {
+        setIsPlayingAudio(false);
+      },
+    );
     // Cleanup on unmount
     return () => {
       SoundPlayer.stop();
@@ -174,8 +182,8 @@ const BuziosHistoryDetail: React.FC = () => {
   }, []);
 
   const shell2Set = useMemo(() => {
-    if (historyItem) {
-      const upCount = historyItem.mouth_up_count;
+    if (historyItem?.shells_summary) {
+      const upCount = historyItem.shells_summary.mouth_up_count || 0;
       const indices = shuffle(Array.from({ length: SHELL_COUNT }, (_, i) => i));
       return new Set(indices.slice(0, upCount));
     }
@@ -186,10 +194,16 @@ const BuziosHistoryDetail: React.FC = () => {
     const effectiveSize = BOWL_SIZE - SHELL_PADDING * 2;
     const R = effectiveSize / 2;
     const center = { x: SHELL_PADDING + R, y: SHELL_PADDING + R };
-    const sizes = Array.from({ length: SHELL_COUNT }, () => rand(SHELL_MIN, SHELL_MAX));
-    const order = Array.from({ length: SHELL_COUNT }, (_, i) => i).sort((a, b) => sizes[b] - sizes[a]);
+    const sizes = Array.from({ length: SHELL_COUNT }, () =>
+      rand(SHELL_MIN, SHELL_MAX),
+    );
+    const order = Array.from({ length: SHELL_COUNT }, (_, i) => i).sort(
+      (a, b) => sizes[b] - sizes[a],
+    );
     const placed: { cx: number; cy: number; r: number }[] = [];
-    const targets: { tx: number; ty: number }[] = Array(SHELL_COUNT).fill(null as any);
+    const targets: { tx: number; ty: number }[] = Array(SHELL_COUNT).fill(
+      null as any,
+    );
     for (const idx of order) {
       const size = sizes[idx];
       const rEff = (size / 2) * RADIUS_SCALE;
@@ -201,7 +215,8 @@ const BuziosHistoryDetail: React.FC = () => {
         const cy = center.y + radius * Math.sin(angle);
         let ok = true;
         for (const p of placed) {
-          const dx = cx - p.cx, dy = cy - p.cy;
+          const dx = cx - p.cx,
+            dy = cy - p.cy;
           const minD = p.r + rEff + SHELL_GAP;
           if (dx * dx + dy * dy < minD * minD) {
             ok = false;
@@ -216,7 +231,8 @@ const BuziosHistoryDetail: React.FC = () => {
         }
       }
       if (!done) {
-        const cx = center.x, cy = center.y;
+        const cx = center.x,
+          cy = center.y;
         placed.push({ cx, cy, r: rEff });
         targets[idx] = { tx: cx - size / 2, ty: cy - size / 2 };
       }
@@ -246,7 +262,10 @@ const BuziosHistoryDetail: React.FC = () => {
     }
   }, [historyItem, shellConfigs, sSV, oSV]);
 
-  const divineMessage = historyItem?.ai_response ?? '';
+  const divineMessage =
+    historyItem?.odu?.interpretation?.meaning ||
+    historyItem?.odu?.interpretation?.guidance ||
+    '';
 
   // --- NEW: Updated playback toggle function ---
   const onPressPlayToggle = () => {
@@ -331,7 +350,7 @@ const BuziosHistoryDetail: React.FC = () => {
               Your Divine Message
             </Text>
             <Text style={[styles.patternName, { color: colors.white }]}>
-              {historyItem.overall_polarity}
+              {historyItem?.odu?.polarity || ''}
             </Text>
           </View>
 
@@ -380,7 +399,15 @@ const BuziosHistoryDetail: React.FC = () => {
               ) : (
                 <Image
                   source={isPlayingAudio ? PAUSE_ICON : PLAY_ICON}
-                  style={[styles.playIcon, { tintColor: (isPreloadingAudio || !preloadedAudioPath) ? '#999' : colors.primary }]}
+                  style={[
+                    styles.playIcon,
+                    {
+                      tintColor:
+                        isPreloadingAudio || !preloadedAudioPath
+                          ? '#999'
+                          : colors.primary,
+                    },
+                  ]}
                   resizeMode="contain"
                 />
               )}

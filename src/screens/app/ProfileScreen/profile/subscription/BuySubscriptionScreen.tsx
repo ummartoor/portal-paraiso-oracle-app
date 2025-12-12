@@ -100,25 +100,70 @@ const BuySubscriptionScreen = () => {
       return;
     }
 
+    // Check if user already has an active subscription to this package
+    const activeSubscription = currentSubscription?.vipSubscription;
+    if (activeSubscription && activeSubscription.packageId === item.id) {
+      Alert.alert(
+        'Already Subscribed',
+        'You are already subscribed to this plan. Please check your subscription details.',
+      );
+      return;
+    }
+
+    // Determine if this is a plan change (user has active subscription but different package)
+    const isPlanChange =
+      !!activeSubscription && activeSubscription.packageId !== item.id;
+
     setProcessingPackageId(item.id);
 
     try {
       // Step 1: Create payment intent
+      // Note: Backend should create payment intent WITHOUT a default payment method
+      // to ensure payment sheet always shows payment method selection
+      if (__DEV__) {
+        console.log('Creating payment intent for package:', {
+          packageId: item.id,
+          priceId: defaultPrice.stripe_price_id,
+          hasActiveSubscription: !!activeSubscription,
+          isPlanChange,
+        });
+      }
+
       const paymentData = await createPaymentIntent(
         item.id,
         defaultPrice.stripe_price_id,
+        isPlanChange,
       );
 
       if (!paymentData) {
+        if (__DEV__) {
+          console.log('Payment intent creation failed or returned null');
+        }
         setProcessingPackageId(null);
         return; // Error is already shown by the store
       }
 
+      if (__DEV__) {
+        console.log('Payment intent created successfully:', {
+          paymentIntentId: paymentData.paymentIntentId,
+          hasClientSecret: !!paymentData.clientSecret,
+          hasSubscriptionId: !!paymentData.subscriptionId,
+        });
+      }
+
       // Step 2: Initialize the Stripe payment sheet
+      // Configure to always show payment method selection (prevent auto-completion)
+      // Note: If backend creates payment intent with customer/default payment method,
+      // Stripe may auto-complete. This config ensures we don't pass additional customer info
       const { error: initError } = await initPaymentSheet({
         merchantDisplayName: 'Portal Paraiso, Inc.',
         paymentIntentClientSecret: paymentData.clientSecret,
+        // Note: Guide says false, but true is required for recurring subscriptions to save payment method
+        // Keeping true as it's correct for subscription billing
         allowsDelayedPaymentMethods: true,
+        returnURL: 'portalparaiso://payment-return',
+        // Explicitly omit customerId and customerEphemeralKeySecret
+        // This prevents using saved payment methods from customer account
         defaultBillingDetails: {
           name: 'Customer',
         },
@@ -129,6 +174,13 @@ const BuySubscriptionScreen = () => {
         },
       });
 
+      if (__DEV__) {
+        console.log('Payment sheet initialized with clientSecret:', {
+          hasClientSecret: !!paymentData.clientSecret,
+          paymentIntentId: paymentData.paymentIntentId,
+        });
+      }
+
       if (initError) {
         throw new Error(
           `Could not initialize payment sheet: ${initError.message}`,
@@ -136,26 +188,72 @@ const BuySubscriptionScreen = () => {
       }
 
       // Step 3: Present the payment sheet to the user
-      const { error: paymentError } = await presentPaymentSheet();
+      if (__DEV__) {
+        console.log('Presenting payment sheet...');
+      }
+
+      const { error: paymentError, paymentIntent: result } =
+        await presentPaymentSheet();
 
       if (paymentError) {
+        if (__DEV__) {
+          console.log('Payment sheet error:', {
+            code: paymentError.code,
+            message: paymentError.message,
+            type: paymentError.type,
+            localizedMessage: paymentError.localizedMessage,
+          });
+        }
+
         if (paymentError.code !== 'Canceled') {
           Alert.alert(
             `Payment Error: ${paymentError.code}`,
             paymentError.message,
           );
+        } else {
+          // User canceled - this is expected behavior
           if (__DEV__) {
-            console.log(
-              `Payment Error: ${paymentError.code}`,
-              paymentError.message,
-            );
+            console.log('User canceled payment sheet');
           }
         }
         setProcessingPackageId(null);
         return;
       }
 
-      // Step 4: Payment confirmed - show processing message and poll for webhook
+      // Step 4: Check payment result status
+      if (result?.status !== 'Succeeded') {
+        Alert.alert(
+          'Payment Not Completed',
+          `Payment status: ${result?.status || 'unknown'}. Please try again.`,
+        );
+        setProcessingPackageId(null);
+        return;
+      }
+
+      if (__DEV__) {
+        console.log('Payment sheet completed successfully');
+      }
+
+      // Step 5: Verify payment (backup for webhook delays)
+      const { verifyPayment } = useStripeStore.getState();
+      try {
+        await verifyPayment(paymentData.paymentIntentId);
+        if (__DEV__) {
+          console.log(
+            'Payment verified successfully via verify-payment endpoint',
+          );
+        }
+      } catch (error) {
+        // Verification failed, but continue with polling as webhook may still process
+        if (__DEV__) {
+          console.warn(
+            'Payment verification failed, continuing with polling:',
+            error,
+          );
+        }
+      }
+
+      // Step 6: Payment confirmed - show processing message and poll for webhook
       Alert.alert(
         'Payment Confirmed',
         'Processing your payment. Please wait...',
@@ -163,14 +261,14 @@ const BuySubscriptionScreen = () => {
         { cancelable: false },
       );
 
-      // Poll for subscription status update (webhook will process payment)
+      // Step 7: Poll for subscription status update (webhook will process payment)
       const { pollSubscriptionStatus } = await import(
         '../../../../../utils/subscriptionPolling'
       );
       const pollingResult = await pollSubscriptionStatus({
         expectedPackageId: item.id,
         maxDuration: 30000, // 30 seconds
-        interval: 2500, // 2.5 seconds
+        initialInterval: 2500, // 2.5 seconds
       });
 
       if (pollingResult.success && pollingResult.subscription) {

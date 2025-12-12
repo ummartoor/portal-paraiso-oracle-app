@@ -130,11 +130,14 @@
 
   "home_title": "PORTAL PARAISO",
   "home_subtitle": "Choose your path to divine guidance",
+  "profile_incomplete_warning": "Complete your profile to get a better experience of the app",
+  "update_profile_button": "Update Profile",
   "home_daily_wisdom_card": "Daily Wisdom Card",
   "home_ritual_tip": "Ritual Tip",
   "home_ai_chat_title": "TALK WITH DIVINE AI",
   "home_ai_chat_subtitle": "Seek guidance, clarity, or comfort — your cosmic guide is listening.",
   "home_ai_chat_button": "Begin Conversation",
+  "refreshing": "Refreshing...",
 
   "carousel_header_title": "EXPLORE THE REALMS",
   "carousel_header_subtitle": "Choose your spiritual path today.",

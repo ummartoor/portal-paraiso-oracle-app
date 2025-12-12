@@ -12,7 +12,7 @@ import {
 import { useThemeStore } from '../../../../../store/useThemeStore';
 import { Fonts } from '../../../../../constants/fonts';
 import GradientBox from '../../../../../components/GradientBox';
-import { useTranslation } from 'react-i18next'; 
+import { useTranslation } from 'react-i18next';
 interface EmailModalProps {
   isVisible: boolean;
   onClose: () => void;
@@ -27,8 +27,9 @@ const EmailModal: React.FC<EmailModalProps> = ({
   defaultValue = '',
 }) => {
   const colors = useThemeStore(state => state.theme.colors);
-    const { t } = useTranslation();
+  const { t } = useTranslation();
   const [email, setEmail] = useState(defaultValue);
+  const [isFocused, setIsFocused] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
@@ -38,7 +39,7 @@ const EmailModal: React.FC<EmailModalProps> = ({
   }, [isVisible, defaultValue]);
 
   const handleUpdate = async () => {
-        Vibration.vibrate([0, 35, 40, 35]); 
+    Vibration.vibrate([0, 35, 40, 35]);
     if (email.trim().length > 0 && !isLoading) {
       setIsLoading(true);
       const success = await onConfirm(email.trim());
@@ -54,34 +55,47 @@ const EmailModal: React.FC<EmailModalProps> = ({
       <View style={[StyleSheet.absoluteFill, styles(colors).overlayBackground]}>
         <View style={styles(colors).overlay}>
           <View style={styles(colors).modal}>
-            <Text style={styles(colors).heading}>{t('email_modal_header')}</Text>
+            <Text style={styles(colors).heading}>
+              {t('email_modal_header')}
+            </Text>
 
             <View style={styles(colors).fieldContainer}>
-               <Text style={styles(colors).label}>{t('email_modal_label')}</Text>
+              <Text style={styles(colors).label}>{t('email_modal_label')}</Text>
               <TextInput
-            placeholder={t('email_modal_placeholder')}
+                placeholder={t('email_modal_placeholder')}
                 placeholderTextColor="rgba(255,255,255,0.6)"
                 value={email}
                 onChangeText={setEmail}
+                onFocus={() => setIsFocused(true)}
+                onBlur={() => setIsFocused(false)}
                 keyboardType="email-address"
                 autoCapitalize="none"
                 style={[
                   styles(colors).input,
-                  { backgroundColor: colors.bgBox, color: colors.white },
+                  {
+                    backgroundColor: colors.bgBox,
+                    color: colors.white,
+                    borderWidth: isFocused ? 1 : 1,
+                    borderColor: isFocused
+                      ? colors.primary
+                      : 'rgba(255,255,255,0.6)',
+                  },
                 ]}
               />
             </View>
 
             <View style={styles(colors).buttonRow}>
               <TouchableOpacity
-              onPress={() => {
-    Vibration.vibrate([0, 35, 40, 35]); 
-    onClose();                          
-  }}
+                onPress={() => {
+                  Vibration.vibrate([0, 35, 40, 35]);
+                  onClose();
+                }}
                 activeOpacity={0.85}
                 style={styles(colors).cancelButton}
               >
-                <Text style={styles(colors).cancelText}>{t('cancel_button')}</Text>
+                <Text style={styles(colors).cancelText}>
+                  {t('cancel_button')}
+                </Text>
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={handleUpdate}
@@ -96,7 +110,9 @@ const EmailModal: React.FC<EmailModalProps> = ({
                   {isLoading ? (
                     <ActivityIndicator color={colors.primary} />
                   ) : (
-                  <Text style={styles(colors).updateText}>{t('update_button')}</Text>
+                    <Text style={styles(colors).updateText}>
+                      {t('update_button')}
+                    </Text>
                   )}
                 </GradientBox>
               </TouchableOpacity>
@@ -170,8 +186,8 @@ const styles = (colors: any) =>
       flexGrow: 1,
       flexBasis: 0,
       height: 50,
-           borderWidth:1.7,
-      borderColor:'#D9B699',
+      borderWidth: 1.7,
+      borderColor: '#D9B699',
       borderRadius: 200,
       overflow: 'hidden',
     },

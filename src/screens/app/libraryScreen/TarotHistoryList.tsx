@@ -74,11 +74,11 @@ const TarotHistoryList: React.FC = () => {
         <View style={styles.cardTextContainer}>
           <Text style={styles.cardTitle}>TAROT READER</Text>
           <Text style={styles.cardSubtitle} numberOfLines={2}>
-            {item.user_question || item.reading.introduction}
+            {item.user_question || item.reading}
           </Text>
         </View>
         <View style={styles.cardRightContainer}>
-          <Text style={styles.cardDate}>{formatDate(item.reading_date)}</Text>
+          <Text style={styles.cardDate}>{formatDate(item.created_at)}</Text>
           <GradientBox
             colors={[colors.black, colors.bgBox]}
             style={styles.iconWrapper}

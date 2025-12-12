@@ -11,6 +11,9 @@ import {
   ScrollView,
   Vibration,
   Button,
+  RefreshControl,
+  ActivityIndicator,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Fonts } from '../../../constants/fonts';
@@ -33,6 +36,7 @@ import {
   Shadows,
 } from '../../../constants/design';
 import Pressable from '../../../components/Pressable';
+import { isProfileComplete } from '../../../utils/profileUtils';
 const { height: SCREEN_HEIGHT, width: SCREEN_WIDTH } = Dimensions.get('screen');
 
 type CardBoxProps = {
@@ -93,6 +97,7 @@ const HomeScreen: React.FC = () => {
     useNavigation<NativeStackNavigationProp<AppStackParamList>>();
   const { t } = useTranslation();
   const { unreadCount, getUnreadCount } = useGetNotificationsStore();
+  const [refreshing, setRefreshing] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
@@ -120,6 +125,27 @@ const HomeScreen: React.FC = () => {
     [navigation],
   );
 
+  // Check if profile is complete
+  const profileComplete = isProfileComplete(user);
+
+  // Pull to refresh handler
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      // Refresh all necessary data
+      await Promise.all([fetchCurrentUser(), getUnreadCount()]);
+    } catch (error) {
+      if (__DEV__) {
+        console.error('Error refreshing home screen:', error);
+      }
+    } finally {
+      // Add a small delay to ensure smooth UX
+      setTimeout(() => {
+        setRefreshing(false);
+      }, 300);
+    }
+  }, [fetchCurrentUser, getUnreadCount]);
+
   return (
     <ImageBackground
       source={require('../../../assets/images/backgroundImage.png')}
@@ -135,7 +161,57 @@ const HomeScreen: React.FC = () => {
         <ScrollView
           contentContainerStyle={{ paddingBottom: 90 }}
           showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor={colors.primary || '#D9B699'}
+              colors={[colors.primary || '#D9B699']}
+              progressViewOffset={Platform.OS === 'android' ? 20 : 0}
+            />
+          }
         >
+          {/* Profile Incomplete Warning Banner */}
+          {!profileComplete && (
+            <View
+              style={[
+                styles.profileWarningBanner,
+                { backgroundColor: colors.bgBox, borderColor: colors.primary },
+              ]}
+            >
+              <Text
+                style={[styles.profileWarningText, { color: colors.white }]}
+                numberOfLines={2}
+              >
+                {t('profile_incomplete_warning')}
+              </Text>
+              <TouchableOpacity
+                activeOpacity={0.8}
+                onPress={() => {
+                  Vibration.vibrate([0, 35, 40, 35]);
+                  navigation.navigate('EditProfile');
+                }}
+              >
+                <GradientBox
+                  colors={[colors.black, colors.bgBox]}
+                  style={[
+                    styles.profileWarningButtonGradient,
+                    { borderColor: colors.primary },
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.profileWarningButtonText,
+                      { color: colors.white },
+                    ]}
+                  >
+                    {t('update_profile_button')}
+                  </Text>
+                </GradientBox>
+              </TouchableOpacity>
+            </View>
+          )}
+
           {/* Header */}
           <View style={styles.headerRow}>
             <Pressable
@@ -269,6 +345,25 @@ const HomeScreen: React.FC = () => {
       <Button title="Show Interstitial Ad" onPress={handleButtonPress} />
     </View> */}
         </ScrollView>
+        {/* Loading overlay when refreshing - positioned outside ScrollView */}
+        {refreshing && (
+          <View style={styles.refreshOverlay}>
+            <View
+              style={[
+                styles.refreshLoaderContainer,
+                { backgroundColor: colors.bgBox },
+              ]}
+            >
+              <ActivityIndicator
+                size="large"
+                color={colors.primary || '#D9B699'}
+              />
+              <Text style={[styles.refreshLoaderText, { color: colors.white }]}>
+                {t('refreshing') || 'Refreshing...'}
+              </Text>
+            </View>
+          </View>
+        )}
       </SafeAreaView>
     </ImageBackground>
   );
@@ -449,5 +544,65 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontFamily: Fonts.aeonikBold,
     lineHeight: 14,
+  },
+  profileWarningBanner: {
+    marginHorizontal: Spacing.xl,
+    marginTop: Spacing.sm,
+    marginBottom: Spacing.sm,
+    borderRadius: BorderRadius.md,
+    borderWidth: 1,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: Spacing.md,
+  },
+  profileWarningText: {
+    fontSize: 13,
+    fontFamily: Fonts.aeonikRegular,
+    lineHeight: 18,
+    flex: 1,
+  },
+  profileWarningButtonGradient: {
+    height: 40,
+    borderRadius: 20,
+    borderWidth: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: Spacing.lg,
+    minWidth: 110,
+  },
+  profileWarningButtonText: {
+    fontSize: 13,
+    fontFamily: Fonts.aeonikBold,
+    letterSpacing: 0.4,
+  },
+  refreshOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'flex-start',
+    alignItems: 'center',
+    paddingTop: 100,
+    zIndex: 1000,
+  },
+  refreshLoaderContainer: {
+    paddingHorizontal: Spacing.xl,
+    paddingVertical: Spacing.md,
+    borderRadius: BorderRadius.lg,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.sm,
+    borderWidth: 1,
+    borderColor: Colors.primary,
+    ...Shadows.medium,
+  },
+  refreshLoaderText: {
+    fontSize: 14,
+    fontFamily: Fonts.aeonikRegular,
+    marginTop: Spacing.xs,
   },
 });

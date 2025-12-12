@@ -134,7 +134,6 @@ const CaurisCardDetailScreen: React.FC = () => {
 
   const {
     reading,
-    userQuestion: storeUserQuestion,
     isLoadingReading,
     readingError,
     getBuziosReading,
@@ -198,8 +197,8 @@ const CaurisCardDetailScreen: React.FC = () => {
   }));
 
   const shell2Set = useMemo(() => {
-    if (reading?.reading?.shells) {
-      const upCount = reading.reading.shells.mouth_up || 0;
+    if (reading?.shells_summary) {
+      const upCount = reading.shells_summary.mouth_up_count || 0;
       const indices = shuffle(Array.from({ length: SHELL_COUNT }, (_, i) => i));
       return new Set(indices.slice(0, upCount));
     }
@@ -293,9 +292,16 @@ const CaurisCardDetailScreen: React.FC = () => {
     Vibration.vibrate([0, 35, 40, 35]);
     if (phase === 0) {
       // Check permissions before throwing shells
-      await refreshPermission();
+      try {
+        await refreshPermission();
+      } catch (error) {
+        console.log('Permission check error:', error);
+        // Continue anyway - don't block new accounts
+      }
 
-      if (!isAllowed) {
+      // Show permission errors BEFORE starting animations
+      // Only block if explicitly not allowed AND we have permission data (not for new accounts)
+      if (!isAllowed && !isCheckingPermission && dailyLimit !== undefined) {
         Alert.alert(
           t('alert_error_title') || 'Upgrade your package',
           'This feature is not available in your current package. Please upgrade to access Búzios readings.',
@@ -310,10 +316,12 @@ const CaurisCardDetailScreen: React.FC = () => {
         return;
       }
 
-      if (hasReachedLimit) {
+      if (hasReachedLimit && !isCheckingPermission) {
         Alert.alert(
           t('alert_error_title') || 'Daily Limit Reached',
-          `You have reached your daily limit of ${dailyLimit} Búzios readings. Please upgrade to get unlimited access.`,
+          `You have reached your daily limit of ${dailyLimit} Búzios reading${
+            dailyLimit === 1 ? '' : 's'
+          }. Please upgrade to get unlimited access.`,
           [
             { text: t('cancel_button') || 'Cancel', style: 'cancel' },
             {
@@ -325,8 +333,32 @@ const CaurisCardDetailScreen: React.FC = () => {
         return;
       }
 
+      // If still checking permissions, wait a bit
+      if (isCheckingPermission) {
+        Alert.alert(
+          t('alert_error_title') || 'Loading',
+          'Please wait while we check your permissions...',
+          [{ text: 'OK' }],
+        );
+        return;
+      }
+
       setPhase(1);
-      getBuziosReading(userQuestion);
+      try {
+        const result = await getBuziosReading(userQuestion);
+        if (!result) {
+          // Error occurred, reset phase
+          setPhase(0);
+        }
+      } catch (error) {
+        // Error occurred, reset phase and show error
+        setPhase(0);
+        Alert.alert(
+          t('alert_error_title') || 'Error',
+          readingError || 'Failed to get Búzios reading. Please try again.',
+          [{ text: 'OK' }],
+        );
+      }
 
       // Softer circle animation with better easing and subtle pulse
       circleScale.value = withSpring(
@@ -421,7 +453,15 @@ const CaurisCardDetailScreen: React.FC = () => {
         });
       });
     }
-  }, [isLoadingReading, reading, phase, contentOpacity]);
+
+    // Handle errors - reset phase if error occurs during loading
+    if (phase === 1 && !isLoadingReading && readingError) {
+      setPhase(0);
+      Alert.alert(t('alert_error_title') || 'Error', readingError, [
+        { text: 'OK' },
+      ]);
+    }
+  }, [isLoadingReading, reading, readingError, phase, contentOpacity]);
 
   // Animate content when phase changes
   useEffect(() => {
@@ -449,17 +489,17 @@ const CaurisCardDetailScreen: React.FC = () => {
 
   useEffect(() => {
     const prepareReadingAudio = async () => {
-      if (reading?.reading?.interpretation && reading?.reading?.odu?.polarity) {
+      if (reading?.odu?.interpretation && reading?.odu?.polarity) {
         setIsPreloadingAudio(true);
-        const readingId =
-          `${userQuestion}_${reading.reading.odu.polarity}`.replace(
-            /[^a-zA-Z0-9]/g,
-            '_',
-          );
-        const audioPath = await preloadSpeech(
-          reading.reading.interpretation,
-          readingId,
+        const readingId = `${userQuestion}_${reading.odu.polarity}`.replace(
+          /[^a-zA-Z0-9]/g,
+          '_',
         );
+        const interpretationText =
+          reading.odu.interpretation.meaning ||
+          reading.odu.interpretation.guidance ||
+          '';
+        const audioPath = await preloadSpeech(interpretationText, readingId);
         if (audioPath) {
           setPreloadedAudioPath(audioPath);
         }
@@ -496,10 +536,13 @@ const CaurisCardDetailScreen: React.FC = () => {
   // --- ADD THIS NEW FUNCTION ---
   // This contains the actual logic we want to run AFTER the ad.
   const performSaveAndNavigate = async () => {
-    const questionToUse = storeUserQuestion || userQuestion;
-    if (reading?.reading && questionToUse && !isSaving) {
-      // We run the save logic here - pass userQuestion and reading object separately
-      const success = await saveBuziosReading(questionToUse, reading.reading);
+    const questionToUse = reading?.user_question || userQuestion;
+    if (reading?.reading_id && questionToUse && !isSaving) {
+      // We run the save logic here - pass reading_id and title
+      const success = await saveBuziosReading(
+        reading.reading_id,
+        questionToUse,
+      );
       if (success) {
         navigation.navigate('MainTabs');
       }
@@ -535,11 +578,15 @@ const CaurisCardDetailScreen: React.FC = () => {
     }
   };
 
-  if (readingError) {
-    Alert.alert(t('alert_error_title'), readingError, [
-      { text: 'OK', onPress: () => navigation.goBack() },
-    ]);
-  }
+  // Handle reading errors - show alert and reset phase
+  useEffect(() => {
+    if (readingError && phase === 1) {
+      setPhase(0);
+      Alert.alert(t('alert_error_title') || 'Error', readingError, [
+        { text: 'OK' },
+      ]);
+    }
+  }, [readingError, phase]);
 
   // --- UPDATED: Title logic for new phases ---
   const titleTop = t(
@@ -573,7 +620,7 @@ const CaurisCardDetailScreen: React.FC = () => {
 
   const showShells = phase >= 1;
   const divineMessage =
-    reading?.reading?.interpretation ?? t('cauris_default_message');
+    reading?.odu?.interpretation?.meaning ?? t('cauris_default_message');
 
   return (
     <ImageBackground
@@ -680,7 +727,7 @@ const CaurisCardDetailScreen: React.FC = () => {
                   .easing(Easing.out(Easing.quad))}
                 style={[styles.patternName, { color: colors.white }]}
               >
-                {reading?.reading?.odu?.polarity || ''}
+                {reading?.odu?.polarity || ''}
               </Animated.Text>
             )}
           </Animated.View>

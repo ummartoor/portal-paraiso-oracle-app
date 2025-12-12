@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -30,14 +30,17 @@ const { height: SCREEN_HEIGHT, width: SCREEN_WIDTH } = Dimensions.get('screen');
 const ForgotPasswordScreen = () => {
   const theme = useThemeStore(state => state.theme);
   const colors = theme.colors;
+  const [focusedField, setFocusedField] = useState<string | null>(null);
   const navigation =
     useNavigation<NativeStackNavigationProp<AuthStackParamsList>>();
-   const { t } = useTranslation();
+  const { t } = useTranslation();
   // --- ADDED: Get the forgotPassword function from your store ---
   const forgotPassword = useAuthStore(state => state.forgotPassword);
 
   const validationSchema = Yup.object().shape({
-email: Yup.string().email(t('validation_email_invalid')).required(t('validation_email_required')),
+    email: Yup.string()
+      .email(t('validation_email_invalid'))
+      .required(t('validation_email_required')),
   });
 
   return (
@@ -64,10 +67,10 @@ email: Yup.string().email(t('validation_email_invalid')).required(t('validation_
             keyboardShouldPersistTaps="handled"
           >
             <Text style={[styles.heading, { color: colors.white }]}>
-                  {t('forgot_password_header')}
+              {t('forgot_password_header')}
             </Text>
             <Text style={[styles.subheading, { color: colors.primary }]}>
-                  {t('forgot_password_subheader')}
+              {t('forgot_password_subheader')}
             </Text>
 
             <Formik
@@ -82,7 +85,7 @@ email: Yup.string().email(t('validation_email_invalid')).required(t('validation_
                 if (success) {
                   navigation.navigate('OTPScreen', { email: values.email });
                 }
-                
+
                 // Re-enable the button after the process is complete
                 setSubmitting(false);
               }}
@@ -101,16 +104,25 @@ email: Yup.string().email(t('validation_email_invalid')).required(t('validation_
                     {t('email_label')}
                   </Text>
                   <TextInput
-                         placeholder={t('email_placeholder')}
+                    placeholder={t('email_placeholder')}
                     placeholderTextColor="#ccc"
                     onChangeText={handleChange('email')}
-                    onBlur={handleBlur('email')}
+                    onBlur={e => {
+                      handleBlur('email')(e);
+                      setFocusedField(null);
+                    }}
+                    onFocus={() => setFocusedField('email')}
                     value={values.email}
                     style={[
                       styles.input,
                       {
                         backgroundColor: colors.bgBox,
                         color: colors.white,
+                        borderWidth: focusedField === 'email' ? 1 : 0,
+                        borderColor:
+                          focusedField === 'email'
+                            ? colors.primary
+                            : 'transparent',
                       },
                     ]}
                     keyboardType="email-address"
@@ -120,12 +132,12 @@ email: Yup.string().email(t('validation_email_invalid')).required(t('validation_
                     <Text style={styles.errorText}>{errors.email}</Text>
                   )}
 
-                 
                   <TouchableOpacity
                     activeOpacity={0.8}
                     onPress={() => {
-                               Vibration.vibrate([0, 35, 40, 35]);
-                      handleSubmit()}}
+                      Vibration.vibrate([0, 35, 40, 35]);
+                      handleSubmit();
+                    }}
                     style={{ width: '100%' }}
                     disabled={isSubmitting} // Disable button while loading
                   >
@@ -139,7 +151,9 @@ email: Yup.string().email(t('validation_email_invalid')).required(t('validation_
                       {isSubmitting ? (
                         <ActivityIndicator color={colors.primary} />
                       ) : (
-                        <Text style={styles.signinText}>{t('continue_button')}</Text>
+                        <Text style={styles.signinText}>
+                          {t('continue_button')}
+                        </Text>
                       )}
                     </GradientBox>
                   </TouchableOpacity>
@@ -149,12 +163,15 @@ email: Yup.string().email(t('validation_email_invalid')).required(t('validation_
 
             <View style={styles.footer}>
               <Text style={styles.footerText}>{t('back_to_footer')}</Text>
-              <TouchableOpacity onPress={() =>  {
-                         Vibration.vibrate([0, 35, 40, 35]);
-                navigation.navigate('Login')}}>
+              <TouchableOpacity
+                onPress={() => {
+                  Vibration.vibrate([0, 35, 40, 35]);
+                  navigation.navigate('Login');
+                }}
+              >
                 <Text style={[styles.signupLink, { color: colors.primary }]}>
                   {' '}
-                    {t('signin_footer_link')}
+                  {t('signin_footer_link')}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -249,28 +266,6 @@ const styles = StyleSheet.create({
   },
 });
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 // import React from 'react';
 // import {
 //   View,
@@ -352,7 +347,7 @@ const styles = StyleSheet.create({
 //                       {
 //                         backgroundColor: colors.bgBox,
 //                         color: colors.white,
-                 
+
 //                       },
 //                     ]}
 //                   />
@@ -382,7 +377,7 @@ const styles = StyleSheet.create({
 
 //             <View style={styles.footer}>
 //               <Text style={styles.footerText}>Back to</Text>
-//               <TouchableOpacity 
+//               <TouchableOpacity
 //               onPress={() => navigation.navigate('Login')}
 //               >
 //                 <Text style={[styles.signupLink, { color: colors.primary }]}> Sign In</Text>

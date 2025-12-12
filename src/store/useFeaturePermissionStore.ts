@@ -3,59 +3,100 @@ import { useShallow } from 'zustand/react/shallow';
 import axios from 'axios';
 import { API_BASEURL } from '@env';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { TimerData } from '../utils/timerUtils';
 
-// --- TypeScript Interfaces matching API documentation ---
+// --- TypeScript Interfaces matching API v2.0 documentation ---
 
-export interface FeatureAccess {
-  allowed: boolean;
-  dailyLimit: number;
-  usedToday?: number;
-  remaining?: number;
-  unlimited?: boolean;
-  // Feature-specific properties
-  cardsPerReading?: number; // For tarot
-  depth?: string; // For horoscope (e.g., "basic", "advanced")
-  shellsPerReading?: number; // For buzios
+export interface LocalizedString {
+  en: string;
+  pt?: string;
+  [key: string]: string | undefined;
+}
+
+export interface TarotFeatureAccess {
+  cards_per_reading: number;
+  cards_min: number;
+  cards_max: number;
+  daily_limit: number;
+  used_today: number;
+  remaining: number;
+  unlimited: boolean;
+  show_timer: boolean;
+}
+
+export interface BuziosFeatureAccess {
+  shells_per_reading: number;
+  daily_limit: number;
+  used_today: number;
+  remaining: number;
+  unlimited: boolean;
+  show_timer: boolean;
+}
+
+export interface AstrologyFeatureAccess {
+  depth: string;
+  daily_limit: number;
+  used_today: number;
+  remaining: number;
+  unlimited: boolean;
+  show_timer: boolean;
+}
+
+export interface ChatFeatureAccess {
+  daily_limit: number;
+  unlimited: boolean;
+  used_today: number;
+  remaining: number;
+  show_timer: boolean;
 }
 
 export interface PackageInfo {
-  name: string;
+  name: LocalizedString;
   type: string;
   tier: number;
 }
 
-export interface AdditionalFeatures {
-  canSaveReadings: boolean;
-  audioNarration: boolean;
-  adFree: boolean;
-  vipBadge: boolean;
-  earlyAccessFeatures: boolean;
-  prioritySupport: boolean;
+export interface Features {
+  can_save_readings: boolean;
+  audio_narration: boolean;
+  reading_history_days: number;
+  ad_free: boolean;
+  show_ads: boolean;
 }
 
-export interface UsageReset {
-  nextReset: string;
-  resetTime: string;
+export interface Experience {
+  ad_free: boolean;
+  show_ads: boolean;
+  vip_badge: boolean;
+  early_access_features: boolean;
+  priority_support: boolean;
 }
 
 export interface FeatureAccessData {
-  tarot: FeatureAccess;
-  horoscope: FeatureAccess;
-  buzios: FeatureAccess;
-  oracle_chat: FeatureAccess;
-  showAds: boolean;
-  package?: PackageInfo;
-  additionalFeatures?: AdditionalFeatures;
-  usageReset?: UsageReset;
-  timestamp?: string;
+  package: PackageInfo;
+  readings: {
+    tarot: TarotFeatureAccess;
+    buzios: BuziosFeatureAccess;
+    astrology: AstrologyFeatureAccess;
+    chat: ChatFeatureAccess;
+  };
+  features: Features;
+  experience: Experience;
+  next_reset: string;
+  timer: TimerData;
+  show_timer: boolean;
 }
 
 export interface UsageStats {
   tarot_readings: number;
-  horoscope_readings: number;
   buzios_readings: number;
-  oracle_chat_messages: number;
-  period: 'daily' | 'weekly' | 'monthly';
+  astrology_readings: number;
+  chat_questions: number;
+  games_played: number;
+  last_tarot_reading: string | null;
+  last_buzios_reading: string | null;
+  last_astrology_reading: string | null;
+  last_chat_question: string | null;
 }
 
 interface FeaturePermissionState {
@@ -78,22 +119,23 @@ interface FeaturePermissionState {
 
   // Permission check helpers
   canAccessTarot: () => boolean;
-  canAccessHoroscope: () => boolean;
+  canAccessAstrology: () => boolean;
   canAccessBuzios: () => boolean;
   canAccessOracleChat: () => boolean;
   hasReachedDailyLimit: (
-    feature: 'tarot' | 'horoscope' | 'buzios' | 'oracle_chat',
+    feature: 'tarot' | 'astrology' | 'buzios' | 'chat',
   ) => boolean;
   getRemainingUsage: (
-    feature: 'tarot' | 'horoscope' | 'buzios' | 'oracle_chat',
+    feature: 'tarot' | 'astrology' | 'buzios' | 'chat',
   ) => number;
 
   // Additional getters
   getPackageInfo: () => PackageInfo | null;
-  getAdditionalFeatures: () => AdditionalFeatures | null;
-  isUnlimited: (
-    feature: 'tarot' | 'horoscope' | 'buzios' | 'oracle_chat',
-  ) => boolean;
+  getFeatures: () => Features | null;
+  getExperience: () => Experience | null;
+  getTimer: () => TimerData | null;
+  isUnlimited: (feature: 'tarot' | 'astrology' | 'buzios' | 'chat') => boolean;
+  getCardLimits: () => { min: number; max: number } | null;
 }
 
 // Cache duration constants (in milliseconds)
@@ -192,34 +234,56 @@ export const useFeaturePermissionStore = create<FeaturePermissionState>(
             },
           );
 
-          if (response.data?.success && response.data?.data?.features) {
+          console.log('🔐 [API Response] GET /user/feature-access:', {
+            url: `${API_BASEURL}/user/feature-access`,
+            status: response.status,
+            data: response.data,
+          });
+
+          if (response.data?.success && response.data?.data) {
             const data = response.data.data;
             const featureAccess: FeatureAccessData = {
-              tarot: data.features.tarot || {
-                allowed: false,
-                dailyLimit: 0,
-                unlimited: false,
-              },
-              horoscope: data.features.horoscope || {
-                allowed: false,
-                dailyLimit: 0,
-                unlimited: false,
-              },
-              buzios: data.features.buzios || {
-                allowed: false,
-                dailyLimit: 0,
-                unlimited: false,
-              },
-              oracle_chat: data.features.oracle_chat || {
-                allowed: false,
-                dailyLimit: 0,
-                unlimited: false,
-              },
-              showAds: data.showAds ?? true,
               package: data.package,
-              additionalFeatures: data.additionalFeatures,
-              usageReset: data.usageReset,
-              timestamp: data.timestamp,
+              readings: {
+                tarot: data.readings?.tarot || {
+                  cards_per_reading: 3,
+                  cards_min: 1,
+                  cards_max: 3,
+                  daily_limit: 1,
+                  used_today: 0,
+                  remaining: 1,
+                  unlimited: false,
+                  show_timer: true,
+                },
+                buzios: data.readings?.buzios || {
+                  shells_per_reading: 16,
+                  daily_limit: 1,
+                  used_today: 0,
+                  remaining: 1,
+                  unlimited: false,
+                  show_timer: true,
+                },
+                astrology: data.readings?.astrology || {
+                  depth: 'basic',
+                  daily_limit: 0,
+                  used_today: 0,
+                  remaining: 0,
+                  unlimited: false,
+                  show_timer: false,
+                },
+                chat: data.readings?.chat || {
+                  daily_limit: 5,
+                  unlimited: false,
+                  used_today: 0,
+                  remaining: 5,
+                  show_timer: true,
+                },
+              },
+              features: data.features,
+              experience: data.experience,
+              next_reset: data.next_reset,
+              timer: data.timer,
+              show_timer: data.show_timer ?? true,
             };
 
             set({
@@ -288,11 +352,16 @@ export const useFeaturePermissionStore = create<FeaturePermissionState>(
           if (response.data?.success && response.data?.data) {
             const usageStats: UsageStats = {
               tarot_readings: response.data.data.tarot_readings || 0,
-              horoscope_readings: response.data.data.horoscope_readings || 0,
               buzios_readings: response.data.data.buzios_readings || 0,
-              oracle_chat_messages:
-                response.data.data.oracle_chat_messages || 0,
-              period: response.data.data.period || 'daily',
+              astrology_readings: response.data.data.astrology_readings || 0,
+              chat_questions: response.data.data.chat_questions || 0,
+              games_played: response.data.data.games_played || 0,
+              last_tarot_reading: response.data.data.last_tarot_reading || null,
+              last_buzios_reading:
+                response.data.data.last_buzios_reading || null,
+              last_astrology_reading:
+                response.data.data.last_astrology_reading || null,
+              last_chat_question: response.data.data.last_chat_question || null,
             };
 
             set({
@@ -336,15 +405,19 @@ export const useFeaturePermissionStore = create<FeaturePermissionState>(
      */
     canAccessTarot: (): boolean => {
       const { featureAccess } = get();
-      return featureAccess?.tarot?.allowed === true;
+      const tarot = featureAccess?.readings?.tarot;
+      return tarot ? tarot.daily_limit > 0 || tarot.unlimited : false;
     },
 
     /**
-     * Checks if user can access Horoscope feature.
+     * Checks if user can access Astrology feature.
      */
-    canAccessHoroscope: (): boolean => {
+    canAccessAstrology: (): boolean => {
       const { featureAccess } = get();
-      return featureAccess?.horoscope?.allowed === true;
+      const astrology = featureAccess?.readings?.astrology;
+      return astrology
+        ? astrology.daily_limit > 0 || astrology.unlimited
+        : false;
     },
 
     /**
@@ -352,7 +425,8 @@ export const useFeaturePermissionStore = create<FeaturePermissionState>(
      */
     canAccessBuzios: (): boolean => {
       const { featureAccess } = get();
-      return featureAccess?.buzios?.allowed === true;
+      const buzios = featureAccess?.readings?.buzios;
+      return buzios ? buzios.daily_limit > 0 || buzios.unlimited : false;
     },
 
     /**
@@ -360,82 +434,59 @@ export const useFeaturePermissionStore = create<FeaturePermissionState>(
      */
     canAccessOracleChat: (): boolean => {
       const { featureAccess } = get();
-      return featureAccess?.oracle_chat?.allowed === true;
+      const chat = featureAccess?.readings?.chat;
+      return chat ? chat.daily_limit > 0 || chat.unlimited : false;
     },
 
     /**
      * Checks if user has reached daily limit for a feature.
      */
     hasReachedDailyLimit: (
-      featureName: 'tarot' | 'horoscope' | 'buzios' | 'oracle_chat',
+      featureName: 'tarot' | 'astrology' | 'buzios' | 'chat',
     ): boolean => {
-      const { featureAccess, usageStats } = get();
-      const featureData = featureAccess?.[featureName];
-      if (!featureData?.allowed) return true;
+      const { featureAccess } = get();
+      const readings = featureAccess?.readings;
+      if (!readings) return true;
+
+      const featureData = {
+        tarot: readings.tarot,
+        astrology: readings.astrology,
+        buzios: readings.buzios,
+        chat: readings.chat,
+      }[featureName];
+
+      if (!featureData) return true;
 
       // If unlimited, never reached limit
       if (featureData.unlimited === true) return false;
 
-      const limit = featureData.dailyLimit || 0;
-      if (limit === 0) return false; // No limit set
-
-      // Check from feature access response first (more accurate)
-      if (
-        featureData.usedToday !== undefined &&
-        featureData.remaining !== undefined
-      ) {
-        return featureData.remaining <= 0;
-      }
-
-      // Fallback to usage stats
-      if (usageStats) {
-        const used = {
-          tarot: usageStats.tarot_readings,
-          horoscope: usageStats.horoscope_readings,
-          buzios: usageStats.buzios_readings,
-          oracle_chat: usageStats.oracle_chat_messages,
-        }[featureName];
-
-        return used >= limit;
-      }
-
-      return false;
+      // Check remaining count
+      return featureData.remaining <= 0;
     },
 
     /**
      * Gets remaining usage count for a feature.
      */
     getRemainingUsage: (
-      featureName: 'tarot' | 'horoscope' | 'buzios' | 'oracle_chat',
+      featureName: 'tarot' | 'astrology' | 'buzios' | 'chat',
     ): number => {
-      const { featureAccess, usageStats } = get();
-      const featureData = featureAccess?.[featureName];
-      if (!featureData?.allowed) return 0;
+      const { featureAccess } = get();
+      const readings = featureAccess?.readings;
+      if (!readings) return 0;
 
-      // If unlimited, return a large number (or Infinity)
+      const featureData = {
+        tarot: readings.tarot,
+        astrology: readings.astrology,
+        buzios: readings.buzios,
+        chat: readings.chat,
+      }[featureName];
+
+      if (!featureData) return 0;
+
+      // If unlimited, return a large number
       if (featureData.unlimited === true) return 9999;
 
-      const limit = featureData.dailyLimit || 0;
-      if (limit === 0) return Infinity; // No limit set
-
-      // Check from feature access response first
-      if (featureData.remaining !== undefined) {
-        return Math.max(0, featureData.remaining);
-      }
-
-      // Fallback to usage stats
-      if (usageStats) {
-        const used = {
-          tarot: usageStats.tarot_readings,
-          horoscope: usageStats.horoscope_readings,
-          buzios: usageStats.buzios_readings,
-          oracle_chat: usageStats.oracle_chat_messages,
-        }[featureName];
-
-        return Math.max(0, limit - used);
-      }
-
-      return limit;
+      return Math.max(0, featureData.remaining || 0);
     },
 
     // Get package information
@@ -444,18 +495,52 @@ export const useFeaturePermissionStore = create<FeaturePermissionState>(
       return featureAccess?.package || null;
     },
 
-    // Get additional features
-    getAdditionalFeatures: (): AdditionalFeatures | null => {
+    // Get features
+    getFeatures: (): Features | null => {
       const { featureAccess } = get();
-      return featureAccess?.additionalFeatures || null;
+      return featureAccess?.features || null;
+    },
+
+    // Get experience
+    getExperience: (): Experience | null => {
+      const { featureAccess } = get();
+      return featureAccess?.experience || null;
+    },
+
+    // Get timer
+    getTimer: (): TimerData | null => {
+      const { featureAccess } = get();
+      return featureAccess?.timer || null;
     },
 
     // Check if feature has unlimited access
     isUnlimited: (
-      feature: 'tarot' | 'horoscope' | 'buzios' | 'oracle_chat',
+      feature: 'tarot' | 'astrology' | 'buzios' | 'chat',
     ): boolean => {
       const { featureAccess } = get();
-      return featureAccess?.[feature]?.unlimited === true;
+      const readings = featureAccess?.readings;
+      if (!readings) return false;
+
+      const featureData = {
+        tarot: readings.tarot,
+        astrology: readings.astrology,
+        buzios: readings.buzios,
+        chat: readings.chat,
+      }[feature];
+
+      return featureData?.unlimited === true;
+    },
+
+    // Get card limits for tarot
+    getCardLimits: (): { min: number; max: number } | null => {
+      const { featureAccess } = get();
+      const tarot = featureAccess?.readings?.tarot;
+      if (!tarot) return null;
+
+      return {
+        min: tarot.cards_min,
+        max: tarot.cards_max,
+      };
     },
   }),
 );
@@ -465,61 +550,135 @@ export const useFeaturePermissionStore = create<FeaturePermissionState>(
  * Use this in components to check if a feature is accessible.
  */
 export const useFeaturePermission = (
-  feature: 'tarot' | 'horoscope' | 'buzios' | 'oracle_chat',
+  feature: 'tarot' | 'astrology' | 'buzios' | 'chat' | 'horoscope',
 ) => {
   const {
     featureAccess,
     isFetchingFeatureAccess,
     fetchFeatureAccess,
     canAccessTarot,
-    canAccessHoroscope,
+    canAccessAstrology,
     canAccessBuzios,
     canAccessOracleChat,
     hasReachedDailyLimit,
     getRemainingUsage,
     isUnlimited,
     getPackageInfo,
-    getAdditionalFeatures,
+    getFeatures,
+    getExperience,
+    getTimer,
+    getCardLimits,
   } = useFeaturePermissionStore(
     useShallow(state => ({
       featureAccess: state.featureAccess,
       isFetchingFeatureAccess: state.isFetchingFeatureAccess,
       fetchFeatureAccess: state.fetchFeatureAccess,
       canAccessTarot: state.canAccessTarot,
-      canAccessHoroscope: state.canAccessHoroscope,
+      canAccessAstrology: state.canAccessAstrology,
       canAccessBuzios: state.canAccessBuzios,
       canAccessOracleChat: state.canAccessOracleChat,
       hasReachedDailyLimit: state.hasReachedDailyLimit,
       getRemainingUsage: state.getRemainingUsage,
       isUnlimited: state.isUnlimited,
       getPackageInfo: state.getPackageInfo,
-      getAdditionalFeatures: state.getAdditionalFeatures,
+      getFeatures: state.getFeatures,
+      getExperience: state.getExperience,
+      getTimer: state.getTimer,
+      getCardLimits: state.getCardLimits,
     })),
   );
 
-  const checkers = {
+  // Normalize feature name (backward compatibility: 'horoscope' -> 'astrology')
+  const normalizedFeature: 'tarot' | 'astrology' | 'buzios' | 'chat' =
+    feature === 'horoscope' ? 'astrology' : feature;
+
+  // Validate feature parameter
+  const validFeatures = ['tarot', 'astrology', 'buzios', 'chat'] as const;
+  if (!validFeatures.includes(normalizedFeature)) {
+    console.error(
+      `Invalid feature: ${feature} (normalized: ${normalizedFeature}). Must be one of: ${validFeatures.join(
+        ', ',
+      )}`,
+    );
+  }
+
+  const checkers: Record<
+    'tarot' | 'astrology' | 'buzios' | 'chat',
+    () => boolean
+  > = {
     tarot: canAccessTarot,
-    horoscope: canAccessHoroscope,
+    astrology: canAccessAstrology,
     buzios: canAccessBuzios,
-    oracle_chat: canAccessOracleChat,
+    chat: canAccessOracleChat,
   };
 
-  const featureData = featureAccess?.[feature];
+  const readings = featureAccess?.readings;
+  const featureData = readings ? readings[normalizedFeature] : null;
+
+  // Safety check: ensure checker function exists
+  const checker = checkers[normalizedFeature];
+  if (!checker || typeof checker !== 'function') {
+    console.warn(
+      `Feature permission checker not found for feature: ${feature} (normalized: ${normalizedFeature})`,
+    );
+    return {
+      isAllowed: false,
+      hasReachedLimit: true,
+      remainingUsage: 0,
+      dailyLimit: 0,
+      isUnlimited: false,
+      usedToday: 0,
+      isLoading: isFetchingFeatureAccess,
+      refresh: () => fetchFeatureAccess(true),
+      packageInfo: getPackageInfo(),
+      features: getFeatures(),
+      experience: getExperience(),
+      timer: getTimer(),
+      showTimer: featureAccess?.show_timer ?? false,
+      cardsPerReading: undefined,
+      cardsMin: undefined,
+      cardsMax: undefined,
+      cardLimits: null,
+      depth: undefined,
+      shellsPerReading: undefined,
+    };
+  }
 
   return {
-    isAllowed: checkers[feature](),
-    hasReachedLimit: hasReachedDailyLimit(feature),
-    remainingUsage: getRemainingUsage(feature),
-    dailyLimit: featureData?.dailyLimit || 0,
-    isUnlimited: isUnlimited(feature),
-    usedToday: featureData?.usedToday || 0,
+    isAllowed: checker(),
+    hasReachedLimit: hasReachedDailyLimit(normalizedFeature),
+    remainingUsage: getRemainingUsage(normalizedFeature),
+    dailyLimit: featureData?.daily_limit || 0,
+    isUnlimited: isUnlimited(normalizedFeature),
+    usedToday: featureData?.used_today || 0,
     isLoading: isFetchingFeatureAccess,
     refresh: () => fetchFeatureAccess(true),
     packageInfo: getPackageInfo(),
-    additionalFeatures: getAdditionalFeatures(),
-    // Feature-specific properties
-    cardsPerReading: featureData?.cardsPerReading,
-    depth: featureData?.depth,
-    shellsPerReading: featureData?.shellsPerReading,
+    features: getFeatures(),
+    experience: getExperience(),
+    timer: getTimer(),
+    showTimer: featureAccess?.show_timer ?? false,
+    // Feature-specific properties (only for tarot)
+    cardsPerReading:
+      normalizedFeature === 'tarot'
+        ? (featureData as TarotFeatureAccess)?.cards_per_reading
+        : undefined,
+    cardsMin:
+      normalizedFeature === 'tarot'
+        ? (featureData as TarotFeatureAccess)?.cards_min
+        : undefined,
+    cardsMax:
+      normalizedFeature === 'tarot'
+        ? (featureData as TarotFeatureAccess)?.cards_max
+        : undefined,
+    cardLimits: normalizedFeature === 'tarot' ? getCardLimits() : null,
+    depth:
+      normalizedFeature === 'astrology'
+        ? (featureData as AstrologyFeatureAccess)?.depth
+        : undefined,
+    shellsPerReading:
+      normalizedFeature === 'buzios'
+        ? (featureData as BuziosFeatureAccess)?.shells_per_reading
+        : undefined,
   };
 };

@@ -45,7 +45,7 @@ const VerifyLoginOtpScreen = () => {
   const route = useRoute<VerifyLoginOtpScreenRouteProp>();
   const { email } = route.params; // Get email passed from LoginScreen
 
- const { verifyEmailOtp, sendVerificationOtp, completeLogin } = useAuthStore();
+  const { verifyEmailOtp, sendVerificationOtp, completeLogin } = useAuthStore();
 
   const [otp, setOtp] = useState<string[]>(Array(6).fill(''));
   const [timer, setTimer] = useState(120);
@@ -65,18 +65,34 @@ const VerifyLoginOtpScreen = () => {
     if (!/^\d*$/.test(text)) return;
 
     // --- PASTE LOGIC ---
-    // Agar user ne pehle box (index 0) mein 6-digit code paste kiya hai
-    if (index === 0 && text.length === 6) {
-      const newOtp = text.split(''); // Code ko array mein baantein ('123456' -> ['1', '2', ...])
+    // Agar user ne 6-digit code paste kiya hai (kisi bhi field mein)
+    if (text.length === 6) {
+      const newOtp = text.split('').slice(0, 6); // Code ko array mein baantein ('123456' -> ['1', '2', ...])
       setOtp(newOtp);
 
       // Focus ko aakhri input par bhej dein
-      inputRefs.current[otp.length - 1]?.focus();
+      inputRefs.current[5]?.focus();
       return; // Function ko yahin rok dein
     }
 
-    // --- SINGLE DIGIT LOGIC (Aapka original logic) ---
-    // Agar paste nahi hua hai, ya 1 digit se kam hai
+    // --- MULTI-DIGIT INPUT (2-5 digits) ---
+    // If user types multiple digits manually, fill from current index
+    if (text.length > 1 && text.length < 6) {
+      const newOtp = [...otp];
+      const digits = text.split('');
+      for (let i = 0; i < digits.length && index + i < 6; i++) {
+        newOtp[index + i] = digits[i];
+      }
+      setOtp(newOtp);
+
+      // Focus on the next empty field or last field
+      const nextIndex = Math.min(index + digits.length, 5);
+      inputRefs.current[nextIndex]?.focus();
+      return;
+    }
+
+    // --- SINGLE DIGIT LOGIC ---
+    // Agar 1 digit ya empty hai
     if (text.length <= 1) {
       const newOtp = [...otp];
       newOtp[index] = text;
@@ -115,11 +131,11 @@ const VerifyLoginOtpScreen = () => {
     setIsVerifying(true);
     try {
       const success = await verifyEmailOtp(email, otpString);
-            if (success) {
+      if (success) {
         completeLogin();
       }
     } catch (error) {
-      console.error("Verification failed unexpectedly:", error);
+      console.error('Verification failed unexpectedly:', error);
       Alert.alert('Error', 'An unexpected error occurred. Please try again.');
     } finally {
       setIsVerifying(false);
@@ -139,8 +155,8 @@ const VerifyLoginOtpScreen = () => {
         inputRefs.current[0]?.focus();
       }
     } catch (error) {
-       console.error("Resend OTP failed unexpectedly:", error);
-       Alert.alert('Error', 'Failed to resend OTP. Please try again.');
+      console.error('Resend OTP failed unexpectedly:', error);
+      Alert.alert('Error', 'Failed to resend OTP. Please try again.');
     } finally {
       setIsResending(false);
     }
@@ -189,19 +205,17 @@ const VerifyLoginOtpScreen = () => {
                     { backgroundColor: colors.bgBox, color: colors.white },
                   ]}
                   keyboardType="number-pad"
-                  // --- CHANGED: Pehla input 6 digits accept karega, baaki 1 ---
-                  maxLength={index === 0 ? 6 : 1}
+                  // --- CHANGED: Sabhi inputs 6 digits accept kar sakte hain for paste ---
+                  maxLength={6}
                   value={digit}
                   onChangeText={text => handleChange(text, index)}
                   onKeyPress={e => handleKeyPress(e, index)}
                   autoFocus={index === 0}
                   editable={!isVerifying}
-
                   // --- ADDED: iOS ke liye 'From Messages' suggest karega ---
                   textContentType={index === 0 ? 'oneTimeCode' : 'none'}
-
                   // --- ADDED: Android ke liye SMS se auto-read karega ---
-                  autoComplete={index === 0 ? 'sms-otp' : 'off'} 
+                  autoComplete={index === 0 ? 'sms-otp' : 'off'}
                 />
               ))}
             </View>
@@ -210,14 +224,20 @@ const VerifyLoginOtpScreen = () => {
               <Text style={[styles.timerText, { color: colors.white }]}>
                 {formatTimer()}
               </Text>
-              <TouchableOpacity onPress={handleResend} disabled={timer > 0 || isResending}>
+              <TouchableOpacity
+                onPress={handleResend}
+                disabled={timer > 0 || isResending}
+              >
                 {isResending ? (
                   <ActivityIndicator size="small" color={colors.primary} />
                 ) : (
                   <Text
                     style={[
                       styles.resendText,
-                      { color: timer > 0 || isResending ? '#aaa' : colors.primary },
+                      {
+                        color:
+                          timer > 0 || isResending ? '#aaa' : colors.primary,
+                      },
                     ]}
                   >
                     {t('resend_button')}
@@ -242,7 +262,9 @@ const VerifyLoginOtpScreen = () => {
                 {isVerifying ? (
                   <ActivityIndicator color={colors.primary} />
                 ) : (
-                  <Text style={styles.continueText}>{t('continue_button')}</Text>
+                  <Text style={styles.continueText}>
+                    {t('continue_button')}
+                  </Text>
                 )}
               </GradientBox>
             </TouchableOpacity>
@@ -364,10 +386,6 @@ const styles = StyleSheet.create({
     textDecorationLine: 'underline',
   },
 });
-
-
-
-
 
 // import React, { useRef, useState, useEffect } from 'react';
 // import {

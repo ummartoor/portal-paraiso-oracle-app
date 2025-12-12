@@ -174,7 +174,7 @@ const ChatDetailScreen: React.FC<ChatDetailScreenProps> = ({ route }) => {
 
   const renderMessage = useCallback(
     ({ item }: { item: ChatMessage }) => {
-      const isUserMessage = item.role === 'user_message';
+      const isUserMessage = item.role === 'user';
       return (
         <MessageItem
           item={item}
@@ -187,7 +187,7 @@ const ChatDetailScreen: React.FC<ChatDetailScreenProps> = ({ route }) => {
   );
 
   const keyExtractor = useCallback(
-    (item: ChatMessage, index: number) => item._id || `msg-${index}`,
+    (item: ChatMessage, index: number) => item.message_id || `msg-${index}`,
     [],
   );
 

@@ -14,7 +14,6 @@ import { Fonts } from '../../../constants/fonts';
 import GradientBox from '../../../components/GradientBox';
 import { useThemeStore } from '../../../store/useThemeStore';
 
-
 import {
   useBuziosStore,
   BuziosHistoryItem,
@@ -24,24 +23,24 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
 
 const BuziosHistoryList: React.FC = () => {
-  const navigation = useNavigation<NativeStackNavigationProp<AppStackParamList>>();
+  const navigation =
+    useNavigation<NativeStackNavigationProp<AppStackParamList>>();
   const { colors } = useThemeStore(s => s.theme);
   const { t } = useTranslation();
 
-  // Store 
+  // Store
   const { history, isLoadingHistory, getBuziosHistory } = useBuziosStore(
-    useShallow((state) => ({
+    useShallow(state => ({
       history: state.history,
       isLoadingHistory: state.isLoadingHistory,
       getBuziosHistory: state.getBuziosHistory,
-    }))
+    })),
   );
-
 
   useFocusEffect(
     React.useCallback(() => {
       getBuziosHistory();
-    }, [getBuziosHistory])
+    }, [getBuziosHistory]),
   );
 
   const formatDate = (dateString: string) => {
@@ -57,11 +56,9 @@ const BuziosHistoryList: React.FC = () => {
       style={styles.historyCard}
       activeOpacity={0.7}
       onPress={() => {
-    
-        navigation.navigate('BuziosHistoryDetail', { history_uid: item._id});
+        navigation.navigate('BuziosHistoryDetail', { history_uid: item._id });
       }}
     >
-
       <Image
         source={require('../../../assets/images/Caris.png')} // Make sure you have an image here
         style={styles.cardIcon}
@@ -69,13 +66,13 @@ const BuziosHistoryList: React.FC = () => {
       <View style={styles.cardTextContainer}>
         {/* Static title */}
         <Text style={styles.cardTitle}>{t('library_buzious')}</Text>
-  
+
         <Text style={styles.cardSubtitle} numberOfLines={2}>
           {item.user_question}
         </Text>
       </View>
       <View style={styles.cardRightContainer}>
-        <Text style={styles.cardDate}>{formatDate(item.reading_date)}</Text>
+        <Text style={styles.cardDate}>{formatDate(item.created_at)}</Text>
 
         <GradientBox
           colors={[colors.black, colors.bgBox]}
@@ -92,14 +89,18 @@ const BuziosHistoryList: React.FC = () => {
 
   if (isLoadingHistory) {
     return (
-      <ActivityIndicator size="large" color={colors.primary} style={styles.loader} />
+      <ActivityIndicator
+        size="large"
+        color={colors.primary}
+        style={styles.loader}
+      />
     );
   }
 
   if (!isLoadingHistory && (!history || history.length === 0)) {
     return (
       <View style={styles.emptyContainer}>
-         <Text style={styles.emptyText}>{t('EMPTY_TEXT')}</Text>
+        <Text style={styles.emptyText}>{t('EMPTY_TEXT')}</Text>
       </View>
     );
   }
@@ -108,7 +109,7 @@ const BuziosHistoryList: React.FC = () => {
     <FlatList
       data={history}
       renderItem={renderHistoryItem}
-      keyExtractor={(item) => item._id}
+      keyExtractor={item => item._id}
       contentContainerStyle={{
         paddingHorizontal: 16,
         paddingTop: 20,

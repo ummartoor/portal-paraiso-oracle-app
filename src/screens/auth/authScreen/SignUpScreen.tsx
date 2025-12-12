@@ -40,6 +40,7 @@ const SignUpScreen = () => {
   const colors = theme.colors;
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [focusedField, setFocusedField] = useState<string | null>(null);
   const { register, isRegistering } = useRegisterStore();
 
   const { sendVerificationOtp } = useAuthStore();
@@ -156,11 +157,23 @@ const SignUpScreen = () => {
                     placeholder={t('name_placeholder')}
                     placeholderTextColor="#ccc"
                     onChangeText={handleChange('name')}
-                    onBlur={handleBlur('name')}
+                    onBlur={e => {
+                      handleBlur('name')(e);
+                      setFocusedField(null);
+                    }}
+                    onFocus={() => setFocusedField('name')}
                     value={values.name}
                     style={[
                       styles.input,
-                      { backgroundColor: colors.bgBox, color: colors.white },
+                      {
+                        backgroundColor: colors.bgBox,
+                        color: colors.white,
+                        borderWidth: focusedField === 'name' ? 1 : 0,
+                        borderColor:
+                          focusedField === 'name'
+                            ? colors.primary
+                            : 'transparent',
+                      },
                     ]}
                   />
                   {errors.name && touched.name && (
@@ -175,13 +188,25 @@ const SignUpScreen = () => {
                     placeholder={t('email_placeholder')}
                     placeholderTextColor="#ccc"
                     onChangeText={handleChange('email')}
-                    onBlur={handleBlur('email')}
+                    onBlur={e => {
+                      handleBlur('email')(e);
+                      setFocusedField(null);
+                    }}
+                    onFocus={() => setFocusedField('email')}
                     value={values.email}
                     autoCapitalize="none"
                     keyboardType="email-address"
                     style={[
                       styles.input,
-                      { backgroundColor: colors.bgBox, color: colors.white },
+                      {
+                        backgroundColor: colors.bgBox,
+                        color: colors.white,
+                        borderWidth: focusedField === 'email' ? 1 : 0,
+                        borderColor:
+                          focusedField === 'email'
+                            ? colors.primary
+                            : 'transparent',
+                      },
                     ]}
                   />
                   {errors.email && touched.email && (
@@ -196,7 +221,14 @@ const SignUpScreen = () => {
                     style={[
                       styles.input,
                       styles.passwordWrapper,
-                      { backgroundColor: colors.bgBox },
+                      {
+                        backgroundColor: colors.bgBox,
+                        borderWidth: focusedField === 'password' ? 1 : 0,
+                        borderColor:
+                          focusedField === 'password'
+                            ? colors.primary
+                            : 'transparent',
+                      },
                     ]}
                   >
                     <TextInput
@@ -204,7 +236,11 @@ const SignUpScreen = () => {
                       placeholderTextColor="#ccc"
                       secureTextEntry={!showPassword}
                       onChangeText={handleChange('password')}
-                      onBlur={handleBlur('password')}
+                      onBlur={e => {
+                        handleBlur('password')(e);
+                        setFocusedField(null);
+                      }}
+                      onFocus={() => setFocusedField('password')}
                       value={values.password}
                       style={{ flex: 1, color: colors.white }}
                       textContentType="newPassword" // <-- **IMPROVEMENT 3**: textContentType ADDED
@@ -230,7 +266,14 @@ const SignUpScreen = () => {
                     style={[
                       styles.input,
                       styles.passwordWrapper,
-                      { backgroundColor: colors.bgBox },
+                      {
+                        backgroundColor: colors.bgBox,
+                        borderWidth: focusedField === 'confirmPassword' ? 1 : 0,
+                        borderColor:
+                          focusedField === 'confirmPassword'
+                            ? colors.primary
+                            : 'transparent',
+                      },
                     ]}
                   >
                     <TextInput
@@ -238,7 +281,11 @@ const SignUpScreen = () => {
                       placeholderTextColor="#ccc"
                       secureTextEntry={!showConfirmPassword}
                       onChangeText={handleChange('confirmPassword')}
-                      onBlur={handleBlur('confirmPassword')}
+                      onBlur={e => {
+                        handleBlur('confirmPassword')(e);
+                        setFocusedField(null);
+                      }}
+                      onFocus={() => setFocusedField('confirmPassword')}
                       value={values.confirmPassword}
                       style={{ flex: 1, color: colors.white }}
                       textContentType="newPassword" // <-- **IMPROVEMENT 3**: textContentType ADDED

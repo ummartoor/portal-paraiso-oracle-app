@@ -1,4 +1,3 @@
-
 // import React, { useRef, useState, useEffect } from 'react';
 // import {
 //   View,
@@ -7,26 +6,26 @@
 //   TextInput,
 //   TouchableOpacity,
 //   StatusBar,
-//   ScrollView, 
+//   ScrollView,
 //   ImageBackground,
 //   KeyboardAvoidingView,
 //   Platform,
 //   Dimensions,
-//   ActivityIndicator, 
+//   ActivityIndicator,
 //   Alert,
 //   NativeSyntheticEvent,
 //   TextInputKeyPressEventData,
-//   Vibration, 
+//   Vibration,
 // } from 'react-native';
 // import { SafeAreaView } from 'react-native-safe-area-context';
-// import { useNavigation, useRoute, RouteProp } from '@react-navigation/native'; 
+// import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 // import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 // import { useThemeStore } from '../../../store/useThemeStore';
 // import { Fonts } from '../../../constants/fonts';
 // import { AuthStackParamsList } from '../../../navigation/routeTypes';
 // import GradientBox from '../../../components/GradientBox';
-// import { useAuthStore } from '../../../store/useAuthStore'; 
+// import { useAuthStore } from '../../../store/useAuthStore';
 // import { useTranslation } from 'react-i18next';
 // const { height: SCREEN_HEIGHT, width: SCREEN_WIDTH } = Dimensions.get('screen');
 
@@ -38,7 +37,7 @@
 //   const colors = theme.colors;
 //   const navigation =
 //     useNavigation<NativeStackNavigationProp<AuthStackParamsList>>();
-//    const { t } = useTranslation(); 
+//    const { t } = useTranslation();
 //   //  Get email from previous screen ---
 //   const route = useRoute<OTPScreenRouteProp>();
 //   const { email } = route.params;
@@ -68,7 +67,7 @@
 //       inputRefs.current[index + 1]?.focus();
 //     }
 //   };
-  
+
 //   // --- ADDED: Handle backspace key press ---
 //   const handleKeyPress = (
 //     e: NativeSyntheticEvent<TextInputKeyPressEventData>,
@@ -93,7 +92,7 @@
 //       Alert.alert(t('alert_error_title'), t('alert_otp_incomplete_message'));
 //       return;
 //     }
-    
+
 //     setIsVerifying(true);
 //     const success = await verifyOtp(email, otpString);
 //     if (success) {
@@ -103,7 +102,7 @@
 //     }
 //     setIsVerifying(false);
 //   };
-  
+
 //   // --- ADDED: Handle Resend OTP ---
 // const handleResend = async () => {
 //   setIsResending(true);
@@ -332,20 +331,6 @@
 //   },
 // });
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 import React, { useRef, useState, useEffect } from 'react';
 import {
   View,
@@ -354,29 +339,29 @@ import {
   TextInput,
   TouchableOpacity,
   StatusBar,
-  ScrollView, 
+  ScrollView,
   ImageBackground,
   KeyboardAvoidingView,
   Platform,
   Dimensions,
-  ActivityIndicator, 
+  ActivityIndicator,
   Alert,
   NativeSyntheticEvent,
   TextInputKeyPressEventData,
-  // Vibration, 
+  // Vibration,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation, useRoute, RouteProp } from '@react-navigation/native'; 
+import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 import { useThemeStore } from '../../../store/useThemeStore';
 import { Fonts } from '../../../constants/fonts';
 import { AuthStackParamsList } from '../../../navigation/routeTypes';
 import GradientBox from '../../../components/GradientBox';
-import { useAuthStore } from '../../../store/useAuthStore'; 
+import { useAuthStore } from '../../../store/useAuthStore';
 import { useTranslation } from 'react-i18next';
-import { useHaptic } from "../../../hooks/useHaptic"; 
-import { HapticFeedbackTypes } from "react-native-haptic-feedback";
+import { useHaptic } from '../../../hooks/useHaptic';
+import { HapticFeedbackTypes } from 'react-native-haptic-feedback';
 const { height: SCREEN_HEIGHT, width: SCREEN_WIDTH } = Dimensions.get('screen');
 
 //  Type for route params ---
@@ -387,14 +372,14 @@ const OTPScreen = () => {
   const colors = theme.colors;
   const navigation =
     useNavigation<NativeStackNavigationProp<AuthStackParamsList>>();
-   const { t } = useTranslation(); 
-     const { trigger: triggerHaptic } = useHaptic();
+  const { t } = useTranslation();
+  const { trigger: triggerHaptic } = useHaptic();
   //  Get email from previous screen ---
   const route = useRoute<OTPScreenRouteProp>();
   const { email } = route.params;
 
   //  Get store functions ---
-  const { verifyOtp, forgotPassword} = useAuthStore();
+  const { verifyOtp, forgotPassword } = useAuthStore();
 
   const [otp, setOtp] = useState<string[]>(Array(6).fill(''));
   const [timer, setTimer] = useState(120);
@@ -414,18 +399,34 @@ const OTPScreen = () => {
     if (!/^\d*$/.test(text)) return;
 
     // --- PASTE LOGIC ---
-    // Agar user ne pehle box (index 0) mein 6-digit code paste kiya hai
-    if (index === 0 && text.length === 6) {
-      const newOtp = text.split(''); // Code ko array mein baantein ('123456' -> ['1', '2', ...])
+    // Agar user ne 6-digit code paste kiya hai (kisi bhi field mein)
+    if (text.length === 6) {
+      const newOtp = text.split('').slice(0, 6); // Code ko array mein baantein ('123456' -> ['1', '2', ...])
       setOtp(newOtp);
 
       // Focus ko aakhri input par bhej dein
-      inputRefs.current[otp.length - 1]?.focus();
+      inputRefs.current[5]?.focus();
       return; // Function ko yahin rok dein
     }
 
-    // --- SINGLE DIGIT LOGIC (Aapka original logic) ---
-    // Agar paste nahi hua hai, ya 1 digit se kam hai
+    // --- MULTI-DIGIT INPUT (2-5 digits) ---
+    // If user types multiple digits manually, fill from current index
+    if (text.length > 1 && text.length < 6) {
+      const newOtp = [...otp];
+      const digits = text.split('');
+      for (let i = 0; i < digits.length && index + i < 6; i++) {
+        newOtp[index + i] = digits[i];
+      }
+      setOtp(newOtp);
+
+      // Focus on the next empty field or last field
+      const nextIndex = Math.min(index + digits.length, 5);
+      inputRefs.current[nextIndex]?.focus();
+      return;
+    }
+
+    // --- SINGLE DIGIT LOGIC ---
+    // Agar 1 digit ya empty hai
     if (text.length <= 1) {
       const newOtp = [...otp];
       newOtp[index] = text;
@@ -437,7 +438,7 @@ const OTPScreen = () => {
       }
     }
   };
-  
+
   // --- Handle backspace key press ---
   const handleKeyPress = (
     e: NativeSyntheticEvent<TextInputKeyPressEventData>,
@@ -456,34 +457,34 @@ const OTPScreen = () => {
 
   // --- Handle OTP verification ---
   const handleContinue = async () => {
-                   triggerHaptic(HapticFeedbackTypes.impactLight); 
+    triggerHaptic(HapticFeedbackTypes.impactLight);
     const otpString = otp.join('');
     if (otpString.length !== 6) {
       Alert.alert(t('alert_error_title'), t('alert_otp_incomplete_message'));
       return;
     }
-    
+
     setIsVerifying(true);
     const success = await verifyOtp(email, otpString);
     if (success) {
       // Pass email to the next screen
-                     triggerHaptic(HapticFeedbackTypes.impactLight); 
+      triggerHaptic(HapticFeedbackTypes.impactLight);
       navigation.navigate('ConfirmPassword', { email });
     }
     setIsVerifying(false);
   };
-  
+
   // --- Handle Resend OTP ---
-const handleResend = async () => {
-  setIsResending(true);
-  const success = await forgotPassword(email); 
-  if (success) {
-    setTimer(120);
-    setOtp(Array(6).fill(''));
-    inputRefs.current[0]?.focus();
-  }
-  setIsResending(false);
-};
+  const handleResend = async () => {
+    setIsResending(true);
+    const success = await forgotPassword(email);
+    if (success) {
+      setTimer(120);
+      setOtp(Array(6).fill(''));
+      inputRefs.current[0]?.focus();
+    }
+    setIsResending(false);
+  };
 
   return (
     <ImageBackground
@@ -507,14 +508,14 @@ const handleResend = async () => {
             keyboardShouldPersistTaps="handled"
           >
             <Text style={[styles.heading, { color: colors.white }]}>
-                    {t('otp_header')}
+              {t('otp_header')}
             </Text>
             <Text style={[styles.subheading, { color: colors.primary }]}>
-               {t('otp_subheader')}
+              {t('otp_subheader')}
             </Text>
 
             <Text style={[styles.label, { color: colors.white }]}>
-           {t('otp_label')}
+              {t('otp_label')}
             </Text>
             <View style={styles.otpContainer}>
               {otp.map((digit, index) => (
@@ -528,18 +529,16 @@ const handleResend = async () => {
                     { backgroundColor: colors.bgBox, color: colors.white },
                   ]}
                   keyboardType="number-pad"
-                  // --- CHANGED: Pehla input 6 digits accept karega, baaki 1 ---
-                  maxLength={index === 0 ? 6 : 1}
+                  // --- CHANGED: Sabhi inputs 6 digits accept kar sakte hain for paste ---
+                  maxLength={6}
                   value={digit}
                   onChangeText={text => handleChange(text, index)}
                   onKeyPress={e => handleKeyPress(e, index)}
                   autoFocus={index === 0}
-                  
                   // --- ADDED: iOS ke liye 'From Messages' suggest karega ---
                   textContentType={index === 0 ? 'oneTimeCode' : 'none'}
-
                   // --- ADDED: Android ke liye SMS se auto-read karega ---
-                  autoComplete={index === 0 ? 'sms-otp' : 'off'} 
+                  autoComplete={index === 0 ? 'sms-otp' : 'off'}
                 />
               ))}
             </View>
@@ -548,7 +547,10 @@ const handleResend = async () => {
               <Text style={[styles.timerText, { color: colors.white }]}>
                 {formatTimer()}
               </Text>
-              <TouchableOpacity onPress={handleResend} disabled={timer > 0 || isResending}>
+              <TouchableOpacity
+                onPress={handleResend}
+                disabled={timer > 0 || isResending}
+              >
                 <View style={styles.resendContainer}>
                   {isResending ? (
                     <ActivityIndicator size="small" color={colors.primary} />
@@ -559,7 +561,7 @@ const handleResend = async () => {
                         { color: timer > 0 ? '#aaa' : colors.primary },
                       ]}
                     >
-              {t('resend_button')}
+                      {t('resend_button')}
                     </Text>
                   )}
                 </View>
@@ -570,7 +572,7 @@ const handleResend = async () => {
               activeOpacity={0.8}
               onPress={handleContinue}
               style={{ width: '100%' }}
-              disabled={isVerifying} 
+              disabled={isVerifying}
             >
               <GradientBox
                 colors={[colors.black, colors.bgBox]}
@@ -582,19 +584,24 @@ const handleResend = async () => {
                 {isVerifying ? (
                   <ActivityIndicator color={colors.primary} />
                 ) : (
-                  <Text style={styles.continueText}>{t('continue_button')}</Text>
+                  <Text style={styles.continueText}>
+                    {t('continue_button')}
+                  </Text>
                 )}
               </GradientBox>
             </TouchableOpacity>
 
             <View style={styles.footer}>
               <Text style={styles.footerText}>{t('back_to_footer')}</Text>
-              <TouchableOpacity onPress={() =>  {
-                               triggerHaptic(HapticFeedbackTypes.impactLight); 
-                navigation.navigate('Login')}}>
+              <TouchableOpacity
+                onPress={() => {
+                  triggerHaptic(HapticFeedbackTypes.impactLight);
+                  navigation.navigate('Login');
+                }}
+              >
                 <Text style={[styles.signupLink, { color: colors.primary }]}>
                   {' '}
-                {t('signin_footer_link')}
+                  {t('signin_footer_link')}
                 </Text>
               </TouchableOpacity>
             </View>

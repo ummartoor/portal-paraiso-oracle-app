@@ -168,8 +168,10 @@ const TarotCardDetailScreen: React.FC = () => {
   // };
   const performSaveAndNavigate = async () => {
     if (isSavingLoading) return; // Check again in case
-    await saveReading();
-    navigation.navigate('MainTabs');
+    if (readingData?.reading_id && userQuestion) {
+      await saveReading(readingData.reading_id, userQuestion);
+      navigation.navigate('MainTabs');
+    }
   };
 
   // --- UPDATE THIS FUNCTION ---
@@ -241,7 +243,7 @@ const TarotCardDetailScreen: React.FC = () => {
 
   useEffect(() => {
     if (apiCards.length > 0) {
-      const shuffledApiCards = shuffleArray(apiCards);
+      const shuffledApiCards = shuffleArray(apiCards as any);
       const cardBackImg = require('../../../../../assets/images/deskCard.png');
       const transformedDeck = shuffledApiCards.map(card => ({
         ...card,
@@ -263,9 +265,9 @@ const TarotCardDetailScreen: React.FC = () => {
   useEffect(() => {
     const prepareReadingAudio = async () => {
       // We only preload if we have the necessary data and a unique ID for the reading
-      if (readingData?.reading?.introduction && selectedCards.length > 0) {
+      if (readingData?.reading && selectedCards.length > 0) {
         setIsPreloadingAudio(true);
-        const textToPreload = `An introduction to your reading: ${readingData.reading.introduction}`;
+        const textToPreload = `An introduction to your reading: ${readingData.reading}`;
 
         // --- THE FIX IS HERE ---
         // Create a unique ID from the selected cards to use for caching the audio file.
@@ -639,10 +641,10 @@ const TarotCardDetailScreen: React.FC = () => {
                   </View>
 
                   <View style={styles.readingContentContainer}>
-                    {readingData?.reading?.introduction && (
+                    {readingData?.reading && (
                       <>
                         <Text style={styles.readingParagraph}>
-                          "{readingData.reading.introduction}"
+                          "{readingData.reading}"
                         </Text>
                         <View style={styles.readMoreContainer}>
                           <TouchableOpacity

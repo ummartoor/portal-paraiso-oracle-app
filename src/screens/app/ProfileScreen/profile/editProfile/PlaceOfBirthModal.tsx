@@ -29,6 +29,7 @@ const PlaceOfBirthModal: React.FC<PlaceOfBirthModalProps> = ({
   const colors = useThemeStore(state => state.theme.colors);
   const { t } = useTranslation();
   const [place, setPlace] = useState(defaultValue);
+  const [isFocused, setIsFocused] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   useEffect(() => {
     if (isVisible) {
@@ -62,9 +63,18 @@ const PlaceOfBirthModal: React.FC<PlaceOfBirthModalProps> = ({
                 placeholderTextColor="rgba(255,255,255,0.6)"
                 value={place}
                 onChangeText={setPlace}
+                onFocus={() => setIsFocused(true)}
+                onBlur={() => setIsFocused(false)}
                 style={[
                   styles(colors).input,
-                  { backgroundColor: colors.bgBox, color: colors.white },
+                  {
+                    backgroundColor: colors.bgBox,
+                    color: colors.white,
+                    borderWidth: isFocused ? 1 : 1,
+                    borderColor: isFocused
+                      ? colors.primary
+                      : 'rgba(255,255,255,0.6)',
+                  },
                 ]}
               />
             </View>

@@ -260,10 +260,7 @@ const SubscriptionPlanModal: React.FC<SubscriptionPlanModalProps> = ({
       const { error: initError } = await initPaymentSheet({
         merchantDisplayName: 'Portal Paraiso, Inc.',
         paymentIntentClientSecret: paymentData.clientSecret,
-        // Note: Guide says false, but true is required for recurring subscriptions to save payment method
-        // Keeping true as it's correct for subscription billing
         allowsDelayedPaymentMethods: true,
-        returnURL: 'portalparaiso://payment-return',
         // Explicitly omit customerId and customerEphemeralKeySecret
         // This prevents using saved payment methods from customer account
         defaultBillingDetails: { name: 'Customer' },
@@ -284,8 +281,7 @@ const SubscriptionPlanModal: React.FC<SubscriptionPlanModalProps> = ({
       }
 
       // Step 3: Present payment sheet
-      const { error: paymentError, paymentIntent: result } =
-        await presentPaymentSheet();
+      const { error: paymentError } = await presentPaymentSheet();
 
       if (paymentError) {
         if (paymentError.code !== 'Canceled') {
@@ -298,36 +294,7 @@ const SubscriptionPlanModal: React.FC<SubscriptionPlanModalProps> = ({
         return;
       }
 
-      // Step 4: Check payment result status
-      if (result?.status !== 'Succeeded') {
-        Alert.alert(
-          'Payment Not Completed',
-          `Payment status: ${result?.status || 'unknown'}. Please try again.`,
-        );
-        setProcessingPackageId(null);
-        return;
-      }
-
-      // Step 5: Verify payment (backup for webhook delays)
-      const { verifyPayment } = useStripeStore.getState();
-      try {
-        await verifyPayment(paymentData.paymentIntentId);
-        if (__DEV__) {
-          console.log(
-            'Payment verified successfully via verify-payment endpoint',
-          );
-        }
-      } catch (error) {
-        // Verification failed, but continue with polling as webhook may still process
-        if (__DEV__) {
-          console.warn(
-            'Payment verification failed, continuing with polling:',
-            error,
-          );
-        }
-      }
-
-      // Step 6: Payment confirmed - show processing message and poll for webhook
+      // Step 4: Payment confirmed - show processing message and poll for webhook
       Alert.alert(
         'Payment Confirmed',
         'Processing your payment. Please wait...',
@@ -335,7 +302,7 @@ const SubscriptionPlanModal: React.FC<SubscriptionPlanModalProps> = ({
         { cancelable: false },
       );
 
-      // Step 7: Poll for subscription status update (webhook will process payment)
+      // Poll for subscription status update (webhook will process payment)
       const { pollSubscriptionStatus } = await import(
         '../utils/subscriptionPolling'
       );

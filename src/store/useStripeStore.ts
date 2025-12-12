@@ -72,6 +72,10 @@ export interface PurchaseMetadata {
   platform: string;
   package_name: string;
   price_id: string;
+  cancel_type?: string;
+  canceled_at?: string;
+  period_end?: string | null;
+  reason?: string;
 }
 
 export interface Purchase {
@@ -121,6 +125,7 @@ interface StripeState {
   createPaymentIntent: (
     packageId: string,
     priceId: string,
+    isPlanChange?: boolean,
   ) => Promise<{
     clientSecret: string;
     paymentIntentId: string;
@@ -140,6 +145,16 @@ interface StripeState {
 
   isVerifyingPayment: boolean;
   verificationError: string | null;
+  /**
+   * Verify payment intent - Production endpoint for backup verification flow
+   * This is used as a fallback when webhook processing is delayed
+   */
+  verifyPayment: (
+    paymentIntentId: string,
+  ) => Promise<{ success: boolean; subscription?: any }>;
+  /**
+   * @deprecated Debug-only endpoint. Use verifyPayment for production.
+   */
   debugVerifyPayment: (paymentIntentId: string) => Promise<boolean>;
 
   purchaseHistory: Purchase[] | null;
@@ -156,7 +171,7 @@ interface StripeState {
 
   isCancelling: boolean;
   cancelError: string | null;
-  cancelSubscription: () => Promise<boolean>;
+  cancelSubscription: (cancelImmediately?: boolean) => Promise<boolean>;
 }
 
 // Helper function to get auth token
@@ -256,6 +271,12 @@ export const useStripeStore = create<StripeState>((set, get) => ({
           headers,
         });
 
+        console.log('📦 [API Response] GET /stripe/packages:', {
+          url: `${API_BASEURL}/stripe/packages`,
+          status: response.status,
+          data: response.data,
+        });
+
         if (response.data?.success) {
           // Handle different response structures
           const packagesData =
@@ -322,6 +343,7 @@ export const useStripeStore = create<StripeState>((set, get) => ({
   createPaymentIntent: async (
     packageId: string,
     priceId: string,
+    isPlanChange?: boolean,
   ): Promise<{
     clientSecret: string;
     paymentIntentId: string;
@@ -331,7 +353,12 @@ export const useStripeStore = create<StripeState>((set, get) => ({
     try {
       const token = await getAuthToken();
       const headers = { 'x-auth-token': token };
-      const payload = { packageId, priceId };
+      // According to API docs, request only includes packageId and priceId
+      // Backend determines isPlanChange and returns it in response
+      const payload = {
+        packageId,
+        priceId,
+      };
 
       const fetchData = async () => {
         const response = await axios.post(
@@ -340,27 +367,110 @@ export const useStripeStore = create<StripeState>((set, get) => ({
           { headers },
         );
 
-        if (response.data?.success && response.data?.data?.client_secret) {
-          set({ isCreatingIntent: false });
-          return {
-            clientSecret: response.data.data.client_secret,
-            paymentIntentId: response.data.data.payment_intent_id,
-            subscriptionId: response.data.data.subscription_id,
-          };
-        } else {
-          throw new Error(
-            response.data?.message ||
-              response.data?.error ||
-              'Failed to create payment intent.',
-          );
+        console.log('💳 [API Response] POST /stripe/payment-intent:', {
+          url: `${API_BASEURL}/stripe/payment-intent`,
+          status: response.status,
+          requestPayload: payload,
+          data: response.data,
+        });
+
+        // Handle both response structures:
+        // 1. { success: true, data: { client_secret, ... } }
+        // 2. { success: true, clientSecret, ... } (direct fields)
+        if (response.data?.success) {
+          const clientSecret =
+            response.data.data?.client_secret || response.data.clientSecret;
+          const paymentIntentId =
+            response.data.data?.payment_intent_id ||
+            response.data.paymentIntentId;
+          const subscriptionId =
+            response.data.data?.subscription_id || response.data.subscriptionId;
+          const responseIsPlanChange =
+            response.data.data?.isPlanChange ?? response.data.isPlanChange;
+
+          if (clientSecret) {
+            set({ isCreatingIntent: false });
+
+            // Log if this is a plan change (from backend response)
+            if (responseIsPlanChange && __DEV__) {
+              console.log(
+                'Plan change detected by backend. Current plan continues until period end.',
+              );
+            }
+
+            return {
+              clientSecret,
+              paymentIntentId,
+              subscriptionId,
+            };
+          }
         }
+
+        // If we get here, there was an error response
+        // Check for "already subscribed" error specifically
+        const errorMessage =
+          response.data?.message ||
+          response.data?.error ||
+          'Failed to create payment intent.';
+
+        // Handle "already subscribed" error with a more user-friendly message
+        if (
+          errorMessage.toLowerCase().includes('already subscribed') ||
+          errorMessage
+            .toLowerCase()
+            .includes('already have an active subscription')
+        ) {
+          // If this is a plan change attempt, provide a different message
+          if (isPlanChange) {
+            throw new Error(
+              'Unable to change plan. The backend may not support plan changes for active subscriptions. Please contact support or cancel your current subscription first.',
+            );
+          } else {
+            throw new Error(
+              'You already have an active subscription to this plan. Please check your subscription details or cancel your current subscription before purchasing a new one.',
+            );
+          }
+        }
+
+        throw new Error(errorMessage);
       };
 
       return await retryApiCall(fetchData, 2, 1000);
     } catch (error: unknown) {
       const errorMessage = getErrorMessage(error);
       set({ intentError: errorMessage, isCreatingIntent: false });
-      Alert.alert('Payment Error', errorMessage);
+
+      // Show user-friendly alert for "already subscribed" error
+      // For plan changes, the error message already indicates it's a plan change issue
+      // so we show a more helpful message
+      if (
+        errorMessage.toLowerCase().includes('already subscribed') ||
+        errorMessage
+          .toLowerCase()
+          .includes('already have an active subscription')
+      ) {
+        if (isPlanChange) {
+          // For plan changes, show a more specific error message
+          Alert.alert(
+            'Plan Change Not Supported',
+            'Unable to change your subscription plan while you have an active subscription. Please contact support or cancel your current subscription first.',
+            [{ text: 'OK', style: 'default' }],
+          );
+        } else {
+          Alert.alert('Subscription Already Active', errorMessage, [
+            {
+              text: 'View Subscription',
+              onPress: () => {
+                // Navigate to subscription details if needed
+                // This would require navigation context, so we'll just show the alert
+              },
+            },
+            { text: 'OK', style: 'default' },
+          ]);
+        }
+      } else {
+        Alert.alert('Payment Error', errorMessage);
+      }
       return null;
     }
   },
@@ -380,9 +490,12 @@ export const useStripeStore = create<StripeState>((set, get) => ({
         { headers },
       );
 
-      if (__DEV__) {
-        console.log('Confirm Payment Response:', response.data);
-      }
+      console.log('✅ [API Response] POST /stripe/confirm-payment:', {
+        url: `${API_BASEURL}/stripe/confirm-payment`,
+        status: response.status,
+        requestPayload: payload,
+        data: response.data,
+      });
 
       if (response.data?.success) {
         set({ isConfirmingPayment: false });
@@ -444,6 +557,12 @@ export const useStripeStore = create<StripeState>((set, get) => ({
           },
         );
 
+        console.log('📜 [API Response] GET /user/purchase-history:', {
+          url: `${API_BASEURL}/user/purchase-history`,
+          status: response.status,
+          data: response.data,
+        });
+
         if (response.data?.success && response.data?.data?.purchases) {
           set({
             purchaseHistory: response.data.data.purchases as Purchase[],
@@ -501,9 +620,35 @@ export const useStripeStore = create<StripeState>((set, get) => ({
           { headers },
         );
 
+        console.log('📋 [API Response] GET /stripe/current-subscription:', {
+          url: `${API_BASEURL}/stripe/current-subscription`,
+          status: response.status,
+          data: response.data,
+        });
+
         if (response.data?.success && response.data?.data) {
+          const subscriptionData = response.data
+            .data as CurrentSubscriptionData;
+
+          if (__DEV__) {
+            console.log('Subscription data received:', {
+              hasVipSubscription: !!subscriptionData.vipSubscription,
+              vipSubscription: subscriptionData.vipSubscription
+                ? {
+                    packageId: subscriptionData.vipSubscription.packageId,
+                    packageName: subscriptionData.vipSubscription.packageName,
+                    currentPeriodEnd:
+                      subscriptionData.vipSubscription.currentPeriodEnd,
+                    endedAt: subscriptionData.vipSubscription.endedAt,
+                    status: subscriptionData.vipSubscription.status,
+                    startDate: subscriptionData.vipSubscription.startDate,
+                  }
+                : null,
+            });
+          }
+
           set({
-            currentSubscription: response.data.data as CurrentSubscriptionData,
+            currentSubscription: subscriptionData,
             isFetchingSubscription: false,
             lastSubscriptionFetch: now,
           });
@@ -526,7 +671,7 @@ export const useStripeStore = create<StripeState>((set, get) => ({
     }
   },
 
-  cancelSubscription: async () => {
+  cancelSubscription: async (cancelImmediately: boolean = false) => {
     set({ isCancelling: true, cancelError: null });
     try {
       const token = await getAuthToken();
@@ -534,13 +679,15 @@ export const useStripeStore = create<StripeState>((set, get) => ({
 
       const response = await axios.post(
         `${API_BASEURL}/stripe/cancel-subscription`,
-        {},
+        { cancelImmediately },
         { headers },
       );
 
-      if (__DEV__) {
-        console.log('Cancel Response', response.data);
-      }
+      console.log('❌ [API Response] POST /stripe/cancel-subscription:', {
+        url: `${API_BASEURL}/stripe/cancel-subscription`,
+        status: response.status,
+        data: response.data,
+      });
 
       if (response.data?.success) {
         Alert.alert(
@@ -565,6 +712,50 @@ export const useStripeStore = create<StripeState>((set, get) => ({
     }
   },
 
+  verifyPayment: async (
+    paymentIntentId: string,
+  ): Promise<{ success: boolean; subscription?: any }> => {
+    set({ isVerifyingPayment: true, verificationError: null });
+    try {
+      const token = await getAuthToken();
+      const headers = { 'x-auth-token': token };
+      const payload = { paymentIntentId };
+
+      const response = await axios.post(
+        `${API_BASEURL}/stripe/verify-payment`,
+        payload,
+        { headers },
+      );
+
+      console.log('✅ [API Response] POST /stripe/verify-payment:', {
+        url: `${API_BASEURL}/stripe/verify-payment`,
+        status: response.status,
+        requestPayload: payload,
+        data: response.data,
+      });
+
+      if (response.data?.success) {
+        set({ isVerifyingPayment: false });
+        // Force refresh subscription after verification
+        get().fetchCurrentSubscription(true);
+        return {
+          success: true,
+          subscription:
+            response.data.data?.subscription || response.data.subscription,
+        };
+      } else {
+        throw new Error(response.data?.message || 'Failed to verify payment.');
+      }
+    } catch (error: unknown) {
+      const errorMessage = getErrorMessage(error);
+      set({ verificationError: errorMessage, isVerifyingPayment: false });
+      if (__DEV__) {
+        console.log('Payment verification error:', errorMessage);
+      }
+      return { success: false };
+    }
+  },
+
   debugVerifyPayment: async (paymentIntentId: string) => {
     set({ isVerifyingPayment: true, verificationError: null });
     try {
@@ -578,9 +769,12 @@ export const useStripeStore = create<StripeState>((set, get) => ({
         { headers },
       );
 
-      if (__DEV__) {
-        console.log('Debug Verify Response:', response.data);
-      }
+      console.log('🔍 [API Response] POST /stripe/debug-verify-payment:', {
+        url: `${API_BASEURL}/stripe/debug-verify-payment`,
+        status: response.status,
+        requestPayload: payload,
+        data: response.data,
+      });
 
       if (response.data?.success) {
         Alert.alert(

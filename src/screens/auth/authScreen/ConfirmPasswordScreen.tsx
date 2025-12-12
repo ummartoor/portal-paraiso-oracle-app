@@ -13,8 +13,8 @@ import {
   Dimensions,
   ImageBackground,
   Alert,
-    ActivityIndicator,
-    Vibration
+  ActivityIndicator,
+  Vibration,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
@@ -33,19 +33,24 @@ import eyeOffIcon from '../../../assets/icons/eyeOff.png';
 import { useTranslation } from 'react-i18next';
 const { height: SCREEN_HEIGHT, width: SCREEN_WIDTH } = Dimensions.get('screen');
 
-type ConfirmPasswordScreenRouteProp = RouteProp<AuthStackParamsList, 'ConfirmPassword'>;
+type ConfirmPasswordScreenRouteProp = RouteProp<
+  AuthStackParamsList,
+  'ConfirmPassword'
+>;
 
 const ConfirmPasswordScreen = () => {
   const theme = useThemeStore(state => state.theme);
   const colors = theme.colors;
-  const navigation = useNavigation<NativeStackNavigationProp<AuthStackParamsList>>();
-  const route = useRoute<ConfirmPasswordScreenRouteProp>(); 
- const { t } = useTranslation();
-  const emailFromRoute = route.params?.email || ''; 
+  const navigation =
+    useNavigation<NativeStackNavigationProp<AuthStackParamsList>>();
+  const route = useRoute<ConfirmPasswordScreenRouteProp>();
+  const { t } = useTranslation();
+  const emailFromRoute = route.params?.email || '';
   const resetPassword = useAuthStore(state => state.resetPassword);
 
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [focusedField, setFocusedField] = useState<string | null>(null);
 
   const validationSchema = Yup.object().shape({
     newPassword: Yup.string()
@@ -58,7 +63,7 @@ const ConfirmPasswordScreen = () => {
 
   const handleSubmitPassword = async (
     values: { newPassword: string; confirmPassword: string },
-    { setSubmitting }: { setSubmitting: (isSubmitting: boolean) => void } 
+    { setSubmitting }: { setSubmitting: (isSubmitting: boolean) => void },
   ) => {
     if (!emailFromRoute) {
       // --- CHANGED: Translated alert ---
@@ -70,13 +75,13 @@ const ConfirmPasswordScreen = () => {
     const success = await resetPassword(
       emailFromRoute,
       values.newPassword,
-      values.confirmPassword
+      values.confirmPassword,
     );
 
     if (success) {
       navigation.navigate('Login');
     }
-    
+
     setSubmitting(false); // Stop loading indicator
   };
 
@@ -87,7 +92,11 @@ const ConfirmPasswordScreen = () => {
       resizeMode="cover"
     >
       <SafeAreaView style={styles.container}>
-        <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
+        <StatusBar
+          barStyle="light-content"
+          backgroundColor="transparent"
+          translucent
+        />
 
         <KeyboardAvoidingView
           style={{ flex: 1 }}
@@ -99,40 +108,70 @@ const ConfirmPasswordScreen = () => {
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
           >
-            <Text style={[styles.heading, { color: colors.white }]}>{t('reset_password_header')}</Text>
+            <Text style={[styles.heading, { color: colors.white }]}>
+              {t('reset_password_header')}
+            </Text>
             <Text style={[styles.subheading, { color: colors.primary }]}>
-               {t('reset_password_subheader')}
+              {t('reset_password_subheader')}
             </Text>
 
             <Formik
-              initialValues={{ newPassword: '', confirmPassword: '' }} 
+              initialValues={{ newPassword: '', confirmPassword: '' }}
               validationSchema={validationSchema}
               onSubmit={handleSubmitPassword}
             >
-              {({ handleChange, handleBlur, handleSubmit, values, errors, touched,isSubmitting }) => (
+              {({
+                handleChange,
+                handleBlur,
+                handleSubmit,
+                values,
+                errors,
+                touched,
+                isSubmitting,
+              }) => (
                 <>
                   {/* Password */}
-                 <Text style={[styles.label, { color: colors.white }]}>{t('new_password_label')}</Text>
+                  <Text style={[styles.label, { color: colors.white }]}>
+                    {t('new_password_label')}
+                  </Text>
                   <View
                     style={[
                       styles.input,
                       styles.passwordWrapper,
-                      { backgroundColor: colors.bgBox },
+                      {
+                        backgroundColor: colors.bgBox,
+                        borderWidth: focusedField === 'newPassword' ? 1 : 0,
+                        borderColor:
+                          focusedField === 'newPassword'
+                            ? colors.primary
+                            : 'transparent',
+                      },
                     ]}
                   >
                     <TextInput
-                           placeholder={t('new_password_placeholder')}
+                      placeholder={t('new_password_placeholder')}
                       placeholderTextColor="#ccc"
                       secureTextEntry={!showPassword}
-                      onChangeText={handleChange('newPassword')} 
-                      onBlur={handleBlur('newPassword')}       
-                      value={values.newPassword}          
+                      onChangeText={handleChange('newPassword')}
+                      onBlur={e => {
+                        handleBlur('newPassword')(e);
+                        setFocusedField(null);
+                      }}
+                      onFocus={() => setFocusedField('newPassword')}
+                      value={values.newPassword}
                       style={{ flex: 1, color: colors.white }}
                     />
-                    <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+                    <TouchableOpacity
+                      onPress={() => setShowPassword(!showPassword)}
+                    >
                       <Image
                         source={showPassword ? eyeOffIcon : eyeIcon}
-                        style={{ width: 20, height: 20, marginRight: 8, tintColor: '#ccc' }}
+                        style={{
+                          width: 20,
+                          height: 20,
+                          marginRight: 8,
+                          tintColor: '#ccc',
+                        }}
                       />
                     </TouchableOpacity>
                   </View>
@@ -141,12 +180,21 @@ const ConfirmPasswordScreen = () => {
                   )}
 
                   {/* Confirm Password */}
-                <Text style={[styles.label, { color: colors.white }]}>{t('confirm_password_label')}</Text>
+                  <Text style={[styles.label, { color: colors.white }]}>
+                    {t('confirm_password_label')}
+                  </Text>
                   <View
                     style={[
                       styles.input,
                       styles.passwordWrapper,
-                      { backgroundColor: colors.bgBox },
+                      {
+                        backgroundColor: colors.bgBox,
+                        borderWidth: focusedField === 'confirmPassword' ? 1 : 0,
+                        borderColor:
+                          focusedField === 'confirmPassword'
+                            ? colors.primary
+                            : 'transparent',
+                      },
                     ]}
                   >
                     <TextInput
@@ -154,26 +202,45 @@ const ConfirmPasswordScreen = () => {
                       placeholderTextColor="#ccc"
                       secureTextEntry={!showConfirmPassword}
                       onChangeText={handleChange('confirmPassword')}
-                      onBlur={handleBlur('confirmPassword')}
+                      onBlur={e => {
+                        handleBlur('confirmPassword')(e);
+                        setFocusedField(null);
+                      }}
+                      onFocus={() => setFocusedField('confirmPassword')}
                       value={values.confirmPassword}
                       style={{ flex: 1, color: colors.white }}
                     />
-                    <TouchableOpacity onPress={() => setShowConfirmPassword(!showConfirmPassword)}>
+                    <TouchableOpacity
+                      onPress={() =>
+                        setShowConfirmPassword(!showConfirmPassword)
+                      }
+                    >
                       <Image
                         source={showConfirmPassword ? eyeOffIcon : eyeIcon}
-                        style={{ width: 20, height: 20, marginRight: 8, tintColor: '#ccc' }}
+                        style={{
+                          width: 20,
+                          height: 20,
+                          marginRight: 8,
+                          tintColor: '#ccc',
+                        }}
                       />
                     </TouchableOpacity>
                   </View>
                   {errors.confirmPassword && touched.confirmPassword && (
-                    <Text style={styles.errorText}>{errors.confirmPassword}</Text>
+                    <Text style={styles.errorText}>
+                      {errors.confirmPassword}
+                    </Text>
                   )}
 
                   {/* Gradient Continue Button */}
-                  <TouchableOpacity activeOpacity={0.8} onPress={() => {
-                             Vibration.vibrate([0, 35, 40, 35]);
-                    handleSubmit()}
-                    } style={{ width: '100%' }}>
+                  <TouchableOpacity
+                    activeOpacity={0.8}
+                    onPress={() => {
+                      Vibration.vibrate([0, 35, 40, 35]);
+                      handleSubmit();
+                    }}
+                    style={{ width: '100%' }}
+                  >
                     <GradientBox
                       colors={[colors.black, colors.bgBox]}
                       style={[
@@ -181,17 +248,27 @@ const ConfirmPasswordScreen = () => {
                         { borderWidth: 1, borderColor: colors.primary },
                       ]}
                     >
-                       <Text style={styles.signinText}>{t('continue_button')}</Text>
+                      <Text style={styles.signinText}>
+                        {t('continue_button')}
+                      </Text>
                     </GradientBox>
                   </TouchableOpacity>
 
                   {/* Footer */}
                   <View style={styles.footer}>
-                   <Text style={styles.footerText}>{t('back_to_footer')}</Text>
-                    <TouchableOpacity onPress={() => {
-                               Vibration.vibrate([0, 35, 40, 35]);
-                      navigation.navigate('Login')}}>
-                       <Text style={[styles.signupLink, { color: colors.primary }]}> {t('login_footer_link')}</Text>
+                    <Text style={styles.footerText}>{t('back_to_footer')}</Text>
+                    <TouchableOpacity
+                      onPress={() => {
+                        Vibration.vibrate([0, 35, 40, 35]);
+                        navigation.navigate('Login');
+                      }}
+                    >
+                      <Text
+                        style={[styles.signupLink, { color: colors.primary }]}
+                      >
+                        {' '}
+                        {t('login_footer_link')}
+                      </Text>
                     </TouchableOpacity>
                   </View>
                 </>

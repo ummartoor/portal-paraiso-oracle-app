@@ -42,7 +42,6 @@ export interface RitualHistoryItem {
   cycle_number: number;
 }
 
-
 // =================================================================
 // ZUSTAND STORE
 // =================================================================
@@ -93,19 +92,28 @@ export const useRitualTipStore = create<RitualTipState>((set, get) => ({
 
       const response = await axios.get(
         `${API_BASEURL}/oracle-chat/daily-ritual-tip`,
-        { headers }
+        { headers },
       );
-console.log(response.data)
+      console.log('📜 [API Response] GET /oracle-chat/daily-ritual-tip:', {
+        url: `${API_BASEURL}/oracle-chat/daily-ritual-tip`,
+        status: response.status,
+        data: response.data,
+      });
       if (response.data?.success) {
         set({
           ritualTip: response.data.data as DailyRitualData,
           isLoading: false,
         });
       } else {
-        throw new Error(response.data.message || 'Failed to retrieve daily ritual tip.');
+        throw new Error(
+          response.data.message || 'Failed to retrieve daily ritual tip.',
+        );
       }
     } catch (error: any) {
-      const errorMessage = error.response?.data?.message || error.message || 'An unknown error occurred.';
+      const errorMessage =
+        error.response?.data?.message ||
+        error.message ||
+        'An unknown error occurred.';
       set({ error: errorMessage, isLoading: false });
       Alert.alert('Error', errorMessage);
     }
@@ -117,44 +125,56 @@ console.log(response.data)
   markRitualTipAsUsed: async () => {
     const currentTip = get().ritualTip;
     if (!currentTip || currentTip.is_used) {
-        return false;
+      return false;
     }
 
     set({ isMarkingAsUsed: true, markAsUsedError: null });
     try {
-        const token = await AsyncStorage.getItem('x-auth-token');
-        if (!token) throw new Error('Authentication token not found.');
-        const headers = { 'x-auth-token': token };
+      const token = await AsyncStorage.getItem('x-auth-token');
+      if (!token) throw new Error('Authentication token not found.');
+      const headers = { 'x-auth-token': token };
 
-        // NOTE: The endpoint in your screenshot shows a 404. I am assuming the correct one is /mark-used
-        const response = await axios.post(
-            `${API_BASEURL}/oracle-chat/daily-ritual-tip/mark-used`,
-            {}, 
-            { headers }
+      // NOTE: The endpoint in your screenshot shows a 404. I am assuming the correct one is /mark-used
+      const response = await axios.post(
+        `${API_BASEURL}/oracle-chat/daily-ritual-tip/mark-used`,
+        {},
+        { headers },
+      );
+      console.log(
+        '📜 [API Response] POST /oracle-chat/daily-ritual-tip/mark-used:',
+        {
+          url: `${API_BASEURL}/oracle-chat/daily-ritual-tip/mark-used`,
+          status: response.status,
+          data: response.data,
+        },
+      );
+      if (response.data?.success) {
+        set(state => ({
+          ritualTip: state.ritualTip
+            ? {
+                ...state.ritualTip,
+                is_used: true,
+                used_at: response.data.data.used_at,
+              }
+            : null,
+          isMarkingAsUsed: false,
+        }));
+        return true;
+      } else {
+        throw new Error(
+          response.data.message || 'Failed to mark ritual as used.',
         );
-console.group(response.data)
-        if (response.data?.success) {
-            set(state => ({
-                ritualTip: state.ritualTip
-                    ? {
-                        ...state.ritualTip,
-                        is_used: true,
-                        used_at: response.data.data.used_at,
-                      }
-                    : null,
-                isMarkingAsUsed: false,
-            }));
-            return true;
-        } else {
-            throw new Error(response.data.message || 'Failed to mark ritual as used.');
-        }
-
+      }
     } catch (error: any) {
-        const errorMessage = error.response?.data?.message || 'No daily ritual tip found for today';
-        set({ markAsUsedError: errorMessage, isMarkingAsUsed: false });
-        // Alert.alert('Error', errorMessage);
-            console.warn('Silent Error: Could not mark ritual as used.', errorMessage);
-        return false;
+      const errorMessage =
+        error.response?.data?.message || 'No daily ritual tip found for today';
+      set({ markAsUsedError: errorMessage, isMarkingAsUsed: false });
+      // Alert.alert('Error', errorMessage);
+      console.warn(
+        'Silent Error: Could not mark ritual as used.',
+        errorMessage,
+      );
+      return false;
     }
   },
 
@@ -164,27 +184,41 @@ console.group(response.data)
   getRitualTipHistory: async () => {
     set({ isLoadingHistory: true, historyError: null });
     try {
-        const token = await AsyncStorage.getItem('x-auth-token');
-        if (!token) throw new Error('Authentication token not found.');
-        const headers = { 'x-auth-token': token };
+      const token = await AsyncStorage.getItem('x-auth-token');
+      if (!token) throw new Error('Authentication token not found.');
+      const headers = { 'x-auth-token': token };
 
-        const response = await axios.get(
-            `${API_BASEURL}/oracle-chat/daily-ritual-tip/history`,
-            { headers }
+      const response = await axios.get(
+        `${API_BASEURL}/oracle-chat/daily-ritual-tip/history`,
+        { headers },
+      );
+
+      console.log(
+        '📜 [API Response] GET /oracle-chat/daily-ritual-tip/history:',
+        {
+          url: `${API_BASEURL}/oracle-chat/daily-ritual-tip/history`,
+          status: response.status,
+          data: response.data,
+        },
+      );
+
+      if (response.data?.success) {
+        set({
+          history: response.data.data.history as RitualHistoryItem[],
+          isLoadingHistory: false,
+        });
+      } else {
+        throw new Error(
+          response.data.message || 'Failed to fetch ritual history.',
         );
-
-        if (response.data?.success) {
-            set({
-                history: response.data.data.history as RitualHistoryItem[],
-                isLoadingHistory: false,
-            });
-        } else {
-            throw new Error(response.data.message || 'Failed to fetch ritual history.');
-        }
+      }
     } catch (error: any) {
-        const errorMessage = error.response?.data?.message || error.message || 'An unknown error occurred.';
-        set({ historyError: errorMessage, isLoadingHistory: false });
-        Alert.alert('Error', errorMessage);
+      const errorMessage =
+        error.response?.data?.message ||
+        error.message ||
+        'An unknown error occurred.';
+      set({ historyError: errorMessage, isLoadingHistory: false });
+      Alert.alert('Error', errorMessage);
     }
   },
 }));

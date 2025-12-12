@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback, useMemo } from 'react';
 import {
   TouchableOpacity,
   Text,
@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import { useThemeStore } from '../store/useThemeStore';
 import GradientBox from './GradientBox';
-import { usePaymentProcessor } from '../utils/paymentHelper';
+import { useImprovedPaymentProcessor } from '../utils/improvedPaymentHelper';
 import { StripePackage } from '../store/useStripeStore';
 import { useStripe } from '@stripe/stripe-react-native';
 
@@ -34,12 +34,19 @@ const PaymentButton: React.FC<PaymentButtonProps> = ({
 }) => {
   const { colors } = useThemeStore(s => s.theme);
   const { initPaymentSheet, presentPaymentSheet } = useStripe();
-  const { processPayment, isLoading } = usePaymentProcessor({
-    initPaymentSheet,
-    presentPaymentSheet,
-  });
 
-  const handlePayment = async () => {
+  // Memoize the stripe instance to prevent recreation
+  const stripe = useMemo(
+    () => ({
+      initPaymentSheet,
+      presentPaymentSheet,
+    }),
+    [initPaymentSheet, presentPaymentSheet],
+  );
+
+  const { processPayment, isLoading } = useImprovedPaymentProcessor(stripe);
+
+  const handlePayment = useCallback(async () => {
     const defaultPrice = pkg.prices.find(p => p.is_default);
     if (!defaultPrice) {
       onError?.('This package is not configured correctly.');
@@ -56,20 +63,30 @@ const PaymentButton: React.FC<PaymentButtonProps> = ({
     if (result.success) {
       onSuccess?.(result.subscription);
     }
-  };
+  }, [pkg, onSuccess, onError, processPayment]);
+
+  const buttonStyles = useMemo(
+    () => [
+      styles.button,
+      style,
+      (disabled || isLoading) && styles.disabledButton,
+    ],
+    [style, disabled, isLoading],
+  );
 
   return (
     <TouchableOpacity
-      style={[styles.button, style]}
+      style={buttonStyles}
       onPress={handlePayment}
       disabled={disabled || isLoading}
+      activeOpacity={0.8}
     >
       <GradientBox
         colors={[colors.black, colors.bgBox]}
         style={styles.gradientWrapper}
       >
         {isLoading ? (
-          <ActivityIndicator color="#D9B699" />
+          <ActivityIndicator color="#D9B699" size="small" />
         ) : (
           <Text style={[styles.buttonText, textStyle]}>{buttonText}</Text>
         )}
@@ -88,19 +105,22 @@ const styles = StyleSheet.create({
     marginTop: 15,
     borderColor: '#D9B699',
     borderWidth: 1,
+    overflow: 'hidden',
   },
   gradientWrapper: {
     width: '100%',
     height: '100%',
     justifyContent: 'center',
     alignItems: 'center',
-    borderRadius: 26,
   },
   buttonText: {
     fontSize: 16,
-    color: '#fff',
-    fontFamily: 'Aeonik-Regular',
+    fontWeight: '600',
+    color: '#D9B699',
+  },
+  disabledButton: {
+    opacity: 0.6,
   },
 });
 
-export default PaymentButton;
+export default React.memo(PaymentButton);

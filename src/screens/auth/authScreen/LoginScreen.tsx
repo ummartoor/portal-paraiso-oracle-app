@@ -39,6 +39,7 @@ const LoginScreen = () => {
   const theme = useThemeStore(state => state.theme);
   const colors = theme.colors;
   const [showPassword, setShowPassword] = useState(false);
+  const [focusedField, setFocusedField] = useState<string | null>(null);
   const login = useAuthStore(state => state.login); // Your login function from store
   const { registerFcmToken } = useNotificationStore();
   const { t, i18n } = useTranslation();
@@ -245,11 +246,23 @@ const LoginScreen = () => {
                     placeholder={t('email_placeholder')}
                     placeholderTextColor="#ccc"
                     onChangeText={handleChange('email')}
-                    onBlur={handleBlur('email')}
+                    onBlur={e => {
+                      handleBlur('email')(e);
+                      setFocusedField(null);
+                    }}
+                    onFocus={() => setFocusedField('email')}
                     value={values.email}
                     style={[
                       styles.input,
-                      { backgroundColor: colors.bgBox, color: colors.white },
+                      {
+                        backgroundColor: colors.bgBox,
+                        color: colors.white,
+                        borderWidth: focusedField === 'email' ? 1 : 0,
+                        borderColor:
+                          focusedField === 'email'
+                            ? colors.primary
+                            : 'transparent',
+                      },
                     ]}
                     keyboardType="email-address"
                     autoCapitalize="none"
@@ -265,7 +278,14 @@ const LoginScreen = () => {
                     style={[
                       styles.input,
                       styles.passwordWrapper,
-                      { backgroundColor: colors.bgBox },
+                      {
+                        backgroundColor: colors.bgBox,
+                        borderWidth: focusedField === 'password' ? 1 : 0,
+                        borderColor:
+                          focusedField === 'password'
+                            ? colors.primary
+                            : 'transparent',
+                      },
                     ]}
                   >
                     <TextInput
@@ -273,7 +293,11 @@ const LoginScreen = () => {
                       placeholderTextColor="#ccc"
                       secureTextEntry={!showPassword}
                       onChangeText={handleChange('password')}
-                      onBlur={handleBlur('password')}
+                      onBlur={e => {
+                        handleBlur('password')(e);
+                        setFocusedField(null);
+                      }}
+                      onFocus={() => setFocusedField('password')}
                       value={values.password}
                       style={{ flex: 1, color: colors.white }}
                     />
