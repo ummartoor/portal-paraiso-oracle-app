@@ -37,6 +37,8 @@ import {
 } from '../../../constants/design';
 import Pressable from '../../../components/Pressable';
 import { isProfileComplete } from '../../../utils/profileUtils';
+import { useFeaturePermissionStore } from '../../../store/useFeaturePermissionStore';
+import SubscriptionPlanModal from '../../../components/SubscriptionPlanModal';
 const { height: SCREEN_HEIGHT, width: SCREEN_WIDTH } = Dimensions.get('screen');
 
 type CardBoxProps = {
@@ -98,12 +100,88 @@ const HomeScreen: React.FC = () => {
   const { t } = useTranslation();
   const { unreadCount, getUnreadCount } = useGetNotificationsStore();
   const [refreshing, setRefreshing] = useState(false);
+  const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
+  const [subscriptionModalMessage, setSubscriptionModalMessage] = useState<
+    string | undefined
+  >(undefined);
+
+  // Feature access store
+  const {
+    featureAccess,
+    isFetchingFeatureAccess,
+    fetchFeatureAccess,
+    getPackageInfo,
+    canAccessTarot,
+    canAccessBuzios,
+    canAccessAstrology,
+    hasReachedDailyLimit,
+  } = useFeaturePermissionStore(
+    useShallow(state => ({
+      featureAccess: state.featureAccess,
+      isFetchingFeatureAccess: state.isFetchingFeatureAccess,
+      fetchFeatureAccess: state.fetchFeatureAccess,
+      getPackageInfo: state.getPackageInfo,
+      canAccessTarot: state.canAccessTarot,
+      canAccessBuzios: state.canAccessBuzios,
+      canAccessAstrology: state.canAccessAstrology,
+      hasReachedDailyLimit: state.hasReachedDailyLimit,
+    })),
+  );
+
+  // Check if user needs subscription based on feature access
+  const shouldShowSubscriptionModal = useCallback(() => {
+    if (!featureAccess || isFetchingFeatureAccess) {
+      return false;
+    }
+
+    const packageInfo = getPackageInfo();
+
+    // Check if user has no package or free package
+    // If package is null, undefined, or type is 'free', show modal
+    if (
+      !packageInfo ||
+      packageInfo.type === 'free' ||
+      (packageInfo.type && packageInfo.type.toLowerCase() === 'free')
+    ) {
+      return true;
+    }
+
+    // Check if all features have no remaining usage and are not unlimited
+    const readings = featureAccess.readings;
+    const hasNoAccess =
+      readings.tarot.remaining === 0 &&
+      !readings.tarot.unlimited &&
+      readings.buzios.remaining === 0 &&
+      !readings.buzios.unlimited &&
+      readings.astrology.remaining === 0 &&
+      !readings.astrology.unlimited &&
+      readings.chat.remaining === 0 &&
+      !readings.chat.unlimited;
+
+    return hasNoAccess;
+  }, [featureAccess, isFetchingFeatureAccess, getPackageInfo]);
 
   useFocusEffect(
     useCallback(() => {
       fetchCurrentUser();
       getUnreadCount();
-    }, [fetchCurrentUser, getUnreadCount]),
+      // Fetch feature access when screen comes into focus
+      fetchFeatureAccess(false).then(() => {
+        // Check if we should show subscription modal after feature access is loaded
+        // Show modal based on API response - if user has no subscription or reached limits
+        if (shouldShowSubscriptionModal()) {
+          // Small delay to ensure smooth UX
+          setTimeout(() => {
+            setShowSubscriptionModal(true);
+          }, 500);
+        }
+      });
+    }, [
+      fetchCurrentUser,
+      getUnreadCount,
+      fetchFeatureAccess,
+      shouldShowSubscriptionModal,
+    ]),
   );
 
   const handleButtonPress = useCallback(() => {
@@ -112,17 +190,73 @@ const HomeScreen: React.FC = () => {
     }
     showAd();
   }, [showAd]);
+  // Check if user has access to a specific feature
+  const checkFeatureAccess = useCallback(
+    (route: string): boolean => {
+      if (!featureAccess || isFetchingFeatureAccess) {
+        // If feature access is not loaded yet, allow navigation
+        // The individual screens will handle the check
+        return true;
+      }
+
+      // Map routes to features
+      if (route === 'AskQuestionTarotScreen') {
+        return canAccessTarot() && !hasReachedDailyLimit('tarot');
+      }
+      if (route === 'AskQuestionCariusScreen') {
+        return canAccessBuzios() && !hasReachedDailyLimit('buzios');
+      }
+      if (route === 'AskQuestionAstrologyScreen') {
+        return canAccessAstrology() && !hasReachedDailyLimit('astrology');
+      }
+
+      // For other routes, allow navigation
+      return true;
+    },
+    [
+      featureAccess,
+      isFetchingFeatureAccess,
+      canAccessTarot,
+      canAccessBuzios,
+      canAccessAstrology,
+      hasReachedDailyLimit,
+    ],
+  );
+
   const onPressCarouselCard = useCallback(
     (item: CardItem) => {
-      if (item.route) {
-        navigation.navigate(item.route as any);
-      } else {
+      if (!item.route) {
         if (__DEV__) {
           console.warn('No route defined for card:', item.id);
         }
+        return;
+      }
+
+      // Check feature access before navigating
+      if (checkFeatureAccess(item.route)) {
+        // User has access, navigate normally
+        navigation.navigate(item.route as any);
+      } else {
+        // User doesn't have access, show subscription modal with message
+        let message = 'Upgrade your package to access this feature.';
+
+        // Customize message based on the feature
+        if (item.route === 'AskQuestionTarotScreen') {
+          message =
+            'Upgrade your package to access Tarot readings and unlock unlimited insights.';
+        } else if (item.route === 'AskQuestionCariusScreen') {
+          message =
+            'Upgrade your package to access Búzios readings and discover your destiny.';
+        } else if (item.route === 'AskQuestionAstrologyScreen') {
+          message =
+            'Upgrade your package to access Astrology readings and explore the stars.';
+        }
+
+        setSubscriptionModalMessage(message);
+        setShowSubscriptionModal(true);
       }
     },
-    [navigation],
+    [navigation, checkFeatureAccess],
   );
 
   // Check if profile is complete
@@ -364,6 +498,24 @@ const HomeScreen: React.FC = () => {
             </View>
           </View>
         )}
+
+        {/* Subscription Plan Modal */}
+        <SubscriptionPlanModal
+          isVisible={showSubscriptionModal}
+          onClose={async () => {
+            // Refresh feature access when modal closes (in case user upgraded)
+            await fetchFeatureAccess(true);
+            setShowSubscriptionModal(false);
+            setSubscriptionModalMessage(undefined);
+          }}
+          onConfirm={async () => {
+            // Refresh feature access after upgrade
+            await fetchFeatureAccess(true);
+            setShowSubscriptionModal(false);
+            setSubscriptionModalMessage(undefined);
+          }}
+          message={subscriptionModalMessage}
+        />
       </SafeAreaView>
     </ImageBackground>
   );

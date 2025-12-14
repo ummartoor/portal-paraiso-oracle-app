@@ -40,6 +40,7 @@ interface SubscriptionPlanModalProps {
   isVisible: boolean;
   onClose: () => void;
   onConfirm: (plan: PlanKey) => void; // This prop is not used by the new logic but kept for type safety
+  message?: string; // Optional message to display to the user
 }
 
 // --- CardContent Component (No Changes) ---
@@ -133,6 +134,7 @@ const SubscriptionPlanModal: React.FC<SubscriptionPlanModalProps> = ({
   isVisible,
   onClose,
   onConfirm,
+  message,
 }) => {
   const { colors } = useThemeStore(state => state.theme);
   const { t } = useTranslation();
@@ -597,6 +599,23 @@ const SubscriptionPlanModal: React.FC<SubscriptionPlanModalProps> = ({
                 </View>
               </View>
 
+              {/* Message Banner */}
+              {message && (
+                <View
+                  style={[
+                    styles.messageBanner,
+                    {
+                      backgroundColor: colors.bgBox,
+                      borderColor: colors.primary,
+                    },
+                  ]}
+                >
+                  <Text style={[styles.messageText, { color: colors.white }]}>
+                    {message}
+                  </Text>
+                </View>
+              )}
+
               {isLoading ? (
                 <ActivityIndicator
                   size="large"
@@ -762,6 +781,22 @@ const styles = StyleSheet.create({
     right: 0,
     alignItems: 'center',
     paddingHorizontal: 16,
+  },
+  messageBanner: {
+    marginHorizontal: 20,
+    marginTop: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  messageText: {
+    fontFamily: Fonts.aeonikRegular,
+    fontSize: 14,
+    lineHeight: 20,
+    textAlign: 'center',
   },
   heroTitle: {
     fontFamily: Fonts.aeonikBold,
