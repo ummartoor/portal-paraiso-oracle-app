@@ -1,19 +1,30 @@
-import React from 'react';
+import React, { useRef, useState } from 'react';
 import {
   View,
   Text,
-  Modal,
   TouchableOpacity,
   StyleSheet,
   ScrollView,
   Image,
   Linking,
   Platform,
+  PanResponder,
+  Dimensions,
+  Animated,
 } from 'react-native';
+import Modal from 'react-native-modal';
 import { useThemeStore } from '../store/useThemeStore';
 import { Fonts } from '../constants/fonts';
 import { Purchase } from '../store/useStripeStore';
 import GradientBox from './GradientBox';
+
+const { height: SCREEN_HEIGHT } = Dimensions.get('window');
+const MIN_MODAL_HEIGHT = 400;
+const MAX_MODAL_HEIGHT = SCREEN_HEIGHT * 0.95;
+const DEFAULT_MODAL_HEIGHT = 500;
+const HEADER_HEIGHT = 80;
+const FOOTER_HEIGHT = 100;
+const DRAG_HANDLE_HEIGHT = 40;
 
 interface PurchaseDetailModalProps {
   isVisible: boolean;
@@ -27,17 +38,61 @@ const PurchaseDetailModal: React.FC<PurchaseDetailModalProps> = ({
   purchase,
 }) => {
   const { colors } = useThemeStore(state => state.theme);
+  const [modalHeight, setModalHeight] = useState(DEFAULT_MODAL_HEIGHT);
+  const [isDragging, setIsDragging] = useState(false);
+  const lastPanY = useRef(0);
 
-  // Debug logging
-  if (__DEV__) {
-    console.log('PurchaseDetailModal render:', {
-      isVisible,
+  // Reset height when modal opens
+  React.useEffect(() => {
+    if (isVisible) {
+      setModalHeight(DEFAULT_MODAL_HEIGHT);
+      lastPanY.current = DEFAULT_MODAL_HEIGHT;
+    }
+  }, [isVisible]);
+
+  // PanResponder for drag area (header + drag handle)
+  const panResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponder: (_, g) => Math.abs(g.dy) > 5,
+      onPanResponderGrant: () => {
+        lastPanY.current = modalHeight;
+      },
+      onPanResponderMove: (_, g) => {
+        const newH = lastPanY.current - g.dy;
+        const clamped = Math.max(
+          MIN_MODAL_HEIGHT,
+          Math.min(MAX_MODAL_HEIGHT, newH),
+        );
+        setModalHeight(clamped);
+      },
+      onPanResponderRelease: (_, g) => {
+        const newH = lastPanY.current - g.dy;
+        const clamped = Math.max(
+          MIN_MODAL_HEIGHT,
+          Math.min(MAX_MODAL_HEIGHT, newH),
+        );
+        setModalHeight(clamped);
+        lastPanY.current = clamped;
+      },
+    }),
+  ).current;
+
+  // Early return after all hooks
+  if (!isVisible) return null;
+
+  // Debug: Log purchase data to help troubleshoot
+  if (__DEV__ && isVisible) {
+    console.log('PurchaseDetailModal - Purchase data:', {
       hasPurchase: !!purchase,
-      purchase: purchase ? JSON.stringify(purchase, null, 2) : null,
+      purchaseId: purchase?.id,
+      packageName: purchase?.package?.name,
+      amount: purchase?.amount,
+      currency: purchase?.currency,
+      paymentStatus: purchase?.payment_status,
+      fullPurchase: purchase ? JSON.stringify(purchase, null, 2) : null,
     });
   }
-
-  if (!isVisible) return null;
 
   const formatDate = (dateString: string): string => {
     try {
@@ -64,7 +119,7 @@ const PurchaseDetailModal: React.FC<PurchaseDetailModalProps> = ({
     if (!currency || typeof currency !== 'string') {
       return 'N/A';
     }
-    return `${(amount / 100).toFixed(2)} ${currency.toUpperCase()}`;
+    return `${(amount / 100).toFixed(2)} ${String(currency).toUpperCase()}`;
   };
 
   const getStatusColor = (status: string) => {
@@ -91,13 +146,24 @@ const PurchaseDetailModal: React.FC<PurchaseDetailModalProps> = ({
     value: string | number | null | undefined;
     valueColor?: string;
   }) => {
-    // Ensure value is always a string
-    const displayValue =
-      value === null || value === undefined
-        ? 'N/A'
-        : typeof value === 'string'
-        ? value
-        : String(value);
+    // Ensure value is always a string and handle all edge cases
+    let displayValue = 'N/A';
+    if (value !== null && value !== undefined) {
+      if (typeof value === 'string') {
+        displayValue = value;
+      } else if (typeof value === 'number') {
+        displayValue = String(value);
+      } else if (typeof value === 'object') {
+        // Handle objects/arrays by stringifying them
+        try {
+          displayValue = JSON.stringify(value);
+        } catch {
+          displayValue = 'N/A';
+        }
+      } else {
+        displayValue = String(value);
+      }
+    }
 
     return (
       <View style={styles(colors).detailRow}>
@@ -116,18 +182,32 @@ const PurchaseDetailModal: React.FC<PurchaseDetailModalProps> = ({
 
   return (
     <Modal
-      visible={isVisible}
-      animationType="slide"
-      transparent
-      onRequestClose={onClose}
+      isVisible={isVisible}
+      onBackdropPress={onClose}
+      swipeDirection={['down']}
+      swipeThreshold={100}
+      style={styles(colors).modal}
+      backdropOpacity={0.6}
+      animationIn="slideInUp"
+      animationOut="slideOutDown"
+      avoidKeyboard={true}
+      propagateSwipe={true}
     >
-      <View style={styles(colors).overlay}>
-        <TouchableOpacity
-          style={styles(colors).backdrop}
-          activeOpacity={1}
-          onPress={onClose}
-        />
-        <View style={styles(colors).modalContainer}>
+      <Animated.View
+        style={[
+          styles(colors).modalContainer,
+          {
+            height: modalHeight,
+            maxHeight: MAX_MODAL_HEIGHT,
+          },
+        ]}
+      >
+        {/* Drag Area (header + handle) */}
+        <View {...panResponder.panHandlers}>
+          <View style={styles(colors).dragHandleContainer}>
+            <View style={styles(colors).dragHandle} />
+          </View>
+
           {/* Header */}
           <View style={styles(colors).header}>
             <View style={styles(colors).headerIconContainer}>
@@ -142,7 +222,9 @@ const PurchaseDetailModal: React.FC<PurchaseDetailModalProps> = ({
             </View>
             <View style={styles(colors).headerTextContainer}>
               <Text style={styles(colors).headerTitle}>
-                {purchase?.package?.name || 'Purchase'}
+                {purchase?.package?.name
+                  ? String(purchase.package.name)
+                  : 'Purchase'}
               </Text>
               <Text style={styles(colors).headerSubtitle}>
                 Purchase Details
@@ -156,12 +238,19 @@ const PurchaseDetailModal: React.FC<PurchaseDetailModalProps> = ({
               <Text style={styles(colors).closeButtonText}>✕</Text>
             </TouchableOpacity>
           </View>
+        </View>
 
-          {/* Content */}
+        {/* Scrollable Content */}
+        <View style={{ flex: 1 }}>
           <ScrollView
-            style={styles(colors).content}
-            showsVerticalScrollIndicator={false}
+            bounces={true}
+            showsVerticalScrollIndicator={true}
             contentContainerStyle={styles(colors).contentContainer}
+            onScrollBeginDrag={e => {
+              if (e.nativeEvent.contentOffset.y <= 0) {
+                // let the modal handle the gesture when at top
+              }
+            }}
           >
             {!purchase ? (
               <View style={styles(colors).emptyState}>
@@ -172,27 +261,29 @@ const PurchaseDetailModal: React.FC<PurchaseDetailModalProps> = ({
             ) : (
               <>
                 {/* Status Badge */}
-                {purchase?.payment_status && (
-                  <View
-                    style={[
-                      styles(colors).statusBadge,
-                      {
-                        backgroundColor:
-                          getStatusColor(purchase.payment_status) + '30',
-                        borderColor: getStatusColor(purchase.payment_status),
-                      },
-                    ]}
-                  >
-                    <Text
+                {purchase?.payment_status !== undefined &&
+                  purchase?.payment_status !== null &&
+                  typeof purchase.payment_status === 'string' && (
+                    <View
                       style={[
-                        styles(colors).statusText,
-                        { color: getStatusColor(purchase.payment_status) },
+                        styles(colors).statusBadge,
+                        {
+                          backgroundColor:
+                            getStatusColor(purchase.payment_status) + '30',
+                          borderColor: getStatusColor(purchase.payment_status),
+                        },
                       ]}
                     >
-                      {purchase.payment_status.toUpperCase()}
-                    </Text>
-                  </View>
-                )}
+                      <Text
+                        style={[
+                          styles(colors).statusText,
+                          { color: getStatusColor(purchase.payment_status) },
+                        ]}
+                      >
+                        {String(purchase.payment_status).toUpperCase()}
+                      </Text>
+                    </View>
+                  )}
 
                 {/* Transaction Details */}
                 <View style={styles(colors).section}>
@@ -207,8 +298,11 @@ const PurchaseDetailModal: React.FC<PurchaseDetailModalProps> = ({
                   <DetailRow
                     label="Transaction Type"
                     value={
-                      purchase?.transaction_type
-                        ? purchase.transaction_type.replace('_', ' ').toUpperCase()
+                      purchase?.transaction_type &&
+                      typeof purchase.transaction_type === 'string'
+                        ? purchase.transaction_type
+                            .replace('_', ' ')
+                            .toUpperCase()
                         : 'N/A'
                     }
                   />
@@ -224,7 +318,8 @@ const PurchaseDetailModal: React.FC<PurchaseDetailModalProps> = ({
                   <DetailRow
                     label="Payment Method"
                     value={
-                      purchase?.payment_method
+                      purchase?.payment_method &&
+                      typeof purchase.payment_method === 'string'
                         ? purchase.payment_method.toUpperCase()
                         : 'N/A'
                     }
@@ -247,12 +342,17 @@ const PurchaseDetailModal: React.FC<PurchaseDetailModalProps> = ({
 
                   <DetailRow
                     label="Package Name"
-                    value={purchase?.package?.name || 'N/A'}
+                    value={
+                      purchase?.package?.name
+                        ? String(purchase.package.name)
+                        : 'N/A'
+                    }
                   />
                   <DetailRow
                     label="Package Type"
                     value={
-                      purchase?.package?.type
+                      purchase?.package?.type &&
+                      typeof purchase.package.type === 'string'
                         ? purchase.package.type.replace('_', ' ').toUpperCase()
                         : 'N/A'
                     }
@@ -262,7 +362,7 @@ const PurchaseDetailModal: React.FC<PurchaseDetailModalProps> = ({
                     value={
                       purchase?.package?.tier !== undefined &&
                       purchase?.package?.tier !== null
-                        ? `Tier ${purchase.package.tier}`
+                        ? `Tier ${String(purchase.package.tier)}`
                         : 'N/A'
                     }
                   />
@@ -270,117 +370,130 @@ const PurchaseDetailModal: React.FC<PurchaseDetailModalProps> = ({
                     purchase.credits_granted > 0 && (
                       <DetailRow
                         label="Credits Granted"
-                        value={purchase.credits_granted.toString()}
+                        value={String(purchase.credits_granted)}
                       />
                     )}
                 </View>
 
                 {/* Metadata Details */}
-                {purchase.metadata && (
-                  <View style={styles(colors).section}>
-                    <Text style={styles(colors).sectionTitle}>
-                      Additional Information
-                    </Text>
+                {purchase.metadata &&
+                  typeof purchase.metadata === 'object' &&
+                  purchase.metadata !== null && (
+                    <View style={styles(colors).section}>
+                      <Text style={styles(colors).sectionTitle}>
+                        Additional Information
+                      </Text>
 
-                    {purchase.metadata?.platform && (
-                      <DetailRow
-                        label="Platform"
-                        value={
-                          typeof purchase.metadata.platform === 'string'
-                            ? purchase.metadata.platform.toUpperCase()
-                            : String(purchase.metadata.platform)
-                        }
-                      />
-                    )}
+                      {purchase.metadata.platform !== undefined &&
+                        purchase.metadata.platform !== null &&
+                        (typeof purchase.metadata.platform === 'string' ||
+                          typeof purchase.metadata.platform === 'number') && (
+                          <DetailRow
+                            label="Platform"
+                            value={
+                              typeof purchase.metadata.platform === 'string'
+                                ? purchase.metadata.platform.toUpperCase()
+                                : String(purchase.metadata.platform)
+                            }
+                          />
+                        )}
 
-                    {purchase.metadata.cancel_type && (
-                      <DetailRow
-                        label="Cancellation Type"
-                        value={
-                          typeof purchase.metadata.cancel_type === 'string'
-                            ? purchase.metadata.cancel_type
-                                .replace('_', ' ')
-                                .toUpperCase()
-                            : String(purchase.metadata.cancel_type)
-                        }
-                      />
-                    )}
+                      {purchase.metadata.cancel_type !== undefined &&
+                        purchase.metadata.cancel_type !== null &&
+                        (typeof purchase.metadata.cancel_type === 'string' ||
+                          typeof purchase.metadata.cancel_type ===
+                            'number') && (
+                          <DetailRow
+                            label="Cancellation Type"
+                            value={
+                              typeof purchase.metadata.cancel_type === 'string'
+                                ? purchase.metadata.cancel_type
+                                    .replace('_', ' ')
+                                    .toUpperCase()
+                                : String(purchase.metadata.cancel_type)
+                            }
+                          />
+                        )}
 
-                    {purchase.metadata.canceled_at && (
-                      <DetailRow
-                        label="Canceled At"
-                        value={
-                          typeof purchase.metadata.canceled_at === 'string'
-                            ? formatDate(purchase.metadata.canceled_at)
-                            : 'N/A'
-                        }
-                      />
-                    )}
+                      {purchase.metadata.canceled_at !== undefined &&
+                        purchase.metadata.canceled_at !== null &&
+                        typeof purchase.metadata.canceled_at === 'string' && (
+                          <DetailRow
+                            label="Canceled At"
+                            value={formatDate(purchase.metadata.canceled_at)}
+                          />
+                        )}
 
-                    {purchase.metadata.period_end && (
-                      <DetailRow
-                        label="Period End"
-                        value={
-                          typeof purchase.metadata.period_end === 'string'
-                            ? formatDate(purchase.metadata.period_end)
-                            : 'N/A'
-                        }
-                      />
-                    )}
+                      {purchase.metadata.period_end !== undefined &&
+                        purchase.metadata.period_end !== null &&
+                        typeof purchase.metadata.period_end === 'string' && (
+                          <DetailRow
+                            label="Period End"
+                            value={formatDate(purchase.metadata.period_end)}
+                          />
+                        )}
 
-                    {purchase.metadata.reason && (
-                      <DetailRow
-                        label="Reason"
-                        value={
-                          typeof purchase.metadata.reason === 'string'
-                            ? purchase.metadata.reason
-                                .replace('_', ' ')
-                                .toUpperCase()
-                            : String(purchase.metadata.reason)
-                        }
-                      />
-                    )}
-                  </View>
-                )}
+                      {purchase.metadata.reason !== undefined &&
+                        purchase.metadata.reason !== null &&
+                        (typeof purchase.metadata.reason === 'string' ||
+                          typeof purchase.metadata.reason === 'number') && (
+                          <DetailRow
+                            label="Reason"
+                            value={
+                              typeof purchase.metadata.reason === 'string'
+                                ? purchase.metadata.reason
+                                    .replace('_', ' ')
+                                    .toUpperCase()
+                                : String(purchase.metadata.reason)
+                            }
+                          />
+                        )}
+                    </View>
+                  )}
 
                 {/* Receipt Link */}
-                {purchase?.receipt_url && (
-                  <TouchableOpacity
-                    onPress={handleReceiptPress}
-                    style={styles(colors).receiptButton}
-                    activeOpacity={0.8}
-                  >
-                    <GradientBox
-                      colors={[colors.black, colors.bgBox]}
-                      style={styles(colors).receiptButtonGradient}
+                {purchase?.receipt_url !== undefined &&
+                  purchase?.receipt_url !== null &&
+                  purchase?.receipt_url !== '' && (
+                    <TouchableOpacity
+                      onPress={handleReceiptPress}
+                      style={styles(colors).receiptButton}
+                      activeOpacity={0.8}
                     >
-                      <Text style={styles(colors).receiptButtonText}>
-                        View Receipt
-                      </Text>
-                    </GradientBox>
-                  </TouchableOpacity>
-                )}
+                      <GradientBox
+                        colors={[colors.black, colors.bgBox]}
+                        style={styles(colors).receiptButtonGradient}
+                      >
+                        <Text
+                          style={styles(colors).receiptButtonText}
+                          numberOfLines={1}
+                        >
+                          View Receipt
+                        </Text>
+                      </GradientBox>
+                    </TouchableOpacity>
+                  )}
               </>
             )}
           </ScrollView>
-
-          {/* Footer */}
-          <View style={styles(colors).footer}>
-            <TouchableOpacity
-              onPress={onClose}
-              style={styles(colors).closeFooterButton}
-              activeOpacity={0.8}
-            >
-              <GradientBox
-                colors={[colors.black, colors.bgBox]}
-                style={styles(colors).closeFooterButtonGradient}
-              >
-                <Text style={styles(colors).closeFooterButtonText}>Close</Text>
-              </GradientBox>
-            </TouchableOpacity>
-          </View>
         </View>
-      </View>
+
+        {/* Footer */}
+        <View style={styles(colors).footer}>
+          <TouchableOpacity
+            onPress={onClose}
+            style={styles(colors).closeFooterButton}
+            activeOpacity={0.8}
+          >
+            <Text
+              style={styles(colors).closeFooterButtonText}
+              numberOfLines={1}
+            >
+              Close
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </Animated.View>
     </Modal>
   );
 };
@@ -389,26 +502,33 @@ export default PurchaseDetailModal;
 
 const styles = (colors: any) =>
   StyleSheet.create({
-    overlay: {
-      flex: 1,
+    modal: {
       justifyContent: 'flex-end',
-    },
-    backdrop: {
-      ...StyleSheet.absoluteFillObject,
-      backgroundColor: 'rgba(0, 0, 0, 0.6)',
+      margin: 0,
     },
     modalContainer: {
       backgroundColor: colors.bgBox,
       borderTopLeftRadius: 24,
       borderTopRightRadius: 24,
-      maxHeight: '90%',
       paddingBottom: Platform.OS === 'ios' ? 34 : 20,
+      overflow: 'hidden',
+      flexDirection: 'column',
+    },
+    dragHandleContainer: {
+      alignItems: 'center',
+      paddingTop: 8,
+    },
+    dragHandle: {
+      width: 40,
+      height: 4,
+      backgroundColor: 'rgba(255, 255, 255, 0.3)',
+      borderRadius: 2,
+      marginBottom: 8,
     },
     header: {
       flexDirection: 'row',
       alignItems: 'center',
       paddingHorizontal: 20,
-      paddingTop: 20,
       paddingBottom: 16,
       borderBottomWidth: 1,
       borderBottomColor: 'rgba(255, 255, 255, 0.1)',
@@ -454,13 +574,16 @@ const styles = (colors: any) =>
       color: colors.white,
       fontWeight: 'bold',
     },
+    contentWrapper: {
+      minHeight: 0,
+    },
     content: {
       flex: 1,
     },
     contentContainer: {
       paddingHorizontal: 20,
-      paddingTop: 20,
-      paddingBottom: 10,
+      paddingTop: 12,
+      paddingBottom: 40,
     },
     statusBadge: {
       alignSelf: 'flex-start',
@@ -513,17 +636,25 @@ const styles = (colors: any) =>
       overflow: 'hidden',
       borderWidth: 1.5,
       borderColor: colors.primary,
+      minHeight: 48,
     },
     receiptButtonGradient: {
+      width: '100%',
+      height: '100%',
       paddingVertical: 14,
       paddingHorizontal: 24,
       alignItems: 'center',
       justifyContent: 'center',
+      minHeight: 48,
     },
     receiptButtonText: {
       fontFamily: Fonts.aeonikBold,
       fontSize: 14,
-      color: colors.white,
+      color: colors.white || '#FFFFFF',
+      textAlign: 'center',
+      includeFontPadding: false,
+      textAlignVertical: 'center',
+      backgroundColor: 'transparent',
     },
     footer: {
       paddingHorizontal: 20,
@@ -533,20 +664,23 @@ const styles = (colors: any) =>
     },
     closeFooterButton: {
       borderRadius: 200,
-      overflow: 'hidden',
       borderWidth: 1.5,
       borderColor: colors.primary,
-      marginBottom: 10,
-    },
-    closeFooterButtonGradient: {
+      backgroundColor: 'transparent',
       paddingVertical: 14,
+      paddingHorizontal: 24,
       alignItems: 'center',
       justifyContent: 'center',
+      marginBottom: 10,
+      minHeight: 48,
     },
     closeFooterButtonText: {
       fontFamily: Fonts.aeonikBold,
       fontSize: 14,
-      color: colors.white,
+      color: colors.primary,
+      textAlign: 'center',
+      includeFontPadding: false,
+      textAlignVertical: 'center',
     },
     emptyState: {
       paddingVertical: 40,

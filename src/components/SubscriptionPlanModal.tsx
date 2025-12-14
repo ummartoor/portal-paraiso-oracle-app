@@ -8,7 +8,6 @@ import React, {
 import {
   View,
   Text,
-  Modal,
   TouchableOpacity,
   StyleSheet,
   Dimensions,
@@ -20,6 +19,7 @@ import {
   Alert,
   ScrollView,
 } from 'react-native';
+import Modal from 'react-native-modal';
 import { useFocusEffect } from '@react-navigation/native';
 import { useThemeStore } from '../store/useThemeStore';
 import { Fonts } from '../constants/fonts';
@@ -28,6 +28,7 @@ import { useTranslation } from 'react-i18next';
 import { useStripe } from '@stripe/stripe-react-native';
 import { useStripeStore, StripePackage } from '../store/useStripeStore';
 import { useShallow } from 'zustand/react/shallow';
+import SubscriptionConfirmationModal from './SubscriptionConfirmationModal';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('screen');
 const CARD_WIDTH = SCREEN_WIDTH * 0.8;
@@ -162,14 +163,21 @@ const SubscriptionPlanModal: React.FC<SubscriptionPlanModalProps> = ({
   const [activatedPackageId, setActivatedPackageId] = useState<string | null>(
     null,
   );
+  const [confirmationModalVisible, setConfirmationModalVisible] =
+    useState(false);
+  const [selectedPackageForConfirmation, setSelectedPackageForConfirmation] =
+    useState<StripePackage | null>(null);
   const flatListRef = useRef<FlatList>(null);
 
   useEffect(() => {
     if (isVisible) {
-      fetchStripePackages();
+      // Fetch packages when modal opens
+      // Force fetch if packages are missing to ensure they load
+      const shouldForceFetch = !packages || packages.length === 0;
+      fetchStripePackages(shouldForceFetch);
       fetchCurrentSubscription();
     }
-  }, [isVisible, fetchStripePackages, fetchCurrentSubscription]);
+  }, [isVisible]);
 
   useEffect(() => {
     const activePackageIdFromServer =
@@ -212,12 +220,16 @@ const SubscriptionPlanModal: React.FC<SubscriptionPlanModalProps> = ({
     },
   };
 
-  const paidPackages =
-    packages
-      ?.filter(p => p.type !== 'free')
-      .sort((a, b) => a.sort_order - b.sort_order) || [];
+  const paidPackages = useMemo(() => {
+    if (!packages || packages.length === 0) {
+      return [];
+    }
+    return packages
+      .filter(p => p.type !== 'free')
+      .sort((a, b) => a.sort_order - b.sort_order);
+  }, [packages]);
 
-  const handleChoosePlan = async (item: StripePackage) => {
+  const handleChoosePlan = (item: StripePackage) => {
     const defaultPrice = item.prices.find(p => p.is_default);
     if (!defaultPrice) {
       Alert.alert('Error', 'This package is not configured correctly.');
@@ -234,11 +246,29 @@ const SubscriptionPlanModal: React.FC<SubscriptionPlanModalProps> = ({
       return;
     }
 
+    // Show confirmation modal first
+    setSelectedPackageForConfirmation(item);
+    setConfirmationModalVisible(true);
+  };
+
+  const handleConfirmSubscription = async () => {
+    if (!selectedPackageForConfirmation) return;
+
+    const item = selectedPackageForConfirmation;
+    const defaultPrice = item.prices.find(p => p.is_default);
+    if (!defaultPrice) {
+      Alert.alert('Error', 'This package is not configured correctly.');
+      setConfirmationModalVisible(false);
+      return;
+    }
+
     // Determine if this is a plan change (user has active subscription but different package)
+    const activeSubscription = currentSubscription?.vipSubscription;
     const isPlanChange =
       !!activeSubscription && activeSubscription.packageId !== item.id;
 
     setProcessingPackageId(item.id);
+    setConfirmationModalVisible(false);
 
     try {
       // Step 1: Create payment intent
@@ -284,14 +314,13 @@ const SubscriptionPlanModal: React.FC<SubscriptionPlanModalProps> = ({
       }
 
       // Step 3: Present payment sheet
-      const { error: paymentError, paymentIntent: result } =
-        await presentPaymentSheet();
+      const paymentResult = await presentPaymentSheet();
 
-      if (paymentError) {
-        if (paymentError.code !== 'Canceled') {
+      if (paymentResult.error) {
+        if (paymentResult.error.code !== 'Canceled') {
           Alert.alert(
-            `Payment Error: ${paymentError.code}`,
-            paymentError.message,
+            `Payment Error: ${paymentResult.error.code}`,
+            paymentResult.error.message,
           );
         }
         setProcessingPackageId(null);
@@ -299,7 +328,8 @@ const SubscriptionPlanModal: React.FC<SubscriptionPlanModalProps> = ({
       }
 
       // Step 4: Check payment result status
-      if (result?.status !== 'Succeeded') {
+      const result = (paymentResult as any).paymentIntent;
+      if (!result || result.status !== 'Succeeded') {
         Alert.alert(
           'Payment Not Completed',
           `Payment status: ${result?.status || 'unknown'}. Please try again.`,
@@ -391,6 +421,7 @@ const SubscriptionPlanModal: React.FC<SubscriptionPlanModalProps> = ({
       );
     } finally {
       setProcessingPackageId(null);
+      setSelectedPackageForConfirmation(null);
     }
   };
 
@@ -465,25 +496,73 @@ const SubscriptionPlanModal: React.FC<SubscriptionPlanModalProps> = ({
     );
   });
 
-  return (
-    <Modal visible={isVisible} animationType="slide" transparent>
-      <View style={[StyleSheet.absoluteFill, styles.overlayBackground]}>
-        <TouchableOpacity style={{ flex: 1 }} onPress={onClose} />
-        <View style={[styles.modal, { backgroundColor: colors.bgBox }]}>
-          <ScrollView showsVerticalScrollIndicator={false}>
-            <View style={styles.headerContainer}>
-              <View style={styles.headerIconPlaceholder} />
-              <Text style={[styles.heading, { color: colors.primary }]}>
-                {t('subscription_plan_title')}
-              </Text>
-              <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
-                <Image
-                  source={require('../assets/icons/closeIcon.png')}
-                  style={styles.closeIcon}
-                />
-              </TouchableOpacity>
-            </View>
+  // Debug log
+  if (__DEV__) {
+    console.log('SubscriptionPlanModal render:', {
+      isVisible,
+      packagesCount: packages?.length || 0,
+    });
+  }
 
+  return (
+    <Modal
+      isVisible={isVisible}
+      onBackdropPress={onClose}
+      swipeDirection={['down']}
+      swipeThreshold={100}
+      style={styles.modal}
+      backdropOpacity={0.6}
+      animationIn="slideInUp"
+      animationOut="slideOutDown"
+      avoidKeyboard={true}
+      propagateSwipe={true}
+      useNativeDriverForBackdrop={true}
+    >
+      <View
+        style={[
+          styles.modalContainer,
+          {
+            backgroundColor: colors.bgBox,
+            maxHeight: SCREEN_HEIGHT * 0.95,
+          },
+        ]}
+      >
+        {/* Header */}
+        <View style={styles.header}>
+          <View style={styles.headerIconContainer}>
+            <Image
+              source={require('../assets/icons/AquariusIcon.png')}
+              style={[styles.headerIcon, { tintColor: colors.primary }]}
+              resizeMode="contain"
+            />
+          </View>
+          <View style={styles.headerTextContainer}>
+            <Text style={[styles.headerTitle, { color: colors.white }]}>
+              {t('subscription_plan_title')}
+            </Text>
+            <Text style={[styles.headerSubtitle, { color: colors.white }]}>
+              Choose Your Plan
+            </Text>
+          </View>
+          <TouchableOpacity
+            onPress={onClose}
+            style={styles.closeButton}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            <Text style={[styles.closeButtonText, { color: colors.white }]}>
+              ✕
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Scrollable Content */}
+        <View style={{ flex: 1 }}>
+          <ScrollView
+            bounces={true}
+            showsVerticalScrollIndicator={true}
+            contentContainerStyle={styles.contentContainer}
+            keyboardShouldPersistTaps="handled"
+          >
             <ImageBackground
               source={require('../assets/images/heroImage.png')}
               style={[styles.hero, { width: SCREEN_WIDTH - 40 }]}
@@ -538,11 +617,23 @@ const SubscriptionPlanModal: React.FC<SubscriptionPlanModalProps> = ({
                 />
               </View>
             )}
-
-            {/* Cancel Button ko yahan se hata diya gaya hai (header me close button hai) */}
           </ScrollView>
         </View>
       </View>
+
+      {/* Confirmation Modal */}
+      <SubscriptionConfirmationModal
+        isVisible={confirmationModalVisible}
+        onClose={() => {
+          setConfirmationModalVisible(false);
+          setSelectedPackageForConfirmation(null);
+        }}
+        onConfirm={handleConfirmSubscription}
+        selectedPackage={selectedPackageForConfirmation}
+        currentSubscription={currentSubscription?.vipSubscription || null}
+        packages={packages}
+        isProcessing={processingPackageId !== null}
+      />
     </Modal>
   );
 };
@@ -550,55 +641,76 @@ const SubscriptionPlanModal: React.FC<SubscriptionPlanModalProps> = ({
 export default SubscriptionPlanModal;
 
 const styles = StyleSheet.create({
-  overlayBackground: {
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
-    justifyContent: 'flex-end',
-  },
-  overlay: {
-    flex: 1,
-    justifyContent: 'flex-end',
-  },
   modal: {
-    maxHeight: SCREEN_HEIGHT * 0.9,
-    paddingTop: 20,
-    overflow: 'hidden',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
+    justifyContent: 'flex-end',
+    margin: 0,
   },
-  headerContainer: {
+  modalContainer: {
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingBottom: Platform.OS === 'ios' ? 34 : 20,
+    overflow: 'hidden',
+    flexDirection: 'column',
+    minHeight: 400,
+  },
+  header: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 20,
-    marginBottom: 10,
-    width: '100%',
+    paddingTop: 20,
+    paddingBottom: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255, 255, 255, 0.1)',
   },
-  closeBtn: {
-    width: 30,
-    height: 30,
+  headerIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: 'rgba(217, 182, 153, 0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  headerIcon: {
+    width: 28,
+    height: 28,
+  },
+  headerTextContainer: {
+    flex: 1,
+  },
+  headerTitle: {
+    fontFamily: Fonts.cormorantSCBold,
+    fontSize: 22,
+    marginBottom: 4,
+  },
+  headerSubtitle: {
+    fontFamily: Fonts.aeonikRegular,
+    fontSize: 14,
+    opacity: 0.7,
+  },
+  closeButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  closeIcon: {
-    width: 16, // Icon chota kar diya hai
-    height: 16,
-    tintColor: '#FFFFFF',
+  closeButtonText: {
+    fontSize: 18,
+    fontWeight: 'bold',
   },
-  headerIconPlaceholder: {
-    width: 30,
-    height: 30,
-  },
-  heading: {
-    fontFamily: Fonts.cormorantSCBold,
-    fontSize: 22,
-    flex: 1, // Take up remaining space
-    textAlign: 'center', // Center the title
+  contentContainer: {
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    paddingBottom: 40,
   },
   hero: {
     height: 200,
     borderRadius: 16,
     overflow: 'hidden',
-    marginTop: 10,
+    marginTop: 8,
+    marginBottom: 20,
     width: SCREEN_WIDTH - 40,
     alignSelf: 'center',
   },

@@ -27,6 +27,7 @@ import {
 } from '../../../../../store/useStripeStore';
 import GradientBox from '../../../../../components/GradientBox';
 import { useStripe } from '@stripe/stripe-react-native';
+import SubscriptionConfirmationModal from '../../../../../components/SubscriptionConfirmationModal';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('screen');
 const CARD_WIDTH = SCREEN_WIDTH * 0.8;
@@ -63,6 +64,10 @@ const BuySubscriptionScreen = () => {
   const [activatedPackageId, setActivatedPackageId] = useState<string | null>(
     null,
   );
+  const [confirmationModalVisible, setConfirmationModalVisible] =
+    useState(false);
+  const [selectedPackageForConfirmation, setSelectedPackageForConfirmation] =
+    useState<StripePackage | null>(null);
   const flatListRef = useRef<FlatList>(null);
 
   useFocusEffect(
@@ -93,7 +98,7 @@ const BuySubscriptionScreen = () => {
       ?.filter(p => p.type !== 'free')
       .sort((a, b) => a.sort_order - b.sort_order) || [];
 
-  const handleChoosePlan = async (item: StripePackage) => {
+  const handleChoosePlan = (item: StripePackage) => {
     const defaultPrice = item.prices.find(p => p.is_default);
     if (!defaultPrice) {
       Alert.alert('Error', 'This package is not configured correctly.');
@@ -110,11 +115,29 @@ const BuySubscriptionScreen = () => {
       return;
     }
 
+    // Show confirmation modal first
+    setSelectedPackageForConfirmation(item);
+    setConfirmationModalVisible(true);
+  };
+
+  const handleConfirmSubscription = async () => {
+    if (!selectedPackageForConfirmation) return;
+
+    const item = selectedPackageForConfirmation;
+    const defaultPrice = item.prices.find(p => p.is_default);
+    if (!defaultPrice) {
+      Alert.alert('Error', 'This package is not configured correctly.');
+      setConfirmationModalVisible(false);
+      return;
+    }
+
     // Determine if this is a plan change (user has active subscription but different package)
+    const activeSubscription = currentSubscription?.vipSubscription;
     const isPlanChange =
       !!activeSubscription && activeSubscription.packageId !== item.id;
 
     setProcessingPackageId(item.id);
+    setConfirmationModalVisible(false);
 
     try {
       // Step 1: Create payment intent
@@ -192,23 +215,22 @@ const BuySubscriptionScreen = () => {
         console.log('Presenting payment sheet...');
       }
 
-      const { error: paymentError, paymentIntent: result } =
-        await presentPaymentSheet();
+      const paymentResult = await presentPaymentSheet();
 
-      if (paymentError) {
+      if (paymentResult.error) {
         if (__DEV__) {
           console.log('Payment sheet error:', {
-            code: paymentError.code,
-            message: paymentError.message,
-            type: paymentError.type,
-            localizedMessage: paymentError.localizedMessage,
+            code: paymentResult.error.code,
+            message: paymentResult.error.message,
+            type: paymentResult.error.type,
+            localizedMessage: paymentResult.error.localizedMessage,
           });
         }
 
-        if (paymentError.code !== 'Canceled') {
+        if (paymentResult.error.code !== 'Canceled') {
           Alert.alert(
-            `Payment Error: ${paymentError.code}`,
-            paymentError.message,
+            `Payment Error: ${paymentResult.error.code}`,
+            paymentResult.error.message,
           );
         } else {
           // User canceled - this is expected behavior
@@ -221,7 +243,8 @@ const BuySubscriptionScreen = () => {
       }
 
       // Step 4: Check payment result status
-      if (result?.status !== 'Succeeded') {
+      const result = (paymentResult as any).paymentIntent;
+      if (!result || result.status !== 'Succeeded') {
         Alert.alert(
           'Payment Not Completed',
           `Payment status: ${result?.status || 'unknown'}. Please try again.`,
@@ -319,6 +342,7 @@ const BuySubscriptionScreen = () => {
       );
     } finally {
       setProcessingPackageId(null);
+      setSelectedPackageForConfirmation(null);
     }
   };
 
@@ -482,6 +506,20 @@ const BuySubscriptionScreen = () => {
             </View>
           )}
         </ScrollView>
+
+        {/* Confirmation Modal */}
+        <SubscriptionConfirmationModal
+          isVisible={confirmationModalVisible}
+          onClose={() => {
+            setConfirmationModalVisible(false);
+            setSelectedPackageForConfirmation(null);
+          }}
+          onConfirm={handleConfirmSubscription}
+          selectedPackage={selectedPackageForConfirmation}
+          currentSubscription={currentSubscription?.vipSubscription || null}
+          packages={packages}
+          isProcessing={processingPackageId !== null}
+        />
       </SafeAreaView>
     </ImageBackground>
   );
