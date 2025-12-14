@@ -221,12 +221,27 @@ const SubscriptionPlanModal: React.FC<SubscriptionPlanModalProps> = ({
   };
 
   const paidPackages = useMemo(() => {
+    console.log('📦 SubscriptionPlanModal - Packages data:', {
+      packages: packages?.length || 0,
+      packagesData: packages,
+    });
+
     if (!packages || packages.length === 0) {
+      console.log('⚠️ No packages available');
       return [];
     }
-    return packages
+
+    const filtered = packages
       .filter(p => p.type !== 'free')
       .sort((a, b) => a.sort_order - b.sort_order);
+
+    console.log('✅ Paid packages after filter:', {
+      total: packages.length,
+      filtered: filtered.length,
+      types: packages.map(p => p.type),
+    });
+
+    return filtered;
   }, [packages]);
 
   const handleChoosePlan = (item: StripePackage) => {
@@ -446,6 +461,7 @@ const SubscriptionPlanModal: React.FC<SubscriptionPlanModalProps> = ({
             <Text style={styles.priceAmount}>
               {defaultPrice?.amount.toFixed(2)}
             </Text>
+            <Text style={styles.currency}>{defaultPrice?.currency}</Text>
             <Text style={styles.priceInterval}>/{defaultPrice?.interval}</Text>
           </View>
           <View style={styles.featuresList}>
@@ -501,127 +517,150 @@ const SubscriptionPlanModal: React.FC<SubscriptionPlanModalProps> = ({
     console.log('SubscriptionPlanModal render:', {
       isVisible,
       packagesCount: packages?.length || 0,
+      paidPackagesCount: paidPackages.length,
+      isLoading,
+      colors: !!colors,
     });
   }
 
   return (
-    <Modal
-      isVisible={isVisible}
-      onBackdropPress={onClose}
-      swipeDirection={['down']}
-      swipeThreshold={100}
-      style={styles.modal}
-      backdropOpacity={0.6}
-      animationIn="slideInUp"
-      animationOut="slideOutDown"
-      avoidKeyboard={true}
-      propagateSwipe={true}
-      useNativeDriverForBackdrop={true}
-    >
-      <View
-        style={[
-          styles.modalContainer,
-          {
-            backgroundColor: colors.bgBox,
-            maxHeight: SCREEN_HEIGHT * 0.95,
-          },
-        ]}
+    <>
+      <Modal
+        isVisible={isVisible}
+        onBackdropPress={onClose}
+        onSwipeComplete={onClose}
+        swipeDirection={['down']}
+        swipeThreshold={100}
+        style={styles.modal}
+        backdropOpacity={0.6}
+        animationIn="slideInUp"
+        animationOut="slideOutDown"
+        avoidKeyboard={true}
+        propagateSwipe={true}
       >
-        {/* Header */}
-        <View style={styles.header}>
-          <View style={styles.headerIconContainer}>
-            <Image
-              source={require('../assets/icons/AquariusIcon.png')}
-              style={[styles.headerIcon, { tintColor: colors.primary }]}
-              resizeMode="contain"
-            />
-          </View>
-          <View style={styles.headerTextContainer}>
-            <Text style={[styles.headerTitle, { color: colors.white }]}>
-              {t('subscription_plan_title')}
-            </Text>
-            <Text style={[styles.headerSubtitle, { color: colors.white }]}>
-              Choose Your Plan
-            </Text>
-          </View>
-          <TouchableOpacity
-            onPress={onClose}
-            style={styles.closeButton}
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-          >
-            <Text style={[styles.closeButtonText, { color: colors.white }]}>
-              ✕
-            </Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Scrollable Content */}
-        <View style={{ flex: 1 }}>
-          <ScrollView
-            bounces={true}
-            showsVerticalScrollIndicator={true}
-            contentContainerStyle={styles.contentContainer}
-            keyboardShouldPersistTaps="handled"
-          >
-            <ImageBackground
-              source={require('../assets/images/heroImage.png')}
-              style={[styles.hero, { width: SCREEN_WIDTH - 40 }]}
-              resizeMode="cover"
-            >
-              <View style={styles.heroOverlay}>
-                <Text style={[styles.heroTitle, { color: colors.white }]}>
-                  {t('subscription_unlock_title')}
-                </Text>
-              </View>
-            </ImageBackground>
-
-            {isLoading ? (
-              <ActivityIndicator
-                size="large"
-                color={colors.primary}
-                style={{ height: 400 }}
+        <View
+          style={[
+            styles.modalContainer,
+            {
+              backgroundColor: colors.bgBox || '#4A3F50',
+              height: SCREEN_HEIGHT * 0.85,
+              maxHeight: SCREEN_HEIGHT * 0.95,
+            },
+          ]}
+        >
+          {/* Header */}
+          <View style={styles.header}>
+            <View style={styles.headerIconContainer}>
+              <Image
+                source={require('../assets/icons/AquariusIcon.png')}
+                style={[styles.headerIcon, { tintColor: colors.primary }]}
+                resizeMode="contain"
               />
-            ) : paidPackages.length === 0 ? (
-              <View style={styles.emptyStateContainer}>
-                <Text style={[styles.emptyStateText, { color: colors.white }]}>
-                  {packages === null
-                    ? 'Loading packages...'
-                    : packages.length === 0
-                    ? 'No packages available at the moment.'
-                    : 'No paid packages found. Please contact support.'}
-                </Text>
-                {__DEV__ && (
-                  <Text style={[styles.debugText, { color: colors.primary }]}>
-                    Debug: packages={packages?.length || 0}, paidPackages=
-                    {paidPackages.length}
-                  </Text>
-                )}
-              </View>
-            ) : (
-              <View style={styles.carouselSection}>
-                <FlatList
-                  data={paidPackages}
-                  renderItem={({ item }) => <Card item={item} />}
-                  keyExtractor={item => item.id}
-                  horizontal
-                  showsHorizontalScrollIndicator={false}
-                  contentContainerStyle={{ paddingHorizontal: 0 }}
-                  ItemSeparatorComponent={() => (
-                    <View style={{ width: CARD_SPACING }} />
-                  )}
-                  removeClippedSubviews={true}
-                  maxToRenderPerBatch={5}
-                  updateCellsBatchingPeriod={50}
-                  initialNumToRender={3}
-                  windowSize={5}
-                />
-              </View>
-            )}
-          </ScrollView>
-        </View>
-      </View>
+            </View>
+            <View style={styles.headerTextContainer}>
+              <Text style={[styles.headerTitle, { color: colors.white }]}>
+                {t('subscription_plan_title')}
+              </Text>
+              <Text style={[styles.headerSubtitle, { color: colors.white }]}>
+                Choose Your Plan
+              </Text>
+            </View>
+            <TouchableOpacity
+              onPress={onClose}
+              style={styles.closeButton}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            >
+              <Text style={[styles.closeButtonText, { color: colors.white }]}>
+                ✕
+              </Text>
+            </TouchableOpacity>
+          </View>
 
-      {/* Confirmation Modal */}
+          {/* Scrollable Content */}
+          <View style={{ flex: 1 }}>
+            <ScrollView
+              bounces={true}
+              showsVerticalScrollIndicator={true}
+              contentContainerStyle={styles.contentContainer}
+              keyboardShouldPersistTaps="handled"
+            >
+              <View style={styles.heroWrap}>
+                <Image
+                  source={require('../assets/images/heroImage.png')}
+                  style={styles.hero}
+                  resizeMode="cover"
+                />
+                <View style={styles.heroOverlay}>
+                  <Text style={[styles.heroTitle, { color: colors.white }]}>
+                    {t('subscription_unlock_title')}
+                  </Text>
+                </View>
+              </View>
+
+              {isLoading ? (
+                <ActivityIndicator
+                  size="large"
+                  color={colors.primary}
+                  style={{ height: 400 }}
+                />
+              ) : paidPackages.length === 0 ? (
+                <View style={styles.emptyStateContainer}>
+                  <Text
+                    style={[styles.emptyStateText, { color: colors.white }]}
+                  >
+                    {packages === null
+                      ? 'Loading packages...'
+                      : packages.length === 0
+                      ? 'No packages available at the moment.'
+                      : `No paid packages found. Total packages: ${packages.length}`}
+                  </Text>
+                  {__DEV__ && (
+                    <View style={{ marginTop: 10 }}>
+                      <Text
+                        style={[styles.debugText, { color: colors.primary }]}
+                      >
+                        Debug: packages={packages?.length || 0}, paidPackages=
+                        {paidPackages.length}
+                      </Text>
+                      {packages && packages.length > 0 && (
+                        <Text
+                          style={[
+                            styles.debugText,
+                            { color: colors.primary, marginTop: 5 },
+                          ]}
+                        >
+                          Package types: {packages.map(p => p.type).join(', ')}
+                        </Text>
+                      )}
+                    </View>
+                  )}
+                </View>
+              ) : (
+                <View style={styles.carouselSection}>
+                  <FlatList
+                    data={paidPackages}
+                    renderItem={({ item }) => <Card item={item} />}
+                    keyExtractor={item => item.id}
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={{ paddingHorizontal: 20 }}
+                    ItemSeparatorComponent={() => (
+                      <View style={{ width: CARD_SPACING }} />
+                    )}
+                    removeClippedSubviews={true}
+                    maxToRenderPerBatch={5}
+                    updateCellsBatchingPeriod={50}
+                    initialNumToRender={3}
+                    windowSize={5}
+                  />
+                </View>
+              )}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Confirmation Modal - Outside main modal to avoid nesting issues */}
       <SubscriptionConfirmationModal
         isVisible={confirmationModalVisible}
         onClose={() => {
@@ -634,7 +673,7 @@ const SubscriptionPlanModal: React.FC<SubscriptionPlanModalProps> = ({
         packages={packages}
         isProcessing={processingPackageId !== null}
       />
-    </Modal>
+    </>
   );
 };
 
@@ -651,7 +690,6 @@ const styles = StyleSheet.create({
     paddingBottom: Platform.OS === 'ios' ? 34 : 20,
     overflow: 'hidden',
     flexDirection: 'column',
-    minHeight: 400,
   },
   header: {
     flexDirection: 'row',
@@ -705,24 +743,29 @@ const styles = StyleSheet.create({
     paddingTop: 12,
     paddingBottom: 40,
   },
-  hero: {
-    height: 200,
+  heroWrap: {
+    height: 250,
+    marginHorizontal: 20,
     borderRadius: 16,
     overflow: 'hidden',
-    marginTop: 8,
-    marginBottom: 20,
-    width: SCREEN_WIDTH - 40,
-    alignSelf: 'center',
+    marginTop: 16,
+    position: 'relative',
+  },
+  hero: {
+    width: '100%',
+    height: '100%',
   },
   heroOverlay: {
-    flex: 1,
+    position: 'absolute',
+    bottom: 20,
+    left: 0,
+    right: 0,
     alignItems: 'center',
-    justifyContent: 'flex-end',
-    paddingBottom: 12,
+    paddingHorizontal: 16,
   },
   heroTitle: {
     fontFamily: Fonts.aeonikBold,
-    fontSize: 16,
+    fontSize: 18,
     textAlign: 'center',
     marginBottom: 20,
   },
@@ -746,8 +789,7 @@ const styles = StyleSheet.create({
     opacity: 0.7,
   },
   carouselSection: {
-    marginTop: 20,
-    height: 480,
+    marginTop: -40,
   },
   cardContainer: {
     paddingVertical: 20,
@@ -757,13 +799,6 @@ const styles = StyleSheet.create({
     padding: 20,
     justifyContent: 'space-between',
     alignItems: 'center',
-    width: CARD_WIDTH,
-    minHeight: 440,
-    shadowColor: '#000',
-    shadowOpacity: 0.25,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 5,
   },
   cardTitle: {
     fontFamily: Fonts.cormorantSCBold,
@@ -780,6 +815,13 @@ const styles = StyleSheet.create({
     fontSize: 32,
     color: '#fff',
   },
+  currency: {
+    fontFamily: Fonts.aeonikRegular,
+    fontSize: 15,
+    marginLeft: 5,
+    marginBottom: 5,
+    color: '#fff',
+  },
   priceInterval: {
     fontFamily: Fonts.aeonikRegular,
     fontSize: 14,
@@ -790,8 +832,6 @@ const styles = StyleSheet.create({
   },
   featuresList: {
     gap: 8,
-    alignSelf: 'stretch',
-    paddingHorizontal: 10,
   },
   featureText: {
     fontFamily: Fonts.aeonikRegular,
