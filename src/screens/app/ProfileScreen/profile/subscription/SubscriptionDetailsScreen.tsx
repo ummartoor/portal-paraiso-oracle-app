@@ -319,7 +319,9 @@ import { useShallow } from 'zustand/react/shallow';
 import { Fonts } from '../../../../../constants/fonts';
 import { useThemeStore } from '../../../../../store/useThemeStore';
 import { useStripeStore } from '../../../../../store/useStripeStore';
+import { useFeaturePermissionStore } from '../../../../../store/useFeaturePermissionStore';
 import GradientBox from '../../../../../components/GradientBox';
+import { ScrollView } from 'react-native';
 
 // --- Date formatting helper ---
 const formatDate = (dateString: string | undefined | null) => {
@@ -351,10 +353,21 @@ const SubscriptionDetailsScreen = () => {
     })),
   );
 
+  // Feature access store
+  const { featureAccess, isFetchingFeatureAccess, fetchFeatureAccess } =
+    useFeaturePermissionStore(
+      useShallow(state => ({
+        featureAccess: state.featureAccess,
+        isFetchingFeatureAccess: state.isFetchingFeatureAccess,
+        fetchFeatureAccess: state.fetchFeatureAccess,
+      })),
+    );
+
   useFocusEffect(
     useCallback(() => {
       fetchCurrentSubscription();
-    }, [fetchCurrentSubscription]),
+      fetchFeatureAccess(true); // Force fetch to get latest data
+    }, [fetchCurrentSubscription, fetchFeatureAccess]),
   );
 
   const handleCancelSubscription = () => {
@@ -409,7 +422,11 @@ const SubscriptionDetailsScreen = () => {
     const { vipSubscription } = currentSubscription;
 
     return (
-      <View style={styles.contentContainer}>
+      <ScrollView
+        style={styles.contentContainer}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={true}
+      >
         <View style={styles.currentPlanCard}>
           <View style={styles.planHeader}>
             <Text style={[styles.currentPlanName, { color: colors.primary }]}>
@@ -571,7 +588,454 @@ const SubscriptionDetailsScreen = () => {
             </TouchableOpacity>
           );
         })()}
-      </View>
+
+        {/* Feature Access Details */}
+        {featureAccess && (
+          <>
+            {/* Package Info from Feature Access */}
+            <View style={[styles.currentPlanCard, { marginTop: 20 }]}>
+              <Text style={[styles.sectionTitle, { color: colors.primary }]}>
+                Package Information
+              </Text>
+              <View style={styles.divider} />
+              {featureAccess.package && (
+                <>
+                  <View style={styles.dateInfoRow}>
+                    <Text style={styles.dateLabel}>Package Name</Text>
+                    <Text style={styles.dateValue}>
+                      {typeof featureAccess.package.name === 'string'
+                        ? featureAccess.package.name
+                        : featureAccess.package.name?.en ||
+                          featureAccess.package.name?.pt ||
+                          'N/A'}
+                    </Text>
+                  </View>
+                  <View style={styles.dateInfoRow}>
+                    <Text style={styles.dateLabel}>Package Type</Text>
+                    <Text style={styles.dateValue}>
+                      {featureAccess.package.type || 'N/A'}
+                    </Text>
+                  </View>
+                  <View style={styles.dateInfoRow}>
+                    <Text style={styles.dateLabel}>Tier</Text>
+                    <Text style={styles.dateValue}>
+                      {featureAccess.package.tier || 'N/A'}
+                    </Text>
+                  </View>
+                </>
+              )}
+            </View>
+
+            {/* Features Section */}
+            <View style={[styles.currentPlanCard, { marginTop: 20 }]}>
+              <Text style={[styles.sectionTitle, { color: colors.primary }]}>
+                Features Access
+              </Text>
+              <View style={styles.divider} />
+
+              {/* Tarot */}
+              {featureAccess.readings?.tarot && (
+                <View style={styles.featureSection}>
+                  <Text style={[styles.featureName, { color: colors.white }]}>
+                    Tarot Readings
+                  </Text>
+                  <View style={styles.featureDetails}>
+                    <View style={styles.dateInfoRow}>
+                      <Text style={styles.dateLabel}>Unlimited</Text>
+                      <Text
+                        style={[
+                          styles.dateValue,
+                          {
+                            color: featureAccess.readings.tarot.unlimited
+                              ? '#4CAF50'
+                              : '#fff',
+                          },
+                        ]}
+                      >
+                        {featureAccess.readings.tarot.unlimited ? 'Yes' : 'No'}
+                      </Text>
+                    </View>
+                    {!featureAccess.readings.tarot.unlimited && (
+                      <>
+                        <View style={styles.dateInfoRow}>
+                          <Text style={styles.dateLabel}>Daily Limit</Text>
+                          <Text style={styles.dateValue}>
+                            {featureAccess.readings.tarot.daily_limit === -1
+                              ? 'Unlimited'
+                              : featureAccess.readings.tarot.daily_limit}
+                          </Text>
+                        </View>
+                        <View style={styles.dateInfoRow}>
+                          <Text style={styles.dateLabel}>Remaining</Text>
+                          <Text style={styles.dateValue}>
+                            {featureAccess.readings.tarot.remaining}
+                          </Text>
+                        </View>
+                        <View style={styles.dateInfoRow}>
+                          <Text style={styles.dateLabel}>Used Today</Text>
+                          <Text style={styles.dateValue}>
+                            {featureAccess.readings.tarot.used_today}
+                          </Text>
+                        </View>
+                      </>
+                    )}
+                    {featureAccess.readings.tarot.cards_per_reading && (
+                      <View style={styles.dateInfoRow}>
+                        <Text style={styles.dateLabel}>Cards Per Reading</Text>
+                        <Text style={styles.dateValue}>
+                          {featureAccess.readings.tarot.cards_per_reading}
+                        </Text>
+                      </View>
+                    )}
+                  </View>
+                </View>
+              )}
+
+              {/* Buzios */}
+              {featureAccess.readings?.buzios && (
+                <View style={[styles.featureSection, { marginTop: 16 }]}>
+                  <Text style={[styles.featureName, { color: colors.white }]}>
+                    Búzios Readings
+                  </Text>
+                  <View style={styles.featureDetails}>
+                    <View style={styles.dateInfoRow}>
+                      <Text style={styles.dateLabel}>Unlimited</Text>
+                      <Text
+                        style={[
+                          styles.dateValue,
+                          {
+                            color: featureAccess.readings.buzios.unlimited
+                              ? '#4CAF50'
+                              : '#fff',
+                          },
+                        ]}
+                      >
+                        {featureAccess.readings.buzios.unlimited ? 'Yes' : 'No'}
+                      </Text>
+                    </View>
+                    {!featureAccess.readings.buzios.unlimited && (
+                      <>
+                        <View style={styles.dateInfoRow}>
+                          <Text style={styles.dateLabel}>Daily Limit</Text>
+                          <Text style={styles.dateValue}>
+                            {featureAccess.readings.buzios.daily_limit === -1
+                              ? 'Unlimited'
+                              : featureAccess.readings.buzios.daily_limit}
+                          </Text>
+                        </View>
+                        <View style={styles.dateInfoRow}>
+                          <Text style={styles.dateLabel}>Remaining</Text>
+                          <Text style={styles.dateValue}>
+                            {featureAccess.readings.buzios.remaining}
+                          </Text>
+                        </View>
+                        <View style={styles.dateInfoRow}>
+                          <Text style={styles.dateLabel}>Used Today</Text>
+                          <Text style={styles.dateValue}>
+                            {featureAccess.readings.buzios.used_today}
+                          </Text>
+                        </View>
+                      </>
+                    )}
+                    {featureAccess.readings.buzios.shells_per_reading && (
+                      <View style={styles.dateInfoRow}>
+                        <Text style={styles.dateLabel}>Shells Per Reading</Text>
+                        <Text style={styles.dateValue}>
+                          {featureAccess.readings.buzios.shells_per_reading}
+                        </Text>
+                      </View>
+                    )}
+                  </View>
+                </View>
+              )}
+
+              {/* Astrology */}
+              {featureAccess.readings?.astrology && (
+                <View style={[styles.featureSection, { marginTop: 16 }]}>
+                  <Text style={[styles.featureName, { color: colors.white }]}>
+                    Astrology/Horoscope
+                  </Text>
+                  <View style={styles.featureDetails}>
+                    <View style={styles.dateInfoRow}>
+                      <Text style={styles.dateLabel}>Unlimited</Text>
+                      <Text
+                        style={[
+                          styles.dateValue,
+                          {
+                            color: featureAccess.readings.astrology.unlimited
+                              ? '#4CAF50'
+                              : '#fff',
+                          },
+                        ]}
+                      >
+                        {featureAccess.readings.astrology.unlimited
+                          ? 'Yes'
+                          : 'No'}
+                      </Text>
+                    </View>
+                    {!featureAccess.readings.astrology.unlimited && (
+                      <>
+                        <View style={styles.dateInfoRow}>
+                          <Text style={styles.dateLabel}>Daily Limit</Text>
+                          <Text style={styles.dateValue}>
+                            {featureAccess.readings.astrology.daily_limit === -1
+                              ? 'Unlimited'
+                              : featureAccess.readings.astrology.daily_limit}
+                          </Text>
+                        </View>
+                        <View style={styles.dateInfoRow}>
+                          <Text style={styles.dateLabel}>Remaining</Text>
+                          <Text style={styles.dateValue}>
+                            {featureAccess.readings.astrology.remaining}
+                          </Text>
+                        </View>
+                        <View style={styles.dateInfoRow}>
+                          <Text style={styles.dateLabel}>Used Today</Text>
+                          <Text style={styles.dateValue}>
+                            {featureAccess.readings.astrology.used_today}
+                          </Text>
+                        </View>
+                      </>
+                    )}
+                    {featureAccess.readings.astrology.depth && (
+                      <View style={styles.dateInfoRow}>
+                        <Text style={styles.dateLabel}>Depth</Text>
+                        <Text style={styles.dateValue}>
+                          {featureAccess.readings.astrology.depth}
+                        </Text>
+                      </View>
+                    )}
+                  </View>
+                </View>
+              )}
+
+              {/* Chat */}
+              {featureAccess.readings?.chat && (
+                <View style={[styles.featureSection, { marginTop: 16 }]}>
+                  <Text style={[styles.featureName, { color: colors.white }]}>
+                    Oracle Chat
+                  </Text>
+                  <View style={styles.featureDetails}>
+                    <View style={styles.dateInfoRow}>
+                      <Text style={styles.dateLabel}>Unlimited</Text>
+                      <Text
+                        style={[
+                          styles.dateValue,
+                          {
+                            color: featureAccess.readings.chat.unlimited
+                              ? '#4CAF50'
+                              : '#fff',
+                          },
+                        ]}
+                      >
+                        {featureAccess.readings.chat.unlimited ? 'Yes' : 'No'}
+                      </Text>
+                    </View>
+                    {!featureAccess.readings.chat.unlimited && (
+                      <>
+                        <View style={styles.dateInfoRow}>
+                          <Text style={styles.dateLabel}>Daily Limit</Text>
+                          <Text style={styles.dateValue}>
+                            {featureAccess.readings.chat.daily_limit === -1
+                              ? 'Unlimited'
+                              : featureAccess.readings.chat.daily_limit}
+                          </Text>
+                        </View>
+                        <View style={styles.dateInfoRow}>
+                          <Text style={styles.dateLabel}>Remaining</Text>
+                          <Text style={styles.dateValue}>
+                            {featureAccess.readings.chat.remaining}
+                          </Text>
+                        </View>
+                        <View style={styles.dateInfoRow}>
+                          <Text style={styles.dateLabel}>Used Today</Text>
+                          <Text style={styles.dateValue}>
+                            {featureAccess.readings.chat.used_today}
+                          </Text>
+                        </View>
+                      </>
+                    )}
+                  </View>
+                </View>
+              )}
+            </View>
+
+            {/* Additional Features */}
+            {(featureAccess.experience || featureAccess.features) && (
+              <View style={[styles.currentPlanCard, { marginTop: 20 }]}>
+                <Text style={[styles.sectionTitle, { color: colors.primary }]}>
+                  Additional Features
+                </Text>
+                <View style={styles.divider} />
+                {featureAccess.experience && (
+                  <>
+                    <View style={styles.dateInfoRow}>
+                      <Text style={styles.dateLabel}>Ad Free</Text>
+                      <Text
+                        style={[
+                          styles.dateValue,
+                          {
+                            color: featureAccess.experience.ad_free
+                              ? '#4CAF50'
+                              : '#F44336',
+                          },
+                        ]}
+                      >
+                        {featureAccess.experience.ad_free ? 'Yes' : 'No'}
+                      </Text>
+                    </View>
+                    <View style={styles.dateInfoRow}>
+                      <Text style={styles.dateLabel}>VIP Badge</Text>
+                      <Text
+                        style={[
+                          styles.dateValue,
+                          {
+                            color: featureAccess.experience.vip_badge
+                              ? '#4CAF50'
+                              : '#F44336',
+                          },
+                        ]}
+                      >
+                        {featureAccess.experience.vip_badge ? 'Yes' : 'No'}
+                      </Text>
+                    </View>
+                    <View style={styles.dateInfoRow}>
+                      <Text style={styles.dateLabel}>
+                        Early Access Features
+                      </Text>
+                      <Text
+                        style={[
+                          styles.dateValue,
+                          {
+                            color: featureAccess.experience
+                              .early_access_features
+                              ? '#4CAF50'
+                              : '#F44336',
+                          },
+                        ]}
+                      >
+                        {featureAccess.experience.early_access_features
+                          ? 'Yes'
+                          : 'No'}
+                      </Text>
+                    </View>
+                    <View style={styles.dateInfoRow}>
+                      <Text style={styles.dateLabel}>Priority Support</Text>
+                      <Text
+                        style={[
+                          styles.dateValue,
+                          {
+                            color: featureAccess.experience.priority_support
+                              ? '#4CAF50'
+                              : '#F44336',
+                          },
+                        ]}
+                      >
+                        {featureAccess.experience.priority_support
+                          ? 'Yes'
+                          : 'No'}
+                      </Text>
+                    </View>
+                  </>
+                )}
+                {featureAccess.features && (
+                  <>
+                    <View style={styles.dateInfoRow}>
+                      <Text style={styles.dateLabel}>Audio Narration</Text>
+                      <Text
+                        style={[
+                          styles.dateValue,
+                          {
+                            color: featureAccess.features.audio_narration
+                              ? '#4CAF50'
+                              : '#F44336',
+                          },
+                        ]}
+                      >
+                        {featureAccess.features.audio_narration ? 'Yes' : 'No'}
+                      </Text>
+                    </View>
+                    <View style={styles.dateInfoRow}>
+                      <Text style={styles.dateLabel}>Can Save Readings</Text>
+                      <Text
+                        style={[
+                          styles.dateValue,
+                          {
+                            color: featureAccess.features.can_save_readings
+                              ? '#4CAF50'
+                              : '#F44336',
+                          },
+                        ]}
+                      >
+                        {featureAccess.features.can_save_readings
+                          ? 'Yes'
+                          : 'No'}
+                      </Text>
+                    </View>
+                    {featureAccess.features.reading_history_days && (
+                      <View style={styles.dateInfoRow}>
+                        <Text style={styles.dateLabel}>
+                          Reading History Days
+                        </Text>
+                        <Text style={styles.dateValue}>
+                          {featureAccess.features.reading_history_days}
+                        </Text>
+                      </View>
+                    )}
+                  </>
+                )}
+              </View>
+            )}
+
+            {/* Timer and Usage Reset */}
+            {(featureAccess.timer || featureAccess.next_reset) && (
+              <View style={[styles.currentPlanCard, { marginTop: 20 }]}>
+                <Text style={[styles.sectionTitle, { color: colors.primary }]}>
+                  Usage & Timer
+                </Text>
+                <View style={styles.divider} />
+                {featureAccess.timer && (
+                  <>
+                    <View style={styles.dateInfoRow}>
+                      <Text style={styles.dateLabel}>Time Until Reset</Text>
+                      <Text style={styles.dateValue}>
+                        {featureAccess.timer.hours}h{' '}
+                        {featureAccess.timer.minutes}m{' '}
+                        {featureAccess.timer.seconds}s
+                      </Text>
+                    </View>
+                    {featureAccess.timer.reset_time && (
+                      <View style={styles.dateInfoRow}>
+                        <Text style={styles.dateLabel}>Reset Time</Text>
+                        <Text style={styles.dateValue}>
+                          {formatDate(featureAccess.timer.reset_time)}
+                        </Text>
+                      </View>
+                    )}
+                  </>
+                )}
+                {featureAccess.next_reset && (
+                  <View style={styles.dateInfoRow}>
+                    <Text style={styles.dateLabel}>Next Reset</Text>
+                    <Text style={styles.dateValue}>
+                      {formatDate(featureAccess.next_reset)}
+                    </Text>
+                  </View>
+                )}
+              </View>
+            )}
+          </>
+        )}
+
+        {isFetchingFeatureAccess && (
+          <View style={styles.loaderContainer}>
+            <ActivityIndicator size="small" color={colors.primary} />
+            <Text style={[styles.loadingText, { color: colors.white }]}>
+              Loading feature details...
+            </Text>
+          </View>
+        )}
+      </ScrollView>
     );
   };
 
@@ -656,6 +1120,8 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     flex: 1,
+  },
+  scrollContent: {
     paddingHorizontal: 20,
     paddingBottom: 30,
   },
@@ -761,5 +1227,27 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 24,
     paddingHorizontal: 10,
+  },
+  sectionTitle: {
+    fontFamily: Fonts.cormorantSCBold,
+    fontSize: 20,
+    marginBottom: 4,
+  },
+  featureSection: {
+    marginTop: 12,
+  },
+  featureName: {
+    fontFamily: Fonts.aeonikBold,
+    fontSize: 16,
+    marginBottom: 8,
+  },
+  featureDetails: {
+    paddingLeft: 12,
+  },
+  loadingText: {
+    fontFamily: Fonts.aeonikRegular,
+    fontSize: 14,
+    marginTop: 8,
+    textAlign: 'center',
   },
 });

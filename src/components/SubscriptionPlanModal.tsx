@@ -27,6 +27,7 @@ import GradientBox from './GradientBox';
 import { useTranslation } from 'react-i18next';
 import { useStripe } from '@stripe/stripe-react-native';
 import { useStripeStore, StripePackage } from '../store/useStripeStore';
+import { useFeaturePermissionStore } from '../store/useFeaturePermissionStore';
 import { useShallow } from 'zustand/react/shallow';
 import SubscriptionConfirmationModal from './SubscriptionConfirmationModal';
 
@@ -159,6 +160,14 @@ const SubscriptionPlanModal: React.FC<SubscriptionPlanModalProps> = ({
     })),
   );
 
+  // Feature access for timer information
+  const { featureAccess, fetchFeatureAccess } = useFeaturePermissionStore(
+    useShallow(state => ({
+      featureAccess: state.featureAccess,
+      fetchFeatureAccess: state.fetchFeatureAccess,
+    })),
+  );
+
   const [processingPackageId, setProcessingPackageId] = useState<string | null>(
     null,
   );
@@ -178,8 +187,10 @@ const SubscriptionPlanModal: React.FC<SubscriptionPlanModalProps> = ({
       const shouldForceFetch = !packages || packages.length === 0;
       fetchStripePackages(shouldForceFetch);
       fetchCurrentSubscription();
+      // Fetch feature access to get timer information
+      fetchFeatureAccess(false);
     }
-  }, [isVisible]);
+  }, [isVisible, fetchFeatureAccess]);
 
   useEffect(() => {
     const activePackageIdFromServer =
@@ -550,42 +561,65 @@ const SubscriptionPlanModal: React.FC<SubscriptionPlanModalProps> = ({
             },
           ]}
         >
-          {/* Header */}
-          <View style={styles.header}>
-            <View style={styles.headerIconContainer}>
-              <Image
-                source={require('../assets/icons/AquariusIcon.png')}
-                style={[styles.headerIcon, { tintColor: colors.primary }]}
-                resizeMode="contain"
-              />
+          {/* Scrollable Content - Everything is scrollable including header */}
+          <ScrollView
+            bounces={true}
+            showsVerticalScrollIndicator={true}
+            contentContainerStyle={styles.scrollContentContainer}
+            keyboardShouldPersistTaps="handled"
+            style={{ flex: 1 }}
+          >
+            {/* Header */}
+            <View style={styles.header}>
+              <View style={styles.headerIconContainer}>
+                <Image
+                  source={require('../assets/icons/AquariusIcon.png')}
+                  style={[styles.headerIcon, { tintColor: colors.primary }]}
+                  resizeMode="contain"
+                />
+              </View>
+              <View style={styles.headerTextContainer}>
+                <Text style={[styles.headerTitle, { color: colors.white }]}>
+                  {t('subscription_plan_title')}
+                </Text>
+                <Text style={[styles.headerSubtitle, { color: colors.white }]}>
+                  Choose Your Plan
+                </Text>
+              </View>
+              <TouchableOpacity
+                onPress={onClose}
+                style={styles.closeButton}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              >
+                <Text style={[styles.closeButtonText, { color: colors.white }]}>
+                  ✕
+                </Text>
+              </TouchableOpacity>
             </View>
-            <View style={styles.headerTextContainer}>
-              <Text style={[styles.headerTitle, { color: colors.white }]}>
-                {t('subscription_plan_title')}
-              </Text>
-              <Text style={[styles.headerSubtitle, { color: colors.white }]}>
-                Choose Your Plan
-              </Text>
-            </View>
-            <TouchableOpacity
-              onPress={onClose}
-              style={styles.closeButton}
-              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-            >
-              <Text style={[styles.closeButtonText, { color: colors.white }]}>
-                ✕
-              </Text>
-            </TouchableOpacity>
-          </View>
 
-          {/* Scrollable Content */}
-          <View style={{ flex: 1 }}>
-            <ScrollView
-              bounces={true}
-              showsVerticalScrollIndicator={true}
-              contentContainerStyle={styles.contentContainer}
-              keyboardShouldPersistTaps="handled"
-            >
+            {/* Content */}
+            <View style={styles.contentContainer}>
+              {/* Timer Display - Show above hero image if timer exists */}
+              {featureAccess?.timer && (
+                <View
+                  style={[
+                    styles.timerBanner,
+                    {
+                      backgroundColor: colors.bgBox,
+                      borderColor: colors.primary,
+                    },
+                  ]}
+                >
+                  <Text style={[styles.timerLabel, { color: colors.white }]}>
+                    Try after:
+                  </Text>
+                  <Text style={[styles.timerValue, { color: colors.primary }]}>
+                    {featureAccess.timer.hours}h {featureAccess.timer.minutes}m{' '}
+                    {featureAccess.timer.seconds}s
+                  </Text>
+                </View>
+              )}
+
               <View style={styles.heroWrap}>
                 <Image
                   source={require('../assets/images/heroImage.png')}
@@ -674,8 +708,8 @@ const SubscriptionPlanModal: React.FC<SubscriptionPlanModalProps> = ({
                   />
                 </View>
               )}
-            </ScrollView>
-          </View>
+            </View>
+          </ScrollView>
         </View>
       </Modal>
 
@@ -757,10 +791,13 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
   },
+  scrollContentContainer: {
+    paddingBottom: 40,
+    flexGrow: 1,
+  },
   contentContainer: {
     paddingHorizontal: 20,
     paddingTop: 12,
-    paddingBottom: 40,
   },
   heroWrap: {
     height: 250,
@@ -781,6 +818,28 @@ const styles = StyleSheet.create({
     right: 0,
     alignItems: 'center',
     paddingHorizontal: 16,
+  },
+  timerBanner: {
+    marginHorizontal: 20,
+    marginTop: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  timerLabel: {
+    fontFamily: Fonts.aeonikRegular,
+    fontSize: 14,
+    lineHeight: 20,
+  },
+  timerValue: {
+    fontFamily: Fonts.aeonikBold,
+    fontSize: 16,
+    lineHeight: 20,
   },
   messageBanner: {
     marginHorizontal: 20,

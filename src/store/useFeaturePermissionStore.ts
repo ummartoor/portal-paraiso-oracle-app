@@ -242,10 +242,103 @@ export const useFeaturePermissionStore = create<FeaturePermissionState>(
 
           if (response.data?.success && response.data?.data) {
             const data = response.data.data;
+
+            // Handle both old structure (data.readings) and new structure (data.features)
+            // Note: In new API, data.features contains readings (tarot, buzios, etc.)
+            // and data.additionalFeatures contains additional features
+            const readingsData =
+              data.readings ||
+              (data.features && typeof data.features.tarot !== 'undefined'
+                ? data.features
+                : null);
+            // If data.features contains readings, we need to get additionalFeatures separately
+            const isNewStructure =
+              !data.readings &&
+              data.features &&
+              typeof data.features.tarot !== 'undefined';
+
+            // Helper function to map camelCase API response to snake_case interface
+            const mapFeatureData = (
+              featureData: any,
+              featureType: 'tarot' | 'buzios' | 'astrology' | 'chat' = 'tarot',
+            ) => {
+              if (!featureData) return null;
+              // If already in snake_case format, return as is
+              if (featureData.daily_limit !== undefined) return featureData;
+              // Map camelCase to snake_case
+              const mapped: any = {
+                daily_limit: featureData.dailyLimit,
+                used_today: featureData.usedToday,
+                remaining: featureData.remaining,
+                unlimited: featureData.unlimited,
+                show_timer: featureData.showTimer ?? true,
+              };
+
+              if (featureType === 'tarot') {
+                mapped.cards_per_reading = featureData.cardsPerReading;
+                mapped.cards_min = featureData.cardsMin;
+                mapped.cards_max = featureData.cardsMax;
+              } else if (featureType === 'buzios') {
+                mapped.shells_per_reading = featureData.shellsPerReading;
+              } else if (featureType === 'astrology') {
+                mapped.depth = featureData.depth;
+              }
+
+              return mapped;
+            };
+
+            // Map horoscope to astrology and oracle_chat to chat if needed
+            const tarotData = mapFeatureData(readingsData?.tarot, 'tarot');
+            const buziosData = mapFeatureData(readingsData?.buzios, 'buzios');
+            const astrologyData = mapFeatureData(
+              readingsData?.astrology || readingsData?.horoscope,
+              'astrology',
+            );
+            const chatData = mapFeatureData(
+              readingsData?.chat || readingsData?.oracle_chat,
+              'chat',
+            );
+
+            // Handle additionalFeatures - map to experience and features
+            // In new API structure, data.additionalFeatures exists
+            // In old structure, data.features and data.experience exist separately
+            const additionalFeatures = data.additionalFeatures;
+            const experienceData =
+              data.experience ||
+              (additionalFeatures
+                ? {
+                    ad_free: additionalFeatures.adFree,
+                    show_ads: !additionalFeatures.adFree,
+                    vip_badge: additionalFeatures.vipBadge,
+                    early_access_features:
+                      additionalFeatures.earlyAccessFeatures,
+                    priority_support: additionalFeatures.prioritySupport,
+                  }
+                : null);
+
+            // In new structure, data.features contains readings, not additional features
+            // So we need to check if it's the new structure
+            const featuresData =
+              (isNewStructure ? null : data.features) ||
+              (additionalFeatures
+                ? {
+                    can_save_readings: additionalFeatures.canSaveReadings,
+                    audio_narration: additionalFeatures.audioNarration,
+                    reading_history_days: 0, // Default if not provided
+                    ad_free: additionalFeatures.adFree,
+                    show_ads: !additionalFeatures.adFree,
+                  }
+                : null);
+
+            // Handle usageReset - map to next_reset and timer
+            const usageReset = data.usageReset;
+            const nextReset =
+              data.next_reset || usageReset?.nextReset || usageReset?.resetTime;
+
             const featureAccess: FeatureAccessData = {
               package: data.package,
               readings: {
-                tarot: data.readings?.tarot || {
+                tarot: tarotData || {
                   cards_per_reading: 3,
                   cards_min: 1,
                   cards_max: 3,
@@ -255,7 +348,7 @@ export const useFeaturePermissionStore = create<FeaturePermissionState>(
                   unlimited: false,
                   show_timer: true,
                 },
-                buzios: data.readings?.buzios || {
+                buzios: buziosData || {
                   shells_per_reading: 16,
                   daily_limit: 1,
                   used_today: 0,
@@ -263,7 +356,7 @@ export const useFeaturePermissionStore = create<FeaturePermissionState>(
                   unlimited: false,
                   show_timer: true,
                 },
-                astrology: data.readings?.astrology || {
+                astrology: astrologyData || {
                   depth: 'basic',
                   daily_limit: 0,
                   used_today: 0,
@@ -271,7 +364,7 @@ export const useFeaturePermissionStore = create<FeaturePermissionState>(
                   unlimited: false,
                   show_timer: false,
                 },
-                chat: data.readings?.chat || {
+                chat: chatData || {
                   daily_limit: 5,
                   unlimited: false,
                   used_today: 0,
@@ -279,9 +372,21 @@ export const useFeaturePermissionStore = create<FeaturePermissionState>(
                   show_timer: true,
                 },
               },
-              features: data.features,
-              experience: data.experience,
-              next_reset: data.next_reset,
+              features: featuresData || {
+                can_save_readings: false,
+                audio_narration: false,
+                reading_history_days: 0,
+                ad_free: false,
+                show_ads: true,
+              },
+              experience: experienceData || {
+                ad_free: false,
+                show_ads: true,
+                vip_badge: false,
+                early_access_features: false,
+                priority_support: false,
+              },
+              next_reset: nextReset || '',
               timer: data.timer,
               show_timer: data.show_timer ?? true,
             };
